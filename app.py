@@ -22,7 +22,7 @@ NATAL = {
     "month": 10,
     "day":   31,
     "hour":  8,
-    "minute": 0,
+    "minute": 25,
     "lat":   48.7053,
     "lon":   2.3936,
     "tz":    "Europe/Paris",
