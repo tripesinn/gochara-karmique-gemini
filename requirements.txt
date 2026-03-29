@@ -4,3 +4,5 @@ pyswisseph>=2.10.3
 anthropic>=0.30.0
 python-dotenv>=1.0.0
 pytz>=2024.1
+gspread>=6.0.0
+google-auth>=2.28.0
