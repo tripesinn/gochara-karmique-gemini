@@ -192,7 +192,7 @@ def calculate_transits(natal: dict, transit_loc: dict,
     # ── Données d'affichage ──────────────────────────────────────────────────
     def _display_dict(pos_dict):
         return {
-            k: {"display": v["display"], "retrograde": v["retrograde"], "lon_raw": round(v["lon"], 4)}
+            k: {"display": v["display"], "retrograde": v["retrograde"]}
             for k, v in pos_dict.items() if v is not None
         }
 
