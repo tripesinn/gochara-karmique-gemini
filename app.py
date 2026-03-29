@@ -234,7 +234,7 @@ def geocode():
     url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
         "q": city, "format": "json", "limit": 1, "addressdetails": 1
     })
-    req = urllib.request.Request(url, headers={"User-Agent": "GochараKarmique/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "GocharaKarmique/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             results = _json.loads(resp.read())
