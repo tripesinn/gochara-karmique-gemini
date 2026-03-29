@@ -70,13 +70,14 @@ def get_synthesis(chart_data: dict) -> str:
     aspects_text = _aspects_to_text(chart_data.get("aspects", []))
     date = chart_data.get("transit_date", "")
     time = chart_data.get("transit_time", "")
+    name = chart_data.get("name", "Jérôme")   # ← AJOUTER
 
     prompt = (
-        f"Analyse karmique védique des transits de Jérôme — {date} à {time}.\n\n"
+        f"Analyse karmique védique des transits de {name} — {date} à {time}.\n\n"  # ← nom dynamique
         f"Aspects actifs (orbe < 3°) :\n{aspects_text}\n\n"
-        "Offre une synthèse d'âme de ce moment astrologique. "
-        "Quelles leçons karmiques, quelles grâces, quelles tensions évolutives "
-        "se jouent pour Jérôme aujourd'hui ?"
+        f"Offre une synthèse d'âme de ce moment astrologique. "
+        f"Quelles leçons karmiques, quelles grâces, quelles tensions évolutives "
+        f"se jouent pour {name} aujourd'hui ?"   # ← nom dynamique
     )
 
     msg = _get_client().messages.create(
