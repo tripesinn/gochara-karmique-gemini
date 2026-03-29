@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ Gochara Karmique — Jérôme</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   WINDOWS 3.1 THEME — Gochara Karmique
+═══════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #008080;
+  font-family: "MS Sans Serif", "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  min-height: 100vh;
+  padding: 6px;
+}
+
+/* ── Window ── */
+.win {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  box-shadow: 1px 1px 0 #000;
+  margin-bottom: 6px;
+}
+
+/* ── Title bar ── */
+.titlebar {
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 3px 5px 3px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  cursor: default;
+}
+.titlebar.purple { background: linear-gradient(90deg, #4b0082 0%, #800080 100%); }
+.titlebar.green  { background: linear-gradient(90deg, #005000 0%, #228B22 100%); }
+.titlebar.teal   { background: linear-gradient(90deg, #005060 0%, #008080 100%); }
+
+.titlebar-title { display: flex; align-items: center; gap: 5px; }
+.titlebar-btns  { display: flex; gap: 2px; }
+.tbtn {
+  width: 16px; height: 14px;
+  background: #c0c0c0;
+  border: 1px solid; border-color: #fff #808080 #808080 #fff;
+  font-size: 9px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Window body ── */
+.winbody { padding: 8px; }
+
+/* ── Sunken panel (inputs / displays) ── */
+.sunken {
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 5px;
+  overflow-y: auto;
+}
+
+/* ── Raised group box ── */
+.group {
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 8px;
+  margin-bottom: 6px;
+  background: #c0c0c0;
+}
+.group-label {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 5px;
+  color: #000080;
+}
+
+/* ── Buttons ── */
+.btn {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  padding: 3px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000;
+  min-width: 80px;
+}
+.btn:active {
+  border-color: #808080 #fff #fff #808080;
+  box-shadow: none;
+  padding: 4px 13px 2px 15px;
+}
+.btn:disabled { color: #808080; cursor: default; }
+
+/* ── Form elements ── */
+input[type="date"],
+input[type="number"],
+input[type="text"],
+input[type="search"] {
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 1px 4px;
+  font-family: inherit;
+  font-size: 11px;
+  height: 22px;
+}
+input[type="number"] { width: 48px; }
+label { font-size: 11px; }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+thead tr { background: #000080; color: #fff; }
+th { padding: 3px 6px; text-align: left; font-weight: bold; white-space: nowrap; }
+td { padding: 2px 6px; border-bottom: 1px solid #c0c0c0; }
+tr:nth-child(odd)  td { background: #fff; }
+tr:nth-child(even) td { background: #dcd8d0; }
+
+/* ── Status bar ── */
+.statusbar {
+  background: #c0c0c0;
+  border-top: 1px solid #808080;
+  padding: 2px 6px;
+  display: flex; gap: 4px;
+  font-size: 11px;
+}
+.statpanel {
+  border: 1px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 1px 6px;
+  flex: 1;
+}
+.statpanel.fixed { flex: 0 0 auto; }
+
+/* ── Aspect color classes ── */
+.asp-conj  { color: #000080; font-weight: bold; }
+.asp-oppo  { color: #800000; font-weight: bold; }
+.asp-trig  { color: #005500; font-weight: bold; }
+.asp-carr  { color: #800000; }
+.asp-sext  { color: #005500; }
+.retro     { color: #800000; font-style: italic; }
+
+/* ── Chat ── */
+.chat-log { height: 190px; overflow-y: auto; }
+.chat-msg { margin-bottom: 5px; font-size: 11px; line-height: 1.5; }
+.chat-user strong { color: #000080; }
+.chat-ai   strong { color: #4b0082; }
+.chat-sys  strong { color: #808080; }
+.chat-row  { display: flex; gap: 4px; margin-top: 5px; }
+.chat-input { flex: 1; }
+
+/* ── Natal header badge ── */
+.natal-badge {
+  background: #000080;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  display: inline-block;
+  margin-right: 4px;
+}
+.natal-info {
+  font-size: 11px;
+  color: #000080;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+/* ── Loading ── */
+.loading { color: #808080; font-style: italic; }
+
+/* ── Layout grid ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+@media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* ── HR ── */
+hr { border: none; border-top: 1px solid #808080; border-bottom: 1px solid #fff; margin: 5px 0; }
+
+/* ── Scrollbar (webkit) ── */
+::-webkit-scrollbar { width: 14px; }
+::-webkit-scrollbar-track { background: #c0c0c0; border: 1px solid #808080; }
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     FENÊTRE PRINCIPALE
+═══════════════════════════════════════════════════════ -->
+<div class="win" style="max-width:960px;margin:0 auto;">
+
+  <div class="titlebar">
+    <div class="titlebar-title">✦ Gochara Karmique — Jérôme</div>
+    <div class="titlebar-btns">
+      <button class="tbtn">_</button>
+      <button class="tbtn">□</button>
+      <button class="tbtn">✕</button>
+    </div>
+  </div>
+
+  <div class="winbody">
+
+    <!-- ── Info natal (lecture seule) ────────────────────────────── -->
+    <div class="natal-info">
+      <span class="natal-badge">NATAL</span>
+      31 Oct 1974 · 08h00 · Athis-Mons, France
+      &nbsp;|&nbsp;
+      <span class="natal-badge">RÉGLAGES</span>
+      Ayanamsa : Djwhal Khul &nbsp;·&nbsp; Maisons : Moonrise (Chandra Lagna) &nbsp;·&nbsp; Nœuds : Vrais &nbsp;·&nbsp; Orbe : &lt; 3°
+    </div>
+
+    <!-- ── Saisie des transits ────────────────────────────────────── -->
+    <div class="group">
+      <div class="group-label">Transits — Date de consultation</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+          <label>Date :</label>
+          <input type="date" id="t-date" value="{{ today_iso }}">
+        </div>
+        <div>
+          <label>Heure :</label>
+          <input type="number" id="t-hour" value="{{ now_hour }}" min="0" max="23">h
+          <input type="number" id="t-minute" value="{{ now_minute }}" min="0" max="59">min
+        </div>
+        <div>
+          <label>Lieu :</label>
+          <input type="text" value="{{ transit_city }}" readonly
+                 style="width:160px;color:#808080;background:#d4d0c8;">
+        </div>
+        <button class="btn" id="calc-btn" onclick="calculateTransits()">✦ Calculer »</button>
+      </div>
+    </div>
+
+    <!-- ── Résultats : aspects + synthèse ────────────────────────── -->
+    <div class="grid2">
+
+      <!-- Aspects -->
+      <div class="win">
+        <div class="titlebar teal">
+          <div class="titlebar-title">☌ Aspects actifs (orbe &lt; 3°)</div>
+        </div>
+        <div class="winbody" style="padding:4px;">
+          <div id="aspects-wrap" class="sunken" style="height:300px;padding:0;">
+            <div style="padding:6px;" class="loading">En attente de calcul…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Synthèse IA -->
+      <div class="win">
+        <div class="titlebar purple">
+          <div class="titlebar-title">✦ Synthèse karmique — Jyotish-AI</div>
+        </div>
+        <div class="winbody" style="padding:4px;">
+          <div id="synthesis" class="sunken" style="height:300px;font-size:11px;line-height:1.6;">
+            <span class="loading">En attente de calcul…</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /grid2 -->
+
+    <!-- ── Chat ──────────────────────────────────────────────────── -->
+    <div class="win">
+      <div class="titlebar green">
+        <div class="titlebar-title">✉ Dialogue karmique</div>
+      </div>
+      <div class="winbody">
+        <div id="chat-log" class="sunken chat-log">
+          <div class="chat-msg chat-ai">
+            <strong>Jyotish-AI :</strong>
+            Namaste, Jérôme. Lance un calcul de tes transits, puis pose-moi tes questions sur ton chemin karmique.
+          </div>
+        </div>
+        <div class="chat-row">
+          <input type="text" id="chat-input" class="chat-input"
+                 placeholder="Pose ta question sur tes transits karmiques…"
+                 onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn" onclick="sendChat()">Envoyer »</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /winbody principale -->
+
+  <!-- ── Status bar ──────────────────────────────────────────────── -->
+  <div class="statusbar">
+    <div class="statpanel" id="status-msg">Prêt</div>
+    <div class="statpanel fixed">Sidéral · Djwhal Khul · Moonrise</div>
+    <div class="statpanel fixed" id="status-count"></div>
+  </div>
+
+</div><!-- /win principale -->
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+let chartContext = "";
+let chatHistory  = [];
+
+/* ── Calcul principal ──────────────────────────────────────────── */
+async function calculateTransits() {
+  const date   = document.getElementById("t-date").value;
+  const hour   = parseInt(document.getElementById("t-hour").value)   || 0;
+  const minute = parseInt(document.getElementById("t-minute").value) || 0;
+
+  if (!date) { setStatus("⚠ Sélectionne une date."); return; }
+
+  setStatus("Calcul des éphémérides…");
+  document.getElementById("calc-btn").disabled = true;
+
+  setAspectsHTML('<div style="padding:6px;" class="loading">Calcul sidéral Djwhal Khul…</div>');
+  setSynthesisHTML('<span class="loading">Interprétation karmique védique en cours…</span>');
+
+  try {
+    const res  = await fetch("/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, hour, minute }),
+    });
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    renderAspects(data.aspects);
+    setSynthesisHTML(escapeNl(data.synthesis));
+
+    chartContext = data.chart_context || "";
+    const n = data.aspects.length;
+    setStatus(`✓ ${n} aspect${n > 1 ? "s" : ""} trouvé${n > 1 ? "s" : ""} · ${date} ${pad(hour)}h${pad(minute)}`);
+    document.getElementById("status-count").textContent = `${n} asp.`;
+
+  } catch (err) {
+    setAspectsHTML(`<div style="padding:6px;color:#800000;">⚠ Erreur : ${escHtml(err.message)}</div>`);
+    setStatus("Erreur lors du calcul.");
+  } finally {
+    document.getElementById("calc-btn").disabled = false;
+  }
+}
+
+/* ── Rendu du tableau d'aspects ────────────────────────────────── */
+function renderAspects(aspects) {
+  if (!aspects || aspects.length === 0) {
+    setAspectsHTML('<div style="padding:6px;">Aucun aspect dans l\'orbe de 3°.</div>');
+    return;
+  }
+  let html = '<table><thead><tr>'
+    + '<th>Transit</th><th>Aspect</th><th>Natal</th><th>Orbe</th>'
+    + '</tr></thead><tbody>';
+
+  aspects.forEach(a => {
+    const cls   = aspClass(a.aspect);
+    const retro = a.retrograde ? ' <span class="retro">℞</span>' : "";
+    html += `<tr>
+      <td>${escHtml(a.transit_planet)}${retro}<br><small style="color:#404040">${escHtml(a.transit_display)}</small></td>
+      <td><span class="${cls}">${escHtml(a.aspect)}</span></td>
+      <td>${escHtml(a.natal_planet)}<br><small style="color:#404040">${escHtml(a.natal_display)}</small></td>
+      <td style="text-align:right">${a.orb}°</td>
+    </tr>`;
+  });
+
+  html += "</tbody></table>";
+  setAspectsHTML(html);
+}
+
+/* ── Chat ──────────────────────────────────────────────────────── */
+async function sendChat() {
+  const input = document.getElementById("chat-input");
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  addChatMsg("Jérôme", msg, "chat-user");
+  input.value = "";
+
+  try {
+    const res  = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg, history: chatHistory, chart_context: chartContext }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    addChatMsg("Jyotish-AI", data.response, "chat-ai");
+    chatHistory.push({ role: "user",      content: msg          });
+    chatHistory.push({ role: "assistant", content: data.response });
+    if (chatHistory.length > 24) chatHistory = chatHistory.slice(-24);
+  } catch (err) {
+    addChatMsg("Système", "⚠ " + err.message, "chat-sys");
+  }
+}
+
+/* ── Helpers ───────────────────────────────────────────────────── */
+function addChatMsg(sender, text, cls) {
+  const log = document.getElementById("chat-log");
+  const div = document.createElement("div");
+  div.className = `chat-msg ${cls}`;
+  div.innerHTML = `<strong>${escHtml(sender)} :</strong> ${escapeNl(escHtml(text))}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setAspectsHTML(html)   { document.getElementById("aspects-wrap").innerHTML = html; }
+function setSynthesisHTML(html) { document.getElementById("synthesis").innerHTML = html; }
+function setStatus(txt)         { document.getElementById("status-msg").textContent = txt; }
+function pad(n)                 { return String(n).padStart(2, "0"); }
+function escHtml(s)             { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escapeNl(s)            { return s.replace(/\n/g,"<br>"); }
+
+function aspClass(asp) {
+  if (asp.includes("Conjonction")) return "asp-conj";
+  if (asp.includes("Opposition"))  return "asp-oppo";
+  if (asp.includes("Trigone"))     return "asp-trig";
+  if (asp.includes("Carr"))        return "asp-carr";
+  if (asp.includes("Sextile"))     return "asp-sext";
+  return "";
+}
+</script>
+</body>
+</html>
