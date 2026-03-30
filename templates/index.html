@@ -502,7 +502,7 @@ let chatHistory  = [];
 
 /* ── Tabs ──────────────────────────────────────────────────────── */
 function switchTab(name) {
-  ["gochara", "carte", "dialogue"].forEach(t => {
+["gochara", "aspects", "carte", "dialogue"].forEach(t => {
     document.getElementById("tab-" + t).classList.toggle("active", t === name);
     document.getElementById("tab-btn-" + t).classList.toggle("active", t === name);
   });
