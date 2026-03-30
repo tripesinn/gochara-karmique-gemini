@@ -628,6 +628,130 @@ function aspClass(asp) {
   if (asp.includes("Sextile"))     return "asp-sext";
   return "";
 }
+  /* ── Screens ───────────────────────────────────────────────────── */
+function showScreen(name) {
+  ["login", "register", "app"].forEach(s => {
+    document.getElementById("screen-" + s).classList.toggle("active", s === name);
+  });
+}
+
+/* ── Auth ──────────────────────────────────────────────────────── */
+async function doLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const err   = document.getElementById("login-error");
+  err.textContent = "";
+  if (!email) { err.textContent = "Email requis."; return; }
+  try {
+    const res  = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (data.error) { err.textContent = data.error; return; }
+    currentUser = data.profile;
+    applyProfile(data.profile);
+    showScreen("app");
+  } catch (e) {
+    err.textContent = "Erreur réseau : " + e.message;
+  }
+}
+
+async function doRegister() {
+  const err = document.getElementById("reg-error");
+  err.textContent = "";
+  const payload = {
+    pseudo: document.getElementById("reg-pseudo").value.trim(),
+    email:  document.getElementById("reg-email").value.trim(),
+    name:   document.getElementById("reg-name").value.trim(),
+    day:    parseInt(document.getElementById("reg-day").value),
+    month:  parseInt(document.getElementById("reg-month").value),
+    year:   parseInt(document.getElementById("reg-year").value),
+    hour:   parseInt(document.getElementById("reg-hour").value),
+    minute: parseInt(document.getElementById("reg-minute").value),
+    city:   document.getElementById("reg-city").value,
+    lat:    parseFloat(document.getElementById("reg-lat").value),
+    lon:    parseFloat(document.getElementById("reg-lon").value),
+    tz:     document.getElementById("reg-tz").value,
+    transit_city: document.getElementById("reg-tcity").value,
+    transit_lat:  parseFloat(document.getElementById("reg-tlat").value),
+    transit_lon:  parseFloat(document.getElementById("reg-tlon").value),
+    transit_tz:   document.getElementById("reg-ttz").value,
+  };
+  if (!payload.email || !payload.pseudo) { err.textContent = "Email et pseudo requis."; return; }
+  try {
+    const res  = await fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) { err.textContent = data.error; return; }
+    currentUser = data.profile;
+    applyProfile(data.profile);
+    showScreen("app");
+  } catch (e) {
+    err.textContent = "Erreur réseau : " + e.message;
+  }
+}
+
+async function doLogout() {
+  await fetch("/logout", { method: "POST" });
+  currentUser = null;
+  showScreen("login");
+}
+
+function applyProfile(p) {
+  const city = p.transit_city || p.city || "—";
+  document.getElementById("natal-summary").textContent =
+    `${p.pseudo || p.name} · ${p.day}/${p.month}/${p.year} ${p.hour}h${String(p.minute).padStart(2,"0")} · ${p.city}`;
+  document.getElementById("transit-city-display").value = city;
+  const today = new Date();
+  document.getElementById("t-date").value =
+    today.toISOString().split("T")[0];
+  document.getElementById("t-hour").value   = today.getHours();
+  document.getElementById("t-minute").value = today.getMinutes();
+}
+
+/* ── Geocode ───────────────────────────────────────────────────── */
+let geoTimer = null;
+function geocodeField(input, resultsId, cityId, latId, lonId, tzId) {
+  clearTimeout(geoTimer);
+  const q = input.value.trim();
+  const box = document.getElementById(resultsId);
+  if (q.length < 2) { box.style.display = "none"; return; }
+  geoTimer = setTimeout(async () => {
+    try {
+      const res  = await fetch("/geocode?q=" + encodeURIComponent(q));
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) { box.style.display = "none"; return; }
+      box.innerHTML = "";
+      data.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "geo-item";
+        div.textContent = item.display_name;
+        div.onclick = async () => {
+          input.value = item.display_name;
+          document.getElementById(cityId).value = item.display_name;
+          document.getElementById(latId).value  = item.lat;
+          document.getElementById(lonId).value  = item.lon;
+          box.style.display = "none";
+          // Timezone
+          try {
+            const tzRes  = await fetch(
+              `https://timeapi.io/api/timezone/coordinate?latitude=${item.lat}&longitude=${item.lon}`
+            );
+            const tzData = await tzRes.json();
+            document.getElementById(tzId).value = tzData.timeZone || "UTC";
+          } catch { document.getElementById(tzId).value = "UTC"; }
+        };
+        box.appendChild(div);
+      });
+      box.style.display = "block";
+    } catch { box.style.display = "none"; }
+  }, 400);
+}
+const _origSendChat = sendChat;
 </script>
 </body>
 </html>
