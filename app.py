@@ -41,41 +41,42 @@ def index():
 
 @app.route("/login", methods=["POST"])
 def login():
-    from profiles import get_profile_by_email
-    data = request.get_json()
-    email = (data.get("email") or "").strip().lower()
-    if not email:
-        return jsonify({"error": "Email requis"}), 400
+    from profiles import get_profile_by_pseudo
+    data   = request.get_json() or {}
+    pseudo = (data.get("pseudo") or "").strip()
+    if not pseudo:
+        return jsonify({"ok": False, "error": "Pseudo requis"}), 400
     try:
-        profile = get_profile_by_email(email)
+        profile = get_profile_by_pseudo(pseudo)
     except Exception as exc:
         app.logger.error("Erreur Sheets login : %s", exc)
-        return jsonify({"error": str(exc)}), 500
+        return jsonify({"ok": False, "error": str(exc)}), 500
     if not profile:
-        return jsonify({"error": "Profil introuvable. Crée ton compte."}), 404
+        return jsonify({"ok": False, "error": f"Pseudo '{pseudo}' introuvable. Crée ton profil d'abord."}), 404
     session["profile"] = profile
-    return jsonify({"ok": True, "profile": profile})
+    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
 
 
 @app.route("/register", methods=["POST"])
 def register():
     from profiles import get_profile_by_email, pseudo_exists, create_profile
-    data = request.get_json()
-    email = (data.get("email") or "").strip().lower()
+    data   = request.get_json() or {}
     pseudo = (data.get("pseudo") or "").strip()
-    if not email or not pseudo:
-        return jsonify({"error": "Email et pseudo requis"}), 400
+    if not pseudo:
+        return jsonify({"ok": False, "error": "Pseudo requis"}), 400
     try:
-        if get_profile_by_email(email):
-            return jsonify({"error": "Email déjà enregistré"}), 409
         if pseudo_exists(pseudo):
-            return jsonify({"error": "Pseudo déjà pris"}), 409
+            return jsonify({"ok": False, "error": "Pseudo déjà pris"}), 409
+        # Email optionnel — si fourni, vérifier doublon
+        email = (data.get("email") or "").strip().lower()
+        if email and get_profile_by_email(email):
+            return jsonify({"ok": False, "error": "Email déjà enregistré"}), 409
         profile = create_profile(data)
     except Exception as exc:
         app.logger.error("Erreur Sheets register : %s", exc)
-        return jsonify({"error": str(exc)}), 500
+        return jsonify({"ok": False, "error": str(exc)}), 500
     session["profile"] = profile
-    return jsonify({"ok": True, "profile": profile})
+    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
 
 
 @app.route("/logout", methods=["POST"])
@@ -99,7 +100,7 @@ def geocode():
         )
         time.sleep(1)
         return jsonify(r.json())
-    except Exception as exc:
+    except Exception:
         try:
             r2 = req.get(
                 "https://photon.komoot.io/api/",
@@ -125,7 +126,7 @@ def geocode():
 @app.route("/calculate", methods=["POST"])
 def calculate():
     from astro_calc import calculate_transits
-    from ai_interpret import get_synthesis, build_chart_context, chat_response
+    from ai_interpret import get_synthesis, build_chart_context
 
     profile = session.get("profile")
     if not profile:
@@ -144,23 +145,24 @@ def calculate():
         "city":   profile["city"],
     }
 
-    transit_loc = {
-        "city": profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
-        "lat":  float(profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
-        "lon":  float(profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
-        "tz":   profile.get("transit_tz", TRANSIT_LOC_DEFAULT["tz"]),
-    }
-
-    data = request.get_json()
+    data = request.get_json() or {}
     date_str = data.get("date", "")
-    hour = int(data.get("hour", 12))
-    minute = int(data.get("minute", 0))
+    hour     = int(data.get("hour", 12))
+    minute   = int(data.get("minute", 0))
+
+    # Lieu de transit — depuis le payload si fourni, sinon profil, sinon défaut Paris
+    transit_loc = {
+        "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
+        "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
+        "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
+        "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
+    }
 
     try:
         year, month, day = map(int, date_str.split("-"))
         result = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
-        result["synthesis"]     = get_synthesis(result, profile)      # ← FIXÉ
-        result["chart_context"] = build_chart_context(result, profile) # ← FIXÉ
+        result["synthesis"]     = get_synthesis(result, profile)
+        result["chart_context"] = build_chart_context(result, profile)
         return jsonify(result)
     except Exception as exc:
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
@@ -171,21 +173,18 @@ def calculate():
 def chat():
     from ai_interpret import chat_response
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Données manquantes"}), 400
-
-        user = session.get("profile", {"name": "l'utilisateur"})
-        message = data.get("message", "")
-        history = data.get("history", [])
+        data = request.get_json() or {}
+        user          = session.get("profile", {"name": "l'utilisateur"})
+        message       = data.get("message", "")
+        history       = data.get("history", [])
         chart_context = data.get("chart_context", "")
-
+        if not message:
+            return jsonify({"error": "Message vide"}), 400
         reply = chat_response(message, history, chart_context, user)
         return jsonify({"reply": reply})
-
-    except Exception as e:
-        print(f"[CHAT ERROR] {e}")
-        return jsonify({"error": str(e)}), 500
+    except Exception as exc:
+        app.logger.error("[CHAT ERROR] %s", exc)
+        return jsonify({"error": str(exc)}), 500
 
 
 # ── Lancement ─────────────────────────────────────────────────────────────────
