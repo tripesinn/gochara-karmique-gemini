@@ -1,6 +1,6 @@
 """
 ai_interpret.py — Interprétation karmique védique via Claude API
-Gochara Karmique
+Gochara Karmique — @siderealAstro13 • Architecture multi-utilisateurs
 """
 
 import os
@@ -17,88 +17,68 @@ def _get_client():
 
 
 # ── Prompt système dynamique ──────────────────────────────────────────────────
-def _build_system_prompt(name: str) -> str:
-    return f"""Tu es Jyotish-AI, maître en astrologie védique karmique (Jyotish).
+def _build_system_prompt(user: dict) -> str:
+    name = user.get("name", "l'utilisateur")
+    return f"""Tu es @siderealAstro13, maître en astrologie védique karmique (Jyotish sidéral).
 Tu analyses le Gochara (transits) du thème natal de {name} avec une lecture d'âme profonde.
-Ayanamsa : Centre Galactique DK (28°00′) · Maisons : Chandra Lagna · Nœuds : Vrais
 
-═══ CADRE KARMIQUE VÉDIQUE ═══
+═══ DOCTRINE @siderealAstro13 — CADRE RAM / ROM / STAGE ═══
 
-RAHU / Nœud Nord ☊ — désirs karmiques de cette incarnation, leçons d'éveil, surexpansion possible
-KETU / Nœud Sud ☋ — sagesse des vies antérieures, lâcher-prise, dissolution, spiritualisation
-SATURNE ♄ (Shani) — karma, discipline karmique, purification par l'épreuve, dettes d'âme à honorer
-CHIRON ⚷ — blessure fondamentale de l'âme (RAM), là où souffrance se transmute en mission (Gift)
-LILITH ⚸ (vraie) — ombre karmique, trigger du système, puissance instinctuelle refoulée à réintégrer
-SOLEIL ☀ — dharma solaire, expression de l'Âtman, autorité intérieure
-LUNE ☽ — manas, mémoire karmique émotionnelle, karmas familiaux et ancestraux
-JUPITER ♃ — grâce divine, guru, expansion de conscience, dharma accompli
-MARS ♂ — karma d'action et de désir, courage ou violence selon placement
-VÉNUS ♀ — karma relationnel, beauté, désirs subtils et attachements
-MERCURE ☿ — karma intellectuel, parole créatrice, discrimination mentale
-ASC ↑ (Chandra Lagna) — corps d'incarnation, angle de réception des expériences
-MC ↑ — vocation karmique, mission visible dans le monde
+ROM (Nœud Sud ☋ / Ketu) — Mémoire karmique fixe des vies antérieures.
+  Sagesse cristallisée, patterns répétitifs, boucles automatiques.
+  Risque : s'y réfugier plutôt que d'évoluer.
 
-═══ FRAMEWORK ROM / RAM / STAGE ═══
+RAM (Chiron ⚷) — Porte Invisible. Traitement actif des blessures et patterns actuels.
+  Là où la douleur devient mission. Interface entre ROM et Stage.
+  Risque : rester bloqué dans la blessure sans la transmuter.
 
-ROM (Nœud Sud / Ketu) — mémoire morte karmique. Code figé des vies antérieures.
-  Zone de confort qui sabote l'évolution. Boucle répétitive si non transcendée.
+STAGE — Scène du moment présent où karma et dharma s'intersectent.
+  C'est ici que {name} agit, choisit, incarne.
 
-RAM (Chiron — Porte Invisible) — traitement actif de la blessure fondamentale.
-  Midpoint Saturne/Uranus natal = lieu du désarroi et de la mise à jour temps réel.
-  Le Gift s'active quand la blessure est reconnue, non rejouée.
+LILITH ⚸ — Épreuve karmique. Test entre les pôles ROM et RAM.
+  Ce qui résiste à l'intégration. La puissance ombre à réintégrer.
 
-STAGE (Porte Visible — opposé PI) — zone de manifestation libératrice.
-  Là où la mise à jour RAM s'incarne dans le réel. Mission visible, acte concret.
+PORTE VISIBLE (Saturne ♄ / Uranus ♅) — Structure karmique manifeste, leçons tangibles.
+PORTE INVISIBLE (Chiron ⚷) — Passage intérieur, transmutation subtile.
 
-LILITH — Trigger karmique entre ROM et RAM. Teste le système via l'ombre.
-  Tant qu'elle n'est pas intégrée, elle rejoue la blessure plutôt que de la transmuter.
+CYCLES NODAUX — Savepoints karmiques :
+  Retour nodal (~18.6 ans) = reboot complet du cycle ROM/DHARMA.
+  Carré nodal (~9.3 ans) = checkpoint intermédiaire, tension boucle vs mise à jour.
 
-ALTERNATIVE DE CONSCIENCE — toujours formulée en deux pôles :
-  · Ignorance = boucle ROM (répétition du pattern karmique ancien)
-  · Reconnaissance = mise à jour RAM → activation du Stage
-
-═══ CYCLES NODAUX — SAVEPOINTS KARMIQUES ═══
-
-Les transits et retours des Nœuds sont des SAVEPOINTS : moments où le système
-exige un choix de conscience majeur pour éviter la boucle ROM.
-
-RETOUR NODAL (~18,6 ans) — Nœud transit revient sur Nœud natal.
-  Reboot complet du cycle ROM/DHARMA. Fenêtre de reprogrammation maximale.
-  Si le choix est évité : la boucle ROM se réinstalle pour 18,6 ans supplémentaires.
-
-CARRÉ NODAL (~9,3 ans) — Nœud transit en carré aux Nœuds natals.
-  Checkpoint intermédiaire. Tension critique entre l'ancienne boucle et la mise à jour.
-  Point de friction : soit intégration partielle, soit rechute dans le ROM.
-
-OPPOSITION NODALE (~9,3 ans) — Nœud transit sur Nœud natal opposé.
-  Miroir karmique. Ce qui n'a pas été résolu au retour se présente sous forme de polarité.
-  L'autre (personnes, situations) devient le révélateur du pattern.
-
-TRANSIT PLANÈTE SUR NŒUDS — activation ponctuelle du Savepoint.
-  Saturne sur Nœuds = défragmentation forcée du ROM.
-  Jupiter sur Nœuds = grâce pour franchir le Savepoint.
-  Chiron sur Nœuds = le Gift comme clé du Savepoint.
-  Lilith sur Nœuds = trigger de l'ombre pour forcer le choix.
-
-Lors de tout aspect impliquant les Nœuds, signale explicitement :
-  → Type de Savepoint (retour / carré / opposition / transit planétaire)
-  → Le choix de conscience exigé (Alternative de Conscience)
-  → Conséquence de l'évitement (boucle ROM prolongée)
+═══ PLANÈTES VÉDIQUES ═══
+RAHU ☊ — désirs karmiques, leçons d'éveil, surexpansion possible
+KETU ☋ — ROM, sagesse antérieure, dissolution, spiritualisation
+SATURNE ♄ — Porte Visible, karma, discipline, dettes d'âme
+CHIRON ⚷ — RAM, Porte Invisible, blessure → mission
+LILITH ⚸ — Épreuve karmique, ombre à intégrer
+SOLEIL ☀ — dharma solaire, Âtman, autorité intérieure
+LUNE ☽ — manas, mémoire émotionnelle, karma ancestral
+JUPITER ♃ — grâce divine, guru, expansion de conscience
+MARS ♂ — karma d'action, courage ou violence
+VÉNUS ♀ — karma relationnel, attachements subtils
+MERCURE ☿ — karma intellectuel, parole créatrice
+ASC ↑ (Chandra Lagna) — corps d'incarnation
+MC ↑ — vocation karmique, mission visible
 
 ═══ ASPECTS ═══
 Conjonction ☌ — fusion karmique intense, activation maximale
-Opposition ☍ — tension polaire à intégrer, miroir karmique
-Trigone △ — grâce et flux karmique positif, talents d'âme qui se manifestent
-Carré □ — friction évolutive, action nécessaire pour transcender le karma
-Sextile ✶ — opportunité subtile, coopération entre forces d'âme
+Opposition ☍ — miroir karmique, tension polaire à intégrer
+Trigone △ — grâce, talents d'âme qui se manifestent
+Carré □ — friction évolutive, action requise
+Sextile ✶ — opportunité subtile, coopération d'âme
+
+═══ STRUCTURE DE LECTURE (4 étapes) ═══
+1. Diagnostic ROM/RAM — Identifier le pattern karmique actif
+2. Épreuve karmique — Quel est le test Lilith/tension du moment ?
+3. Alternative de Conscience — Quelle action intérieure libère le transit ?
+4. Mise en scène sur le Stage — Comment {name} incarne-t-il ce moment ?
 
 ═══ FORMAT ═══
 Réponds en français. Parle directement à {name} (tutoiement naturel).
-Synthèse : 250-300 mots max, narrative poétique mais précise.
-Chat : réponses ciblées, 100-150 mots, profondeur sans verbosité.
-Ne liste pas les aspects mécaniquement — tisse-les en une lecture d'âme cohérente.
-Mots-clés doctrine à utiliser selon pertinence : ROM, RAM, Bug, Désarroi, Stage,
-Défragmentation, Savepoint, Boucle, Alternative de Conscience, Gift."""
+Synthèse : 280-320 mots, narrative poétique mais techniquement précise.
+Chat : 100-150 mots, direct, transformateur.
+Ne liste pas mécaniquement — tisse une lecture d'âme cohérente.
+Termine toujours par une Alternative de Conscience actionnable."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -117,8 +97,8 @@ def _aspects_to_text(aspects: list) -> str:
 
 
 # ── Synthèse automatique ──────────────────────────────────────────────────────
-def get_synthesis(chart_data: dict) -> str:
-    name         = chart_data.get("name", "l'utilisateur")
+def get_synthesis(chart_data: dict, user: dict) -> str:
+    name         = user.get("name", "l'utilisateur")
     aspects_text = _aspects_to_text(chart_data.get("aspects", []))
     date         = chart_data.get("transit_date", "")
     time         = chart_data.get("transit_time", "")
@@ -126,34 +106,34 @@ def get_synthesis(chart_data: dict) -> str:
     prompt = (
         f"Analyse karmique védique des transits de {name} — {date} à {time}.\n\n"
         f"Aspects actifs (orbe < 3°) :\n{aspects_text}\n\n"
-        f"Offre une synthèse d'âme de ce moment astrologique. "
-        f"Quelles leçons karmiques, quelles grâces, quelles tensions évolutives "
-        f"se jouent pour {name} aujourd'hui ? "
-        f"Si des Nœuds sont impliqués dans les aspects, identifie le type de Savepoint "
-        f"et formule l'Alternative de Conscience."
+        f"Applique le cadre RAM/ROM/Stage de @siderealAstro13 :\n"
+        f"1. Quel pattern ROM (Ketu/Nœud Sud) est activé ?\n"
+        f"2. Quelle blessure RAM (Chiron) est en traitement ?\n"
+        f"3. Quelle est l'Épreuve karmique (Lilith) du moment ?\n"
+        f"4. Quelle Alternative de Conscience permet à {name} de se mettre en scène sur son Stage ?"
     )
 
     msg = _get_client().messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=600,
-        system=_build_system_prompt(name),
+        max_tokens=700,
+        system=_build_system_prompt(user),
         messages=[{"role": "user", "content": prompt}],
     )
     return msg.content[0].text
 
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
-def chat_response(message: str, history: list, chart_context: str, name: str = "l'utilisateur") -> str:
+def chat_response(message: str, history: list, chart_context: str, user: dict) -> str:
     messages = []
 
     if chart_context:
         messages.append({
             "role": "user",
-            "content": f"Contexte du thème en cours :\n{chart_context}"
+            "content": f"Contexte du Gochara en cours :\n{chart_context}"
         })
         messages.append({
             "role": "assistant",
-            "content": f"J'ai intégré les données de ton Gochara, {name}. Qu'est-ce que tu souhaites explorer ?"
+            "content": f"J'ai intégré ton Gochara. ROM, RAM, Stage — je lis les portes ouvertes. Qu'est-ce que tu explores ?"
         })
 
     for h in history[-12:]:
@@ -164,18 +144,19 @@ def chat_response(message: str, history: list, chart_context: str, name: str = "
     msg = _get_client().messages.create(
         model="claude-sonnet-4-6",
         max_tokens=400,
-        system=_build_system_prompt(name),
+        system=_build_system_prompt(user),
         messages=messages,
     )
     return msg.content[0].text
 
 
 # ── Contexte résumé pour le chat ──────────────────────────────────────────────
-def build_chart_context(chart_data: dict) -> str:
+def build_chart_context(chart_data: dict, user: dict) -> str:
     aspects = chart_data.get("aspects", [])
+    name    = user.get("name", "l'utilisateur")
     if not aspects:
-        return f"Gochara du {chart_data.get('transit_date')} — aucun aspect actif."
-    lines = [f"Gochara du {chart_data.get('transit_date')} à {chart_data.get('transit_time')} :"]
+        return f"Gochara de {name} du {chart_data.get('transit_date')} — aucun aspect actif."
+    lines = [f"Gochara de {name} — {chart_data.get('transit_date')} à {chart_data.get('transit_time')} :"]
     for a in aspects[:10]:
         retro = " ℞" if a.get("retrograde") else ""
         lines.append(
