@@ -1,44 +1,36 @@
 """
 profiles.py — Gestion des profils utilisateurs via Google Sheets
-Gochara Karmique — Login par email
-
-Colonnes :
-  A: email | B: prenom | C: birth_date | D: birth_hour | E: birth_minute
-  F: birth_city | G: birth_lat | H: birth_lon | I: birth_tz
-  J: transit_city | K: transit_lat | L: transit_lon | M: transit_tz
-  N: created_at
+Gochara Karmique — Architecture multi-utilisateurs
 """
 
 import os
 import json
-import logging
-from datetime import datetime
-
 import gspread
 from google.oauth2.service_account import Credentials
 
-logger = logging.getLogger(__name__)
-
-COL = {
-    "email":        0,
-    "prenom":       1,
-    "birth_date":   2,
-    "birth_hour":   3,
-    "birth_minute": 4,
-    "birth_city":   5,
-    "birth_lat":    6,
-    "birth_lon":    7,
-    "birth_tz":     8,
-    "transit_city": 9,
-    "transit_lat":  10,
-    "transit_lon":  11,
-    "transit_tz":   12,
-    "created_at":   13,
-}
-
 SCOPES = [
-    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
+]
+
+# Colonnes du Google Sheet (ordre fixe)
+COLS = [
+    "pseudo",       # A
+    "email",        # B
+    "name",         # C
+    "year",         # D
+    "month",        # E
+    "day",          # F
+    "hour",         # G
+    "minute",       # H
+    "lat",          # I
+    "lon",          # J
+    "tz",           # K
+    "city",         # L
+    "transit_city", # M
+    "transit_lat",  # N
+    "transit_lon",  # O
+    "transit_tz",   # P
 ]
 
 _sheet = None
@@ -47,84 +39,143 @@ _sheet = None
 def _get_sheet():
     global _sheet
     if _sheet is not None:
-        try:
-            _sheet.get("A1")
-            return _sheet
-        except Exception:
-            _sheet = None
+        return _sheet
 
-    creds_raw = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-    if not creds_raw:
-        raise EnvironmentError("GOOGLE_CREDENTIALS_JSON manquant.")
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    sheet_id   = os.environ.get("SHEET_ID")
 
-    creds_data = json.loads(creds_raw)
+    if not creds_json or not sheet_id:
+        raise RuntimeError("GOOGLE_CREDENTIALS_JSON ou SHEET_ID manquant dans les variables d'environnement.")
+
+    creds_data = json.loads(creds_json)
     creds = Credentials.from_service_account_info(creds_data, scopes=SCOPES)
     gc = gspread.authorize(creds)
+    spreadsheet = gc.open_by_key(sheet_id)
 
-    sheet_id = os.environ.get("SHEET_ID")
-    workbook = gc.open_by_key(sheet_id) if sheet_id else gc.open("gochara-profiles")
-    _sheet = workbook.sheet1
+    # Utilise la première feuille, la crée si besoin
+    try:
+        ws = spreadsheet.sheet1
+    except Exception:
+        ws = spreadsheet.add_worksheet(title="profiles", rows=1000, cols=20)
 
-    if not _sheet.cell(1, 1).value:
-        _sheet.append_row(list(COL.keys()))
+    # Créer l'en-tête si la feuille est vide
+    if not ws.row_values(1):
+        ws.append_row(COLS)
 
-    logger.info("Google Sheets connecté — %s", _sheet.title)
+    _sheet = ws
     return _sheet
 
 
-def get_profile_by_email(email: str) -> dict | None:
-    email = email.strip().lower()
-    sheet = _get_sheet()
-    rows = sheet.get_all_values()
-    for row in rows[1:]:
-        if row and row[0].strip().lower() == email:
-            return _row_to_dict(row)
-    return None
-
-
-def create_profile(
-    email, prenom, birth_date, birth_hour, birth_minute,
-    birth_city, birth_lat, birth_lon, birth_tz,
-    transit_city, transit_lat, transit_lon,
-    transit_tz="Europe/Paris",
-) -> dict:
-    email = email.strip().lower()
-    if get_profile_by_email(email):
-        raise ValueError(f"Un compte existe deja pour '{email}'.")
-
-    sheet = _get_sheet()
-    row = [
-        email, prenom.strip(),
-        birth_date, birth_hour, birth_minute,
-        birth_city, birth_lat, birth_lon, birth_tz,
-        transit_city, transit_lat, transit_lon, transit_tz,
-        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-    ]
-    sheet.append_row(row, value_input_option="USER_ENTERED")
-    logger.info("Profil cree : %s (%s)", email, prenom)
-    return _row_to_dict(row)
-
-
-def _row_to_dict(row: list) -> dict:
-    def g(idx, default=""):
+def _row_to_profile(row: list) -> dict:
+    """Convertit une ligne Sheets en dict profil."""
+    def _safe(i, cast=str, default=""):
         try:
-            return row[idx] if idx < len(row) and row[idx] != "" else default
-        except IndexError:
+            v = row[i].strip()
+            return cast(v) if v else default
+        except (IndexError, ValueError):
             return default
 
     return {
-        "email":        g(COL["email"]),
-        "prenom":       g(COL["prenom"]),
-        "birth_date":   g(COL["birth_date"], "1990-01-01"),
-        "birth_hour":   int(g(COL["birth_hour"],   12)),
-        "birth_minute": int(g(COL["birth_minute"],  0)),
-        "birth_city":   g(COL["birth_city"]),
-        "birth_lat":    float(g(COL["birth_lat"],  48.8566)),
-        "birth_lon":    float(g(COL["birth_lon"],   2.3522)),
-        "birth_tz":     g(COL["birth_tz"], "Europe/Paris"),
-        "transit_city": g(COL["transit_city"]),
-        "transit_lat":  float(g(COL["transit_lat"], 48.8566)),
-        "transit_lon":  float(g(COL["transit_lon"],  2.3522)),
-        "transit_tz":   g(COL["transit_tz"], "Europe/Paris"),
-        "created_at":   g(COL["created_at"]),
+        "pseudo":       _safe(0),
+        "email":        _safe(1),
+        "name":         _safe(2),
+        "year":         _safe(3, int, 1990),
+        "month":        _safe(4, int, 1),
+        "day":          _safe(5, int, 1),
+        "hour":         _safe(6, int, 12),
+        "minute":       _safe(7, int, 0),
+        "lat":          _safe(8, float, 48.8566),
+        "lon":          _safe(9, float, 2.3522),
+        "tz":           _safe(10) or "Europe/Paris",
+        "city":         _safe(11) or "Paris, France",
+        "transit_city": _safe(12) or "Paris, France",
+        "transit_lat":  _safe(13, float, 48.8566),
+        "transit_lon":  _safe(14, float, 2.3522),
+        "transit_tz":   _safe(15) or "Europe/Paris",
     }
+
+
+def get_profile_by_email(email: str) -> dict | None:
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    email_lower = email.strip().lower()
+    for row in records[1:]:  # skip header
+        if len(row) > 1 and row[1].strip().lower() == email_lower:
+            return _row_to_profile(row)
+    return None
+
+
+def get_profile_by_pseudo(pseudo: str) -> dict | None:
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_lower = pseudo.strip().lower()
+    for row in records[1:]:
+        if row and row[0].strip().lower() == pseudo_lower:
+            return _row_to_profile(row)
+    return None
+
+
+def create_profile(data: dict) -> dict:
+    """Crée un nouveau profil et retourne le profil créé."""
+    ws = _get_sheet()
+    row = [
+        data.get("pseudo", ""),
+        data.get("email", ""),
+        data.get("name", ""),
+        str(data.get("year", "")),
+        str(data.get("month", "")),
+        str(data.get("day", "")),
+        str(data.get("hour", "")),
+        str(data.get("minute", "")),
+        str(data.get("lat", "")),
+        str(data.get("lon", "")),
+        data.get("tz", "Europe/Paris"),
+        data.get("city", ""),
+        data.get("transit_city", ""),
+        str(data.get("transit_lat", "")),
+        str(data.get("transit_lon", "")),
+        data.get("transit_tz", "Europe/Paris"),
+    ]
+    ws.append_row(row)
+    return _row_to_profile(row)
+
+
+def update_profile(email: str, data: dict) -> dict | None:
+    """Met à jour le profil d'un utilisateur existant."""
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    email_lower = email.strip().lower()
+
+    for i, row in enumerate(records[1:], start=2):  # start=2 (1-indexed, skip header)
+        if len(row) > 1 and row[1].strip().lower() == email_lower:
+            new_row = [
+                data.get("pseudo", row[0] if len(row) > 0 else ""),
+                row[1],  # email immuable
+                data.get("name", row[2] if len(row) > 2 else ""),
+                str(data.get("year",  row[3]  if len(row) > 3  else "")),
+                str(data.get("month", row[4]  if len(row) > 4  else "")),
+                str(data.get("day",   row[5]  if len(row) > 5  else "")),
+                str(data.get("hour",  row[6]  if len(row) > 6  else "")),
+                str(data.get("minute",row[7]  if len(row) > 7  else "")),
+                str(data.get("lat",   row[8]  if len(row) > 8  else "")),
+                str(data.get("lon",   row[9]  if len(row) > 9  else "")),
+                data.get("tz",           row[10] if len(row) > 10 else "Europe/Paris"),
+                data.get("city",         row[11] if len(row) > 11 else ""),
+                data.get("transit_city", row[12] if len(row) > 12 else ""),
+                str(data.get("transit_lat", row[13] if len(row) > 13 else "")),
+                str(data.get("transit_lon", row[14] if len(row) > 14 else "")),
+                data.get("transit_tz",   row[15] if len(row) > 15 else "Europe/Paris"),
+            ]
+            ws.update(f"A{i}:P{i}", [new_row])
+            return _row_to_profile(new_row)
+    return None
+
+
+def pseudo_exists(pseudo: str) -> bool:
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_lower = pseudo.strip().lower()
+    for row in records[1:]:
+        if row and row[0].strip().lower() == pseudo_lower:
+            return True
+    return False
