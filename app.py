@@ -169,26 +169,22 @@ def calculate():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    from ai_interpret import chat_response
-
-    profile = session.get("profile")
-    if not profile:
-        return jsonify({"error": "Non connecté"}), 401
-
-    data = request.get_json()
-    message = data.get("message", "").strip()
-    history = data.get("history", [])
-    chart_context = data.get("chart_context", "")
-
-    if not message:
-        return jsonify({"error": "Message vide"}), 400
-
     try:
-        response = chat_response(message, history, chart_context, profile)  # ← FIXÉ
-        return jsonify({"response": response})
-    except Exception as exc:
-        app.logger.error("Erreur chat : %s", exc, exc_info=True)
-        return jsonify({"error": str(exc)}), 500
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Données manquantes"}), 400
+
+        user = session.get("profile", {"name": "l'utilisateur"})
+        message = data.get("message", "")
+        history = data.get("history", [])
+        chart_context = data.get("chart_context", "")
+
+        reply = chat_response(message, history, chart_context, user)
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        print(f"[CHAT ERROR] {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 # ── Lancement ─────────────────────────────────────────────────────────────────
