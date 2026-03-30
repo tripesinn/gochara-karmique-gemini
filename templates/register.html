@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ Gochara Karmique — Inscription</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #008080;
+  font-family: "MS Sans Serif", "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+}
+.win {
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff;
+  box-shadow: 2px 2px 0 #000;
+  width: 100%; max-width: 480px;
+}
+.titlebar {
+  background: linear-gradient(90deg, #4b0082 0%, #800080 100%);
+  color: #fff; font-weight: bold; font-size: 11px;
+  padding: 3px 5px 3px 7px;
+  display: flex; align-items: center; justify-content: space-between;
+  user-select: none;
+}
+.titlebar-btns { display: flex; gap: 2px; }
+.tbtn {
+  width: 16px; height: 14px; background: #c0c0c0;
+  border: 1px solid; border-color: #fff #808080 #808080 #fff;
+  font-size: 9px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.winbody { padding: 12px; }
+.group {
+  border: 2px solid; border-color: #808080 #fff #fff #808080;
+  padding: 10px; margin-bottom: 8px; background: #c0c0c0;
+}
+.group-label { font-weight: bold; font-size: 11px; margin-bottom: 6px; color: #000080; }
+label { font-size: 11px; display: inline-block; width: 110px; vertical-align: middle; }
+input[type="text"], input[type="email"], input[type="number"] {
+  background: #fff;
+  border: 2px solid; border-color: #808080 #fff #fff #808080;
+  padding: 1px 4px; font-family: inherit; font-size: 11px; height: 22px;
+}
+.field-row { display: flex; align-items: center; gap: 4px; margin-bottom: 5px; flex-wrap: wrap; }
+.field-row input[type="text"], .field-row input[type="email"] { flex: 1; min-width: 120px; }
+.geocode-row { display: flex; gap: 4px; align-items: center; }
+.geocode-row input { flex: 1; }
+.geocode-btn {
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff;
+  padding: 1px 8px; font-family: inherit; font-size: 11px;
+  cursor: pointer; white-space: nowrap; height: 22px;
+}
+.geocode-btn:active { border-color: #808080 #fff #fff #808080; }
+.coord-display { font-size: 10px; color: #404040; margin-top: 2px; font-style: italic; }
+.btn {
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff;
+  padding: 4px 16px; font-family: inherit; font-size: 12px; font-weight: bold;
+  cursor: pointer; box-shadow: 1px 1px 0 #000; min-width: 90px;
+}
+.btn:active { border-color: #808080 #fff #fff #808080; box-shadow: none; }
+.btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.error { color: #800000; font-size: 11px; margin-top: 6px; display: none; }
+.hint  { font-size: 10px; color: #404040; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="titlebar">
+    <span>✦ Gochara Karmique — Créer un compte</span>
+    <div class="titlebar-btns">
+      <button class="tbtn">_</button><button class="tbtn">□</button><button class="tbtn">✕</button>
+    </div>
+  </div>
+  <div class="winbody">
+
+    <!-- Identité -->
+    <div class="group">
+      <div class="group-label">Identité</div>
+      <div class="field-row"><label>Pseudo :</label><input type="text" id="pseudo" placeholder="ton_pseudo_unique"></div>
+      <div class="field-row"><label>Email :</label><input type="email" id="email" placeholder="ton@email.com"></div>
+      <div class="field-row"><label>Prénom / Nom :</label><input type="text" id="name" placeholder="Prénom Nom"></div>
+    </div>
+
+    <!-- Naissance -->
+    <div class="group">
+      <div class="group-label">Données natales</div>
+      <div class="field-row">
+        <label>Naissance :</label>
+        <input type="number" id="day"    placeholder="JJ" min="1" max="31" style="width:42px">
+        /
+        <input type="number" id="month"  placeholder="MM" min="1" max="12" style="width:42px">
+        /
+        <input type="number" id="year"   placeholder="AAAA" min="1900" max="2025" style="width:56px">
+      </div>
+      <div class="field-row">
+        <label>Heure :</label>
+        <input type="number" id="hour"   placeholder="HH" min="0" max="23" style="width:42px"> h
+        <input type="number" id="minute" placeholder="MM" min="0" max="59" style="width:42px"> min
+      </div>
+      <div class="field-row" style="align-items:flex-start;">
+        <label style="margin-top:3px;">Lieu natal :</label>
+        <div style="flex:1;">
+          <div class="geocode-row">
+            <input type="text" id="natal-city-input" placeholder="ex: Paris, France">
+            <button class="geocode-btn" onclick="geocode('natal')">Chercher</button>
+          </div>
+          <div class="coord-display" id="natal-coords">—</div>
+        </div>
+      </div>
+      <input type="hidden" id="lat">
+      <input type="hidden" id="lon">
+      <input type="hidden" id="tz">
+      <input type="hidden" id="city">
+    </div>
+
+    <!-- Lieu de transit -->
+    <div class="group">
+      <div class="group-label">Lieu de transit (où tu consultes habituellement)</div>
+      <div class="field-row" style="align-items:flex-start;">
+        <label style="margin-top:3px;">Lieu :</label>
+        <div style="flex:1;">
+          <div class="geocode-row">
+            <input type="text" id="transit-city-input" placeholder="ex: Lyon, France">
+            <button class="geocode-btn" onclick="geocode('transit')">Chercher</button>
+          </div>
+          <div class="coord-display" id="transit-coords">—</div>
+        </div>
+      </div>
+      <input type="hidden" id="transit_city">
+      <input type="hidden" id="transit_lat">
+      <input type="hidden" id="transit_lon">
+      <input type="hidden" id="transit_tz">
+    </div>
+
+    <div id="error-msg" class="error"></div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="window.location.href='/login'">← Retour</button>
+      <button class="btn" id="reg-btn" onclick="doRegister()">Créer »</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const TZ_MAP = {
+  "Europe/Paris": ["France", "Belgium", "Luxembourg", "Monaco", "Andorra", "Spain", "Germany", "Italy", "Switzerland", "Austria", "Netherlands", "Poland", "Czech", "Slovakia", "Hungary", "Slovenia", "Croatia", "Serbia", "Bosnia", "Montenegro", "North Macedonia", "Albania", "Kosovo", "Liechtenstein", "San Marino", "Vatican"],
+  "Europe/London": ["United Kingdom", "UK", "England", "Ireland"],
+  "Europe/Bucharest": ["Romania", "Bulgaria", "Moldova", "Greece", "Cyprus"],
+  "Europe/Helsinki": ["Finland", "Estonia", "Latvia", "Lithuania"],
+  "Europe/Moscow": ["Russia"],
+  "America/New_York": ["United States", "USA", "US", "Canada"],
+  "America/Los_Angeles": [],
+  "Asia/Tokyo": ["Japan"],
+  "Asia/Shanghai": ["China"],
+  "Asia/Kolkata": ["India"],
+  "Australia/Sydney": ["Australia"],
+};
+
+function guessTz(country) {
+  for (const [tz, countries] of Object.entries(TZ_MAP)) {
+    if (countries.some(c => country.toLowerCase().includes(c.toLowerCase()))) return tz;
+  }
+  return "UTC";
+}
+
+async function geocode(type) {
+  const inputId = type === "natal" ? "natal-city-input" : "transit-city-input";
+  const q = document.getElementById(inputId).value.trim();
+  if (!q) { showError("Saisis un lieu avant de chercher."); return; }
+
+  try {
+    const res  = await fetch("/geocode?q=" + encodeURIComponent(q));
+    const data = await res.json();
+    if (!data || data.length === 0) { showError("Lieu introuvable. Essaie avec le pays."); return; }
+
+    const r    = data[0];
+    const lat  = parseFloat(r.lat).toFixed(4);
+    const lon  = parseFloat(r.lon).toFixed(4);
+    const city = r.display_name.split(",").slice(0, 2).join(",").trim();
+    const country = r.display_name;
+    const tz   = guessTz(country);
+
+    if (type === "natal") {
+      document.getElementById("lat").value   = lat;
+      document.getElementById("lon").value   = lon;
+      document.getElementById("tz").value    = tz;
+      document.getElementById("city").value  = city;
+      document.getElementById("natal-coords").textContent = `✓ ${city} — lat ${lat} / lon ${lon} — ${tz}`;
+    } else {
+      document.getElementById("transit_lat").value   = lat;
+      document.getElementById("transit_lon").value   = lon;
+      document.getElementById("transit_tz").value    = tz;
+      document.getElementById("transit_city").value  = city;
+      document.getElementById("transit-coords").textContent = `✓ ${city} — lat ${lat} / lon ${lon} — ${tz}`;
+    }
+    hideError();
+  } catch(e) {
+    showError("Erreur géocodage : " + e.message);
+  }
+}
+
+async function doRegister() {
+  hideError();
+  const get = id => document.getElementById(id).value.trim();
+
+  const payload = {
+    pseudo:       get("pseudo"),
+    email:        get("email"),
+    name:         get("name"),
+    year:         parseInt(get("year")),
+    month:        parseInt(get("month")),
+    day:          parseInt(get("day")),
+    hour:         parseInt(get("hour")),
+    minute:       parseInt(get("minute")),
+    lat:          parseFloat(get("lat")),
+    lon:          parseFloat(get("lon")),
+    tz:           get("tz"),
+    city:         get("city"),
+    transit_city: get("transit_city"),
+    transit_lat:  parseFloat(get("transit_lat")),
+    transit_lon:  parseFloat(get("transit_lon")),
+    transit_tz:   get("transit_tz"),
+  };
+
+  // Validation côté client
+  if (!payload.pseudo)        { showError("Pseudo requis."); return; }
+  if (!payload.email)         { showError("Email requis."); return; }
+  if (!payload.name)          { showError("Prénom/Nom requis."); return; }
+  if (!payload.year || !payload.month || !payload.day) { showError("Date de naissance incomplète."); return; }
+  if (!get("lat"))            { showError("Lieu natal non géocodé — clique Chercher."); return; }
+  if (!get("transit_lat"))    { showError("Lieu de transit non géocodé — clique Chercher."); return; }
+
+  const btn = document.getElementById("reg-btn");
+  btn.disabled = true; btn.textContent = "…";
+
+  try {
+    const res  = await fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.error || "Erreur inconnue."); return; }
+    window.location.href = "/";
+  } catch(e) {
+    showError("Erreur réseau : " + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Créer »";
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById("error-msg");
+  el.textContent = "⚠ " + msg; el.style.display = "block";
+}
+function hideError() {
+  document.getElementById("error-msg").style.display = "none";
+}
+</script>
+</body>
+</html>
