@@ -125,7 +125,7 @@ def geocode():
 @app.route("/calculate", methods=["POST"])
 def calculate():
     from astro_calc import calculate_transits
-    from ai_interpret import get_synthesis, build_chart_context
+    from ai_interpret import get_synthesis, build_chart_context, chat_response
 
     profile = session.get("profile")
     if not profile:
