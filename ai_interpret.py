@@ -302,8 +302,7 @@ def _get_nakshatra_context(planet_name: str, nakshatra: str, is_transit: bool = 
     context = f"[{nakshatra} — Régent: {data['regent']}]\n"
     context += f"  Thème ROM: {data['rom_theme']}\n"
 
-    # Contexte spécifique à la planète
-    p = planet_name.split()[0].lower()  # "ketu", "chiron", "saturne", etc.
+    p = planet_name.split()[0].lower()
 
     if "ketu" in p or "nœud sud" in p:
         context += f"  Ketu ici: {data['ketu_ici']}\n"
@@ -318,7 +317,6 @@ def _get_nakshatra_context(planet_name: str, nakshatra: str, is_transit: bool = 
 
     context += f"  Stage: {data['stage']}\n"
 
-    # Note de transit actuel si disponible
     if is_transit and "transit_note" in data:
         context += f"  ⚡ ACTUALITÉ: {data['transit_note']}\n"
 
@@ -327,33 +325,21 @@ def _get_nakshatra_context(planet_name: str, nakshatra: str, is_transit: bool = 
 
 # ── Détection des cycles nodaux ───────────────────────────────────────────────
 def _detect_nodal_cycles(chart_data: dict, natal: dict) -> str:
-    """
-    Détecte les retours nodaux (~18.6 ans) et carrés nodaux (~9.3 ans)
-    actifs dans les transits.
-    Retourne une description textuelle si cycle nodal actif.
-    """
     cycles = []
 
-    transits = chart_data.get("transits", {})
-    natal_planets = chart_data.get("natal", {})
+    transits       = chart_data.get("transits", {})
+    natal_planets  = chart_data.get("natal", {})
 
-    # Position Nœud Nord natal
-    nn_natal = natal_planets.get("Nœud Nord ☊", {})
-    nn_natal_nak = nn_natal.get("nakshatra", "")
-
-    # Position Nœud Nord transit
-    nn_transit = transits.get("Nœud Nord ☊", {})
+    nn_transit     = transits.get("Nœud Nord ☊", {})
     nn_transit_nak = nn_transit.get("nakshatra", "")
 
-    # Vérification via les aspects actifs
     aspects = chart_data.get("aspects", [])
     for asp in aspects:
         t_planet = asp.get("transit_planet", "")
         n_planet = asp.get("natal_planet", "")
         asp_type = asp.get("aspect", "")
-        orb = asp.get("orb", 99)
+        orb      = asp.get("orb", 99)
 
-        # Retour Nodal : Nœud Nord transit ☌ Nœud Nord natal
         if "Nœud Nord ☊" in t_planet and "Nœud Nord ☊" in n_planet:
             if "Conjonction" in asp_type and orb <= 3:
                 cycles.append(
@@ -370,7 +356,6 @@ def _detect_nodal_cycles(chart_data: dict, natal: dict) -> str:
                     f"   Nœud Nord transit en {nn_transit_nak} forme carré au Nœud natal."
                 )
 
-        # Ketu transit ☌ Nœud Nord natal = demi-retour
         if "Ketu" in t_planet or "Nœud Sud" in t_planet:
             if "Nœud Nord ☊" in n_planet and "Conjonction" in asp_type and orb <= 3:
                 cycles.append(
@@ -385,12 +370,8 @@ def _detect_nodal_cycles(chart_data: dict, natal: dict) -> str:
 
 # ── Construction des nakshatras actifs ───────────────────────────────────────
 def _build_nakshatra_context(chart_data: dict) -> str:
-    """
-    Construit le contexte nakshatra des planètes karmiquement critiques en transit.
-    Priorité : Ketu, Rahu, Saturne, Chiron, Lilith, Jupiter.
-    """
     transits = chart_data.get("transits", {})
-    lines = ["═══ NAKSHATRAS DES PLANÈTES EN TRANSIT (contexte karmique) ═══"]
+    lines    = ["═══ NAKSHATRAS DES PLANÈTES EN TRANSIT (contexte karmique) ═══"]
 
     priority_planets = [
         "Nœud Sud ☋", "Nœud Nord ☊", "Chiron ⚷",
@@ -403,7 +384,7 @@ def _build_nakshatra_context(chart_data: dict) -> str:
         pdata = transits.get(pname)
         if not pdata:
             continue
-        nak = pdata.get("nakshatra")
+        nak  = pdata.get("nakshatra")
         pada = pdata.get("pada")
         if not nak:
             continue
@@ -422,16 +403,11 @@ def _build_nakshatra_context(chart_data: dict) -> str:
 
 # ── Positions planétaires brutes ──────────────────────────────────────────────
 def _build_positions_summary(chart_data: dict) -> str:
-    """
-    Injecte les positions brutes des planètes (natal + transit) dans le prompt.
-    L'IA peut ainsi référencer les positions sans se baser uniquement sur les aspects.
-    """
-    natal = chart_data.get("natal", {})
+    natal    = chart_data.get("natal", {})
     transits = chart_data.get("transits", {})
 
     lines = ["═══ POSITIONS PLANÉTAIRES ═══"]
 
-    # Natal
     lines.append("\nNATAL :")
     key_natal = [
         "Soleil ☀", "Lune ☽", "Nœud Nord ☊", "Nœud Sud ☋",
@@ -441,13 +417,12 @@ def _build_positions_summary(chart_data: dict) -> str:
     for k in key_natal:
         p = natal.get(k)
         if p:
-            nak = p.get("nakshatra", "")
-            pada = p.get("pada", "")
-            retro = " ℞" if p.get("retrograde") else ""
+            nak    = p.get("nakshatra", "")
+            pada   = p.get("pada", "")
+            retro  = " ℞" if p.get("retrograde") else ""
             nak_str = f" | {nak} Pd{pada}" if nak else ""
             lines.append(f"  {k}{retro} : {p['display']}{nak_str}")
 
-    # Transit
     lines.append("\nTRANSIT :")
     key_transit = [
         "Soleil ☀", "Lune ☽", "Nœud Nord ☊", "Nœud Sud ☋",
@@ -457,9 +432,9 @@ def _build_positions_summary(chart_data: dict) -> str:
     for k in key_transit:
         p = transits.get(k)
         if p:
-            nak = p.get("nakshatra", "")
-            pada = p.get("pada", "")
-            retro = " ℞" if p.get("retrograde") else ""
+            nak    = p.get("nakshatra", "")
+            pada   = p.get("pada", "")
+            retro  = " ℞" if p.get("retrograde") else ""
             nak_str = f" | {nak} Pd{pada}" if nak else ""
             lines.append(f"  {k}{retro} : {p['display']}{nak_str}")
 
@@ -518,17 +493,13 @@ Selon la question, tu analyses à l'échelle appropriée :
 COURT TERME (1-30 jours) :
   Lune, Soleil, Mars, Mercure, Vénus — transits rapides.
   Aspect du moment, fenêtre d'activation précise.
-  "Dans les prochains jours..."
 
 MOYEN TERME (1-6 mois) :
   Jupiter, Saturne, Nœuds, Chiron — transits de saison.
-  Thème du trimestre, retrogradations.
-  "Dans les prochains mois..."
 
 LONG TERME (1 an et plus) :
   Nœuds (18 mois par signe), Saturne (2.5 ans), Chiron (cycles 50 ans).
   Cycles de vie, Savepoints nodaux.
-  "Dans les prochaines années..."
 
 Si la question ne précise pas d'horizon : commence par le zoom le plus
 pertinent selon les aspects actifs, puis élargis si nécessaire.
@@ -556,21 +527,20 @@ Carré □ — friction évolutive, action requise
 Sextile ✶ — opportunité subtile, coopération d'âme
 
 ═══ STRUCTURE DE LECTURE (4 étapes) ═══
-1. Diagnostic ROM/RAM — Identifier le pattern karmique actif + nakshatra impliqué
-2. Épreuve karmique — Quel est le test Lilith/tension du moment ?
-3. Alternative de Conscience — Quelle action intérieure libère le transit ?
-4. Mise en scène sur le Stage — Comment {name} incarne-t-il ce moment ?
+1. Diagnostic ROM — Pattern karmique actif + nakshatra + durée du transit
+2. Diagnostic RAM — Blessure Chiron en traitement + nakshatra actif
+3. Épreuve karmique Lilith — Quel est le test du moment ?
+4. Alternative de Conscience + mise en scène sur le Stage
 
 ═══ FORMAT ═══
 Réponds en français. Parle directement à {name} (tutoiement naturel).
-Synthèse : 500-650 mots, narrative poétique mais techniquement précise.
+Synthèse : 700-900 mots, narrative poétique mais techniquement précise.
   → Nomme toujours le nakshatra et son impact spécifique.
-  → Si cycle nodal actif, le traiter en priorité.
-  → Adapte le zoom temporel à la question.
-Chat : 180-250 mots, direct, transformateur.
-  → Une réponse = une Alternative de Conscience actionnab le.
-Ne liste pas mécaniquement — tisse une lecture d'âme cohérente.
-Termine toujours par une Alternative de Conscience actionnable."""
+  → Si cycle nodal actif, le traiter en priorité absolue.
+  → Adapte le zoom temporel à la durée réelle des transits.
+  → Développe CHAQUE étape des 4 sections — ne tronque pas.
+  → Termine par une Alternative de Conscience actionnable, concrète, incarnée.
+Ne liste pas mécaniquement — tisse une lecture d'âme cohérente."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -597,10 +567,9 @@ def get_synthesis(chart_data: dict, user: dict) -> str:
     date         = chart_data.get("transit_date", "")
     time         = chart_data.get("transit_time", "")
 
-    # Contextes enrichis
-    positions_ctx  = _build_positions_summary(chart_data)
-    nakshatra_ctx  = _build_nakshatra_context(chart_data)
-    nodal_ctx      = _detect_nodal_cycles(chart_data, user)
+    positions_ctx = _build_positions_summary(chart_data)
+    nakshatra_ctx = _build_nakshatra_context(chart_data)
+    nodal_ctx     = _detect_nodal_cycles(chart_data, user)
 
     nodal_section = ""
     if nodal_ctx:
@@ -613,86 +582,17 @@ def get_synthesis(chart_data: dict, user: dict) -> str:
         f"{nakshatra_ctx}"
         f"{nodal_section}\n\n"
         f"Applique le cadre RAM/ROM/Stage de @siderealAstro13 :\n"
-        f"1. Quel pattern ROM (Ketu/Nœud Sud) est activé — dans quel nakshatra et quel impact ?\n"
-        f"2. Quelle blessure RAM (Chiron) est en traitement — nakshatra actif ?\n"
-        f"3. Quelle est l'Épreuve karmique (Lilith) du moment ?\n"
-        f"4. Quelle Alternative de Conscience permet à {name} de se mettre en scène sur son Stage ?\n"
-        f"Intègre le zoom temporel approprié selon la durée des transits actifs.\n\n"
-        f"Développe chaque section complètement. Ne tronque pas l'analyse."
+        f"1. Quel pattern ROM (Ketu/Nœud Sud) est activé — nakshatra, durée, profondeur ?\n"
+        f"2. Quelle blessure RAM (Chiron) est en traitement — nakshatra actif, comment se manifeste-t-elle ?\n"
+        f"3. Quelle est l'Épreuve karmique Lilith du moment — quelle ombre résiste ?\n"
+        f"4. Quelle Alternative de Conscience concrète permet à {name} de se mettre en scène sur son Stage ?\n"
+        f"Intègre le zoom temporel approprié. Développe CHAQUE section complètement sans tronquer."
     )
 
     msg = _get_client().messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1400,
+        max_tokens=1800,
         system=_build_system_prompt(user),
         messages=[{"role": "user", "content": prompt}],
     )
     return msg.content[0].text
-
-
-# ── Chat ──────────────────────────────────────────────────────────────────────
-def chat_response(message: str, history: list, chart_context: str, user: dict) -> str:
-    messages = []
-
-    if chart_context:
-        messages.append({
-            "role": "user",
-            "content": f"Contexte du Gochara en cours :\n{chart_context}"
-        })
-        messages.append({
-            "role": "assistant",
-            "content": "J'ai intégré ton Gochara. ROM, RAM, Stage — je lis les portes ouvertes. Qu'est-ce que tu explores ?"
-        })
-
-    for h in history[-12:]:
-        messages.append(h)
-
-    messages.append({"role": "user", "content": message})
-
-    msg = _get_client().messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=700,
-        system=_build_system_prompt(user),
-        messages=messages,
-    )
-    return msg.content[0].text
-
-
-# ── Contexte résumé pour le chat ──────────────────────────────────────────────
-def build_chart_context(chart_data: dict, user: dict) -> str:
-    aspects = chart_data.get("aspects", [])
-    transits = chart_data.get("transits", {})
-    name    = user.get("name", "l'utilisateur")
-
-    if not aspects:
-        return f"Gochara de {name} du {chart_data.get('transit_date')} — aucun aspect actif."
-
-    lines = [f"Gochara de {name} — {chart_data.get('transit_date')} à {chart_data.get('transit_time')} :"]
-
-    # Positions nakshatra des planètes clés en transit
-    key_planets = ["Nœud Sud ☋", "Nœud Nord ☊", "Chiron ⚷", "Saturne ♄", "Lilith ⚸", "Jupiter ♃"]
-    nak_lines = []
-    for pname in key_planets:
-        p = transits.get(pname)
-        if p and p.get("nakshatra"):
-            retro = " ℞" if p.get("retrograde") else ""
-            nak_lines.append(f"  {pname}{retro} en {p['nakshatra']} Pd{p.get('pada','?')}")
-    if nak_lines:
-        lines.append("Nakshatras actifs :")
-        lines.extend(nak_lines)
-
-    # Cycles nodaux
-    nodal_ctx = _detect_nodal_cycles(chart_data, user)
-    if nodal_ctx:
-        lines.append(f"CYCLE NODAL : {nodal_ctx[:120]}...")
-
-    # Aspects
-    lines.append("Aspects actifs :")
-    for a in aspects[:10]:
-        retro = " ℞" if a.get("retrograde") else ""
-        t_nak = f" [{a.get('transit_nak','')}]" if a.get("transit_nak") else ""
-        lines.append(
-            f"  • {a['transit_planet']}{retro}{t_nak} {a['aspect']} natal {a['natal_planet']} (orbe {a['orb']}°)"
-        )
-
-    return "\n".join(lines)
