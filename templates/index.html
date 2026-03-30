@@ -291,7 +291,7 @@ hr { border: none; border-top: 1px solid #808080; border-bottom: 1px solid #fff;
 
       </div><!-- /tab nouvelle -->
     </div>
-    <div class="statusbar"><div class="statpanel">Prêt — identifiez-vous</div><div class="statpanel fixed">Sidéral · Djwhal Khul · @siderealAstro13</div></div>
+    <div class="statusbar"><div class="statpanel">Prêt — identifiez-vous</div><div class="statpanel fixed">Sidéral · Centre Galactique DK · @siderealAstro13</div></div>
   </div>
 </div>
 
@@ -414,7 +414,7 @@ hr { border: none; border-top: 1px solid #808080; border-bottom: 1px solid #fff;
                 </svg>
               </div>
               <div class="karma-legend">
-                <span class="quadrant-badge badge-rom">🔴 ROM —Karma ☋</span>
+                <span class="quadrant-badge badge-rom">🔴 ROM — Karma ☋</span>
                 <span class="quadrant-badge badge-ram">🟢 RAM — ⚷ blessure cachée</span>
                 <span class="quadrant-badge badge-stage">🔵 STAGE — Dharma ☊</span>
                 <span class="quadrant-badge badge-trial">🟣 ÉPREUVE — ⚸ trigger</span>
@@ -450,7 +450,7 @@ hr { border: none; border-top: 1px solid #808080; border-bottom: 1px solid #fff;
 
     <div class="statusbar">
       <div class="statpanel" id="status-msg">Prêt</div>
-      <div class="statpanel fixed">Sidéral · Djwhal Khul · Moonrise</div>
+      <div class="statpanel fixed">Sidéral · Centre Galactique DK · Moonrise</div>
       <div class="statpanel fixed" id="status-count"></div>
     </div>
 
@@ -466,7 +466,8 @@ hr { border: none; border-top: 1px solid #808080; border-bottom: 1px solid #fff;
 let currentProfile = null;
 let chartContext   = "";
 let chatHistory    = [];
-let lastCalcData   = null;  // pour la carte karmique
+let lastCalcData   = null;
+let userName       = "";
 
 // ══════════════════════════════════════════════════════════
 // TABS ACCÈS
@@ -486,7 +487,6 @@ function switchMainTab(name) {
   document.querySelectorAll(".tab-main-panel").forEach(p => p.classList.remove("active"));
   document.getElementById("tab-main-" + name).classList.add("active");
   document.getElementById("panel-" + name).classList.add("active");
-  // Si on bascule sur la carte et qu'un calcul existe, rafraîchir
   if (name === "carte" && lastCalcData) renderKarmaMap(lastCalcData);
 }
 
@@ -583,6 +583,7 @@ function backToProfile() {
 
 function launchMain(profile) {
   currentProfile = profile;
+  userName = profile.name || "";
   document.getElementById("screen-access").style.display = "none";
   document.getElementById("screen-main").style.display   = "block";
   document.getElementById("main-title-name").textContent  = profile.name;
@@ -594,9 +595,8 @@ function launchMain(profile) {
      ${profile.birth_day} ${mname} ${profile.birth_year} · ${pad(profile.birth_hour)}h${pad(profile.birth_minute)} · ${profile.birthCity}
      &nbsp;|&nbsp;
      <span class="natal-badge">RÉGLAGES</span>
-     Ayanamsa : Djwhal Khul · Moonrise (Chandra Lagna) · Nœuds Vrais · Orbe &lt; 3°`;
+     Ayanamsa : Centre Galactique DK (28°00′) · Moonrise (Chandra Lagna) · Nœuds Vrais · Orbe &lt; 3°`;
 
-  // Préremplir transit
   document.getElementById("t-city").value = profile.transitCity || "";
   document.getElementById("t-lat").value  = profile.transit_lat || "";
   document.getElementById("t-lon").value  = profile.transit_lon || "";
@@ -628,7 +628,7 @@ async function calculateTransits() {
 
   setStatus("Calcul des éphémérides…");
   document.getElementById("calc-btn").disabled = true;
-  setAspectsHTML('<div style="padding:6px;" class="loading">Calcul sidéral Djwhal Khul…</div>');
+  setAspectsHTML('<div style="padding:6px;" class="loading">Calcul sidéral Centre Galactique DK…</div>');
   setSynthesisHTML('<span class="loading">Interprétation karmique védique en cours…</span>');
 
   try {
@@ -646,15 +646,14 @@ async function calculateTransits() {
     if (data.error) throw new Error(data.error);
 
     lastCalcData = data;
+    userName     = data.name || userName;
     renderAspects(data.aspects);
     setSynthesisHTML(escapeNl(data.synthesis));
     chartContext = data.chart_context || "";
 
-    // Mettre à jour la carte si on est sur cet onglet
     if (document.getElementById("panel-carte").classList.contains("active")) {
       renderKarmaMap(data);
     } else {
-      // Marquer que la carte est à rafraîchir
       updateKarmaQuadrants(data.aspects);
     }
 
@@ -697,31 +696,29 @@ function renderAspects(aspects) {
 // CARTE KARMIQUE SVG
 // ══════════════════════════════════════════════════════════
 function renderKarmaMap(data) {
-  const svg = document.getElementById("karma-svg");
-  const aspects = data.aspects || [];
+  const svg      = document.getElementById("karma-svg");
+  const aspects  = data.aspects  || {};
   const transits = data.transits || {};
   const natal    = data.natal    || {};
 
-  const cx = 360, cy = 200, R_out = 170, R_in = 120, R_label = 190;
+  const cx = 360, cy = 200, R_out = 170, R_in = 120, R_label = 192;
 
-  // Couleurs par signe (quadrant)
   const SIGN_COLORS = [
     "#ff6b6b","#ff9f43","#ffd32a","#c4e538",
     "#0be881","#00d2d3","#54a0ff","#5f27cd",
     "#ee5a24","#a29bfe","#fd79a8","#6c5ce7"
   ];
 
-  // Mapper longitude → angle SVG (0° Bélier = haut, sens horaire)
   const lonToAngle = lon => ((lon - 90 + 360) % 360) * Math.PI / 180;
   const polarX     = (r, a) => cx + r * Math.cos(a);
   const polarY     = (r, a) => cy + r * Math.sin(a);
 
   let s = ``;
 
-  // ── Fond + cercle externe ──
+  // ── Fond ──
   s += `<rect x="0" y="0" width="720" height="400" fill="#f0ede8"/>`;
 
-  // ── 12 secteurs (signes) anneau externe ──
+  // ── 12 secteurs signes ──
   for (let i = 0; i < 12; i++) {
     const a1 = lonToAngle(i * 30);
     const a2 = lonToAngle((i + 1) * 30);
@@ -733,7 +730,7 @@ function renderKarmaMap(data) {
           fill="${SIGN_COLORS[i]}" fill-opacity="0.25" stroke="#aaa" stroke-width="0.5"/>`;
   }
 
-  // ── Cercle interne (zone aspects) ──
+  // ── Cercle interne ──
   s += `<circle cx="${cx}" cy="${cy}" r="${R_in}" fill="white" fill-opacity="0.7" stroke="#ccc" stroke-width="1"/>`;
 
   // ── Symboles signes ──
@@ -753,58 +750,59 @@ function renderKarmaMap(data) {
     "Sextile ✶":     "#006666",
   };
 
-  aspects.slice(0, 20).forEach(a => {
+  (data.aspects || []).slice(0, 20).forEach(a => {
     const tData = transits[a.transit_planet];
     const nData = natal[a.natal_planet];
     if (!tData || !nData) return;
     const tLon = tData.lon_raw !== undefined ? tData.lon_raw : null;
     const nLon = nData.lon_raw !== undefined ? nData.lon_raw : null;
     if (tLon === null || nLon === null) return;
-
     const aT = lonToAngle(tLon);
     const aN = lonToAngle(nLon);
-    const color = ASP_COLORS[a.aspect] || "#888";
+    const color   = ASP_COLORS[a.aspect] || "#888";
     const opacity = Math.max(0.2, 1 - a.orb / 3);
     s += `<line x1="${polarX(R_in, aT)}" y1="${polarY(R_in, aT)}"
                x2="${polarX(R_in, aN)}" y2="${polarY(R_in, aN)}"
                stroke="${color}" stroke-width="1" stroke-opacity="${opacity.toFixed(2)}"/>`;
   });
 
-  // ── Points planètes transit (extérieur) ──
+  // ── Planètes TRANSIT (anneau extérieur) ──
+  // r=16, font-size=13 — taille augmentée
   const PLANET_SYM = {
     "Soleil ☀": "☀", "Lune ☽": "☽", "Mercure ☿": "☿", "Vénus ♀": "♀",
     "Mars ♂": "♂", "Jupiter ♃": "♃", "Saturne ♄": "♄", "Uranus ♅": "♅",
     "Neptune ♆": "♆", "Pluton ♇": "♇", "Chiron ⚷": "⚷",
     "Nœud Nord ☊": "☊", "Nœud Sud ☋": "☋", "Lilith ⚸": "⚸",
-    "ASC ↑": "ASC", "MC ↑": "MC",
+    "ASC ↑": "AS", "MC ↑": "MC",
   };
 
   Object.entries(transits).forEach(([name, d]) => {
     if (d.lon_raw === undefined) return;
-    const a = lonToAngle(d.lon_raw);
-    const r = R_out - 8;
+    const a   = lonToAngle(d.lon_raw);
+    const r   = R_out - 12;
     const sym = PLANET_SYM[name] || name.substring(0, 2);
-    s += `<circle cx="${polarX(r, a)}" cy="${polarY(r, a)}" r="14" fill="#1084d0" fill-opacity="0.8"/>`;
+    s += `<circle cx="${polarX(r, a)}" cy="${polarY(r, a)}" r="16" fill="#1084d0" fill-opacity="0.85"/>`;
     s += `<text x="${polarX(r, a)}" y="${polarY(r, a)}" text-anchor="middle"
-          dominant-baseline="middle" font-size="8" fill="white" font-family="Arial">${escHtml(sym)}</text>`;
+          dominant-baseline="middle" font-size="13" fill="white" font-family="Arial" font-weight="bold">${escHtml(sym)}</text>`;
   });
 
-  // ── Points planètes natal (intérieur) ──
+  // ── Planètes NATAL (anneau intérieur) ──
+  // r=13, font-size=12 — taille augmentée et cohérente
   Object.entries(natal).forEach(([name, d]) => {
     if (d.lon_raw === undefined) return;
-    const a = lonToAngle(d.lon_raw);
-    const r = R_in - 8;
+    const a   = lonToAngle(d.lon_raw);
+    const r   = R_in - 12;
     const sym = PLANET_SYM[name] || name.substring(0, 2);
-    s += `<circle cx="${polarX(r, a)}" cy="${polarY(r, a)}" r="6" fill="#4b0082" fill-opacity="0.8"/>`;
+    s += `<circle cx="${polarX(r, a)}" cy="${polarY(r, a)}" r="13" fill="#4b0082" fill-opacity="0.85"/>`;
     s += `<text x="${polarX(r, a)}" y="${polarY(r, a)}" text-anchor="middle"
-          dominant-baseline="middle" font-size="16" fill="white" font-family="Arial">${escHtml(sym)}</text>`;
+          dominant-baseline="middle" font-size="12" fill="white" font-family="Arial" font-weight="bold">${escHtml(sym)}</text>`;
   });
 
-  // ── Labels ──
-  s += `<text x="4" y="14" font-size="14" fill="#1084d0" font-family="Arial">● Transit</text>`;
-  s += `<text x="4" y="26" font-size="14" fill="#4b0082" font-family="Arial">● Natal</text>`;
+  // ── Légende + date centre ──
+  s += `<text x="4" y="14" font-size="12" fill="#1084d0" font-family="Arial" font-weight="bold">● Transit</text>`;
+  s += `<text x="4" y="28" font-size="12" fill="#4b0082" font-family="Arial" font-weight="bold">● Natal</text>`;
   s += `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle"
-        font-size="16" fill="#404040" font-family="Arial">${data.transit_date || ""}</text>`;
+        font-size="14" fill="#404040" font-family="Arial">${data.transit_date || ""}</text>`;
 
   svg.innerHTML = s;
   updateKarmaQuadrants(data.aspects);
@@ -839,7 +837,7 @@ async function sendChat() {
   try {
     const res  = await fetch("/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg, history: chatHistory, chart_context: chartContext }),
+      body: JSON.stringify({ message: msg, history: chatHistory, chart_context: chartContext, name: userName }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
