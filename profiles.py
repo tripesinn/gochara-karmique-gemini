@@ -106,12 +106,12 @@ def get_profile_by_email(email: str) -> dict | None:
 
 
 def get_profile_by_pseudo(pseudo: str) -> dict | None:
-    ws = _get_sheet()
-    records = ws.get_all_values()
+    sheet   = _get_sheet()
+    records = sheet.get_all_records()
     pseudo_lower = pseudo.strip().lower()
-    for row in records[1:]:
-        if row and row[0].strip().lower() == pseudo_lower:
-            return _row_to_profile(row)
+    for row in records:
+        if str(row.get("pseudo", "")).strip().lower() == pseudo_lower:
+            return dict(row)
     return None
 
 
