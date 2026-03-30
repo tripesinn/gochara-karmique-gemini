@@ -169,6 +169,7 @@ def calculate():
 
 @app.route("/chat", methods=["POST"])
 def chat():
+    from ai_interpret import chat_response
     try:
         data = request.get_json()
         if not data:
