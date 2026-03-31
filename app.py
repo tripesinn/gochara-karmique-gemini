@@ -67,7 +67,6 @@ def register():
     try:
         if pseudo_exists(pseudo):
             return jsonify({"ok": False, "error": "Pseudo déjà pris"}), 409
-        # Email optionnel — si fourni, vérifier doublon
         email = (data.get("email") or "").strip().lower()
         if email and get_profile_by_email(email):
             return jsonify({"ok": False, "error": "Email déjà enregistré"}), 409
@@ -126,7 +125,7 @@ def geocode():
 @app.route("/calculate", methods=["POST"])
 def calculate():
     from astro_calc import calculate_transits
-    from ai_interpret import get_synthesis, build_chart_context
+    from ai_interpret import get_synthesis
 
     profile = session.get("profile")
     if not profile:
@@ -150,7 +149,6 @@ def calculate():
     hour     = int(data.get("hour", 12))
     minute   = int(data.get("minute", 0))
 
-    # Lieu de transit — depuis le payload si fourni, sinon profil, sinon défaut Paris
     transit_loc = {
         "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
         "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
@@ -161,29 +159,10 @@ def calculate():
     try:
         year, month, day = map(int, date_str.split("-"))
         result = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
-        result["synthesis"]     = get_synthesis(result, profile)
-        result["chart_context"] = build_chart_context(result, profile)
+        result["synthesis"] = get_synthesis(result, profile)
         return jsonify(result)
     except Exception as exc:
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
-        return jsonify({"error": str(exc)}), 500
-
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    from ai_interpret import chat_response
-    try:
-        data = request.get_json() or {}
-        user          = session.get("profile", {"name": "l'utilisateur"})
-        message       = data.get("message", "")
-        history       = data.get("history", [])
-        chart_context = data.get("chart_context", "")
-        if not message:
-            return jsonify({"error": "Message vide"}), 400
-        reply = chat_response(message, history, chart_context, user)
-        return jsonify({"reply": reply})
-    except Exception as exc:
-        app.logger.error("[CHAT ERROR] %s", exc)
         return jsonify({"error": str(exc)}), 500
 
 
