@@ -786,9 +786,19 @@ async function calculateTransits() {
     setStatus(`✓ ${n} aspect${n!==1?"s":""}`);
     setCount(`${n} asp.`);
   } catch (err) {
-    setStatus("⚠ " + err.message);
+    const raw = err.message || "";
+    let friendly = raw;
+    if (raw.includes("529") || raw.toLowerCase().includes("overload")) {
+      friendly = "⏳ L'oracle est temporairement surchargé — réessaie dans quelques secondes.";
+    } else if (raw.includes("500") || raw.includes("502") || raw.includes("503")) {
+      friendly = "⚠ Le serveur est momentanément indisponible — réessaie dans un instant.";
+    } else if (raw.toLowerCase().includes("networkerror") || raw.toLowerCase().includes("failed to fetch")) {
+      friendly = "⚠ Problème de connexion réseau — vérifie ta connexion et réessaie.";
+    }
+    setStatus("⚠ " + friendly);
     document.getElementById("synthesis").innerHTML =
-      `<span style="color:#800000;">Erreur : ${escHtml(err.message)}</span>`;
+      `<div style="color:#800000;padding:8px;line-height:1.6;">${escHtml(friendly)}<br><br>
+       <button class="btn" onclick="calculateTransits()" style="margin-top:4px;">↺ Réessayer</button></div>`;
   } finally {
     document.getElementById("calc-btn").disabled = false;
   }
