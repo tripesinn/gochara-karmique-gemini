@@ -525,9 +525,30 @@ def calculate():
     lang = session.get("lang", "fr")
 
     try:
+        import time as _time
         year, month, day = map(int, date_str.split("-"))
         result = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
-        result["synthesis"] = get_synthesis(result, profile, lang=lang)
+
+        # Retry 3x sur surcharge Anthropic (529 / overloaded_error)
+        synthesis = None
+        last_exc  = None
+        for attempt in range(3):
+            try:
+                synthesis = get_synthesis(result, profile, lang=lang)
+                break
+            except Exception as exc:
+                last_exc = exc
+                msg = str(exc).lower()
+                if "529" in msg or "overload" in msg:
+                    app.logger.warning("Anthropic surchargé (tentative %d/3) : %s", attempt + 1, exc)
+                    _time.sleep(3 * (attempt + 1))
+                else:
+                    raise
+
+        if synthesis is None:
+            raise Exception("L'oracle est temporairement surchargé — réessaie dans quelques secondes.")
+
+        result["synthesis"] = synthesis
         return jsonify(result)
     except Exception as exc:
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
