@@ -141,7 +141,6 @@ input.sunken, select.sunken {
   line-height: 1.6;
   font-size: 12px;
 }
-/* Markdown rendu dans synthesis */
 #synthesis h1,#synthesis h2 { color:#4b0082; font-size:13px; margin:8px 0 4px; }
 #synthesis h3 { color:#800080; font-size:12px; margin:6px 0 3px; }
 #synthesis strong { color:#000080; }
@@ -149,7 +148,40 @@ input.sunken, select.sunken {
 #synthesis p { margin-bottom:6px; }
 #synthesis hr { border:none; border-top:1px solid #c0c0c0; margin:8px 0; }
 
-/* ── Aspects table (sous la carte) ── */
+/* ── Loading indicator ── */
+@keyframes win-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes win-bar   { 0%{width:0%} 100%{width:100%} }
+@keyframes spin      { to{transform:rotate(360deg)} }
+
+#loading-indicator { display:none; padding:16px 10px; text-align:center; }
+#loading-indicator.visible { display:block; }
+.load-title { color:#4b0082; font-weight:bold; font-size:12px; margin-bottom:10px; }
+.load-bar-wrap {
+  background:#808080; border:2px solid;
+  border-color:#808080 #fff #fff #808080;
+  height:16px; margin-bottom:10px; overflow:hidden;
+}
+.load-bar-inner {
+  height:100%; background:linear-gradient(90deg,#000080,#800080);
+  animation:win-bar 3s ease-in-out infinite alternate;
+}
+.load-steps { display:flex; flex-direction:column; gap:4px; }
+.load-step {
+  font-size:11px; color:#808080; opacity:.4; transition:all .3s;
+  display:flex; align-items:center; gap:6px;
+}
+.load-step.active  { color:#000080; opacity:1; font-weight:bold; }
+.load-step.done    { color:#005000; opacity:.7; }
+.load-step::before { content:"○"; font-size:10px; }
+.load-step.active::before { content:"►"; animation:win-blink .8s infinite; }
+.load-step.done::before   { content:"✓"; }
+.load-spinner {
+  display:inline-block; width:10px; height:10px;
+  border:2px solid #c0c0c0; border-top-color:#000080;
+  border-radius:50%; animation:spin .6s linear infinite; margin-left:4px;
+}
+
+/* ── Aspects table ── */
 .aspects-wrap {
   max-height: 320px; overflow-y: auto;
   background: #fff; border: 2px solid;
@@ -268,7 +300,6 @@ input.sunken, select.sunken {
 .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .hidden { display: none !important; }
 </style>
-<!-- marked.js pour le rendu Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -278,7 +309,6 @@ input.sunken, select.sunken {
   <div class="titlebar">
     <div class="titlebar-title">✦ {{ lang.title }}</div>
     <div class="titlebar-btns" style="align-items:center;gap:6px;">
-      <!-- Sélecteur de langue -->
       <select class="lang-select" id="lang-selector" onchange="setLang(this.value)">
         {% for l in all_langs %}
         <option value="{{ l.code }}" {% if l.code == lang.code %}selected{% endif %}>{{ l.label }}</option>
@@ -430,7 +460,7 @@ input.sunken, select.sunken {
     <div class="winbody" style="padding-top:4px;">
       <div class="tabs-bar">
         <button class="tab-btn active" id="tab-btn-gochara" onclick="switchTab('gochara')">{{ lang.tab_gochara }}</button>
-        <button class="tab-btn hidden"        id="tab-btn-carte"   onclick="switchTab('carte')">{{ lang.tab_carte }}</button>
+        <button class="tab-btn hidden"  id="tab-btn-carte"  onclick="switchTab('carte')">{{ lang.tab_carte }}</button>
       </div>
 
       <!-- ── Tab : Gochara ── -->
@@ -440,6 +470,19 @@ input.sunken, select.sunken {
             <div class="titlebar-title">{{ lang.synthesis_title }}</div>
           </div>
           <div class="winbody" style="padding:0;">
+
+            <!-- ← LOADING INDICATOR (remplace le vide pendant le calcul) -->
+            <div id="loading-indicator">
+              <div class="load-title">⚙ Calcul en cours<span class="load-spinner"></span></div>
+              <div class="load-bar-wrap"><div class="load-bar-inner"></div></div>
+              <div class="load-steps">
+                <div class="load-step" id="ls-1">Calcul des éphémérides sidérales</div>
+                <div class="load-step" id="ls-2">Analyse des aspects (orbe &lt; 3°)</div>
+                <div class="load-step" id="ls-3">Lecture des Nakshatras &amp; cycles nodaux</div>
+                <div class="load-step" id="ls-4">Synthèse karmique @siderealAstro13</div>
+              </div>
+            </div>
+
             <div id="synthesis"><span class="loading">{{ lang.synthesis_wait }}</span></div>
           </div>
         </div>
@@ -462,7 +505,6 @@ input.sunken, select.sunken {
       <!-- ── Tab : Carte Karmique ── -->
       <div class="tab-panel" id="tab-carte">
 
-        <!-- Roue SVG -->
         <div class="win">
           <div class="titlebar green">
             <div class="titlebar-title">{{ lang.carte_title }}</div>
@@ -478,7 +520,6 @@ input.sunken, select.sunken {
           </div>
         </div>
 
-        <!-- Tableau des aspects -->
         <div class="win">
           <div class="titlebar gold">
             <div class="titlebar-title">{{ lang.aspects_title }}</div>
@@ -505,7 +546,6 @@ input.sunken, select.sunken {
 
 </div><!-- /main-win -->
 
-<!-- ═══ Buy me a coffee — bouton flottant ═══ -->
 <a id="btn-coffee" href="https://buymeacoffee.com/jerome6" target="_blank" rel="noopener">
   ☕ {{ lang.support_label }}
 </a>
@@ -517,7 +557,6 @@ input.sunken, select.sunken {
 <script>
 "use strict";
 
-/* Labels JS injectés depuis Flask/Jinja2 */
 const L = {
   ready:          {{ lang.ready | tojson }},
   no_calc:        {{ lang.no_calc | tojson }},
@@ -533,8 +572,8 @@ const L = {
   sent_err:       {{ lang.sent_err | tojson }},
 };
 
-let currentPseudo = "";
-let lastChartData = null;
+let currentPseudo     = "";
+let lastChartData     = null;
 let lastSynthesisText = "";
 let lastTransitDate   = "";
 
@@ -562,6 +601,48 @@ function setSynthesis(text) {
   } else {
     el.textContent = text || "";
   }
+}
+
+/* ══ LOADING INDICATOR ═══════════════════════════════════════════ */
+let _loadTimers = [];
+
+function showLoading() {
+  const ind = document.getElementById("loading-indicator");
+  const syn = document.getElementById("synthesis");
+  if (!ind || !syn) return;
+  ind.classList.add("visible");
+  syn.style.display = "none";
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById("ls-"+i);
+    if (el) el.className = "load-step";
+  });
+  // étape 1 active immédiatement, les suivantes avec délai
+  const delays = [0, 1800, 5000, 9000];
+  _loadTimers = [];
+  delays.forEach((d, i) => {
+    const t = setTimeout(() => {
+      if (i > 0) {
+        const prev = document.getElementById("ls-"+i);
+        if (prev) prev.className = "load-step done";
+      }
+      const cur = document.getElementById("ls-"+(i+1));
+      if (cur) cur.className = "load-step active";
+    }, d);
+    _loadTimers.push(t);
+  });
+}
+
+function hideLoading() {
+  _loadTimers.forEach(t => clearTimeout(t));
+  _loadTimers = [];
+  const ind = document.getElementById("loading-indicator");
+  const syn = document.getElementById("synthesis");
+  if (ind) ind.classList.remove("visible");
+  if (syn) syn.style.display = "";
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById("ls-"+i);
+    if (el) el.className = "load-step done";
+  });
 }
 
 /* ══ LANGUE ══════════════════════════════════════════════════════ */
@@ -759,8 +840,10 @@ async function calculateTransits() {
   setStatus(L.calc_ephem);
   document.getElementById("calc-btn").disabled = true;
   setAspectsHTML(`<div style="padding:8px;" class="loading">${L.calc_sideral}</div>`);
+
+  // ← NOUVEAU : loading indicator remplace le vide
   setSynthesis("");
-  document.getElementById("synthesis").innerHTML = `<span class="loading">${L.calc_karmic}</span>`;
+  showLoading();
   switchTab("gochara");
   document.getElementById("email-status").textContent = "";
 
@@ -777,6 +860,7 @@ async function calculateTransits() {
     if (res.status === 429) {
       const msg = data.message || "Limite mensuelle atteinte.";
       const url = data.upgrade_url || "";
+      hideLoading();
       document.getElementById("synthesis").innerHTML =
         `<div style="color:#800000;padding:12px;line-height:1.8;">
           🔒 <strong>${escHtml(msg)}</strong><br><br>
@@ -786,12 +870,12 @@ async function calculateTransits() {
       setStatus("🔒 Quota mensuel atteint");
       return;
     }
-    // ──────────────────────────────────────────────────────────────
 
     if (data.error) throw new Error(data.error);
     lastChartData     = data;
     lastSynthesisText = data.synthesis || "";
     renderAspects(data.aspects);
+    hideLoading();
     setSynthesis(lastSynthesisText);
     const n = (data.aspects || []).length;
     const rem = typeof data.remaining === "number"
@@ -811,6 +895,7 @@ async function calculateTransits() {
       friendly = "⚠ Problème de connexion réseau — vérifie ta connexion et réessaie.";
     }
     setStatus("⚠ " + friendly);
+    hideLoading();
     document.getElementById("synthesis").innerHTML =
       `<div style="color:#800000;padding:8px;line-height:1.6;">${escHtml(friendly)}<br><br>
        <button class="btn" onclick="calculateTransits()" style="margin-top:4px;">↺ Réessayer</button></div>`;
@@ -1038,7 +1123,7 @@ async function sendSynthesisEmail() {
     btn.disabled = false;
   }
 }
-   
+
 /* ══ INIT ════════════════════════════════════════════════════════ */
 (function init() {
   const dateEl = document.getElementById("t-date");
