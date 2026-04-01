@@ -624,7 +624,7 @@ def send_synthesis():
   </div>
   <div class="synthesis">{synthesis}</div>
   <div class="support">
-    <a href="https://buymeacoffee.com/PLACEHOLDER">☕ {lang['support_label']}</a>
+    <a href="https://buymeacoffee.com/jerome6">☕ {lang['support_label']}</a>
   </div>
   <div class="footer">
     Généré par Karmic Gochara · karmic.gochara.onrender.com<br>
