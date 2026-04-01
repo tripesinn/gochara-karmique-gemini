@@ -561,6 +561,7 @@ def calculate():
             raise Exception("L'oracle est temporairement surchargé — réessaie dans quelques secondes.")
 
         result["synthesis"] = synthesis
+        result["remaining"] = quota["remaining"]
         return jsonify(result)
     except Exception as exc:
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
