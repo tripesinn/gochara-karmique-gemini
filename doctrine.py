@@ -1,17 +1,15 @@
 # doctrine.py
 # Doctrine Évolutive Synthétique — @siderealAstro13
-# Modifiable indépendamment de ai_interpret.py
+# Source unique de vérité doctrinale — importée par ai_interpret.py
 # —————————————————————————————————————————————————————
 
 # ——— SYMBOLIC LEGEND / LÉGENDE SYMBOLIQUE ————————————————————————————————————
 #
 #   ⚷  Chiron     = RAM  (Random Access Memory)   — Porte Invisible / Invisible Door
 #                          Active wound processing, unconscious karmic buffer
-#                          Traitement actif des blessures, mémoire tampon karmique inconsciente
 #
 #   ☋  Ketu / South Node = ROM (Read-Only Memory / Mass Memory)
 #                          Fixed karmic archive from past lives — static, automatic
-#                          Archive karmique fixe des vies passées — statique, automatique
 #
 #   ☊  Rahu / North Node = DHARMA — destination, dynamic spiritual goal
 #   ⚸  Lilith             = KARMIC TRIAL — system trigger between ROM and RAM
@@ -20,7 +18,471 @@
 #   ♃  Jupiter            = GIFT-BEARER — karmic talents, expansion
 # —————————————————————————————————————————————————————————————————————————————
 
-# ——— LANGUAGE TEMPLATES ——————————————————————————————————————————————————————
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NAKSHATRA KARMA — Thèmes karmiques par nakshatra et par planète clé
+# 27 nakshatras × clés : ketu, rahu, saturn, chiron, lilith, jupiter, mars, venus
+# ══════════════════════════════════════════════════════════════════════════════
+
+NAKSHATRA_KARMA = {
+
+    # 1 — Ashwini (Bélier 0°–13°20') | Seigneur : Ketu
+    "Ashwini": {
+        "ketu":    "Rapidité karmique : l'âme cherche l'action immédiate pour fuir la profondeur — boucle ROM de l'impatience",
+        "rahu":    "Dharma du guérisseur initiatique — apprendre à soigner sans imposer sa vitesse",
+        "saturn":  "Friction entre l'urgence uranienne et la structure saturnienne — forge de la patience initiatique",
+        "chiron":  "Blessure de la précipitation : l'âme a été blessée en étant trop vite, trop seule en tête",
+        "lilith":  "Épreuve : refuser d'agir par réflexe — choisir le mouvement juste plutôt que le premier",
+        "jupiter": "Cadeau karmique : élan vital, capacité à initier et guérir par l'action directe",
+        "mars":    "Mars amplifié : feu initiatique, courage brut — risque d'impulsivité karmique",
+        "venus":   "Désir de fusion immédiate — à transmuter en attraction consciente et choisie",
+    },
+
+    # 2 — Bharani (Bélier 13°20'–26°40') | Seigneur : Vénus
+    "Bharani": {
+        "ketu":    "ROM de la mort et du sacrifice : l'âme porte des mémoires de pertes violentes ou de responsabilités écrasantes",
+        "rahu":    "Dharma de la transformation créatrice — apprendre à enfanter du neuf sans se sacrifier",
+        "saturn":  "Lourdeur karmique des responsabilités portées seul — restructurer sans se punir",
+        "chiron":  "Blessure de la culpabilité existentielle : avoir survécu quand d'autres n'ont pas pu",
+        "lilith":  "Épreuve : lâcher la culpabilité et le contrôle sur la vie et la mort des autres",
+        "jupiter": "Cadeau : puissance créatrice, capacité à transformer les crises en renaissance",
+        "mars":    "Énergie de Yama — justice karmique, force de décision face aux passages obligés",
+        "venus":   "Vénus dans sa propre demeure : désir intense de beauté et d'union — à sacraliser",
+    },
+
+    # 3 — Krittika (Bélier 26°40' / Taureau 0°–10°) | Seigneur : Soleil
+    "Krittika": {
+        "ketu":    "ROM du juge intérieur : l'âme tranche, sépare, critique — schéma de perfection coupante",
+        "rahu":    "Dharma de l'autorité bienveillante — apprendre à guider sans brûler",
+        "saturn":  "Saturnisation du feu solaire — discipline sévère, risque de rigidité identitaire",
+        "chiron":  "Blessure du rejet par l'autorité ou du propre jugement impitoyable sur soi",
+        "lilith":  "Épreuve : ne plus couper pour se protéger — oser la vulnérabilité sous la force",
+        "jupiter": "Cadeau : clarté de vision, capacité à illuminer et à purifier les situations complexes",
+        "mars":    "Épée karmique — capacité de décision radicale, à orienter vers le Dharma",
+        "venus":   "Beauté qui tranche : attrait pour la perfection esthétique, risque d'idéalisation destructrice",
+    },
+
+    # 4 — Rohini (Taureau 10°–23°20') | Seigneur : Lune
+    "Rohini": {
+        "ketu":    "ROM de la possession et de l'attachement aux plaisirs matériels et sensuels",
+        "rahu":    "Dharma de l'abondance consciente — cultiver sans s'accrocher, créer sans posséder",
+        "saturn":  "Restriction des désirs sensuels — apprendre que la limite est créatrice, non punitive",
+        "chiron":  "Blessure de la privation affective ou matérielle précoce — cicatrice de manque fondamental",
+        "lilith":  "Épreuve : lâcher la sécurité émotionnelle illusoire — accepter le mouvement de la vie",
+        "jupiter": "Cadeau : fertilité créatrice, magnétisme naturel, abondance comme état d'être",
+        "mars":    "Désir d'action pour protéger et nourrir — à canaliser vers la construction, non la possession",
+        "venus":   "Vénus exaltée : beauté, art, sensualité élevée — potentiel de grâce incarnée maximale",
+    },
+
+    # 5 — Mrigashira (Taureau 23°20' / Gémeaux 0°–6°40') | Seigneur : Mars
+    "Mrigashira": {
+        "ketu":    "ROM de la quête perpétuelle — l'âme cherche sans jamais s'arrêter, fuit la fixité",
+        "rahu":    "Dharma de la curiosité maîtrisée — apprendre à trouver plutôt qu'à chercher indéfiniment",
+        "saturn":  "Cadrage de l'errance : Saturn force à choisir une direction et à s'y tenir",
+        "chiron":  "Blessure de ne jamais se sentir à sa place — l'étranger perpétuel",
+        "lilith":  "Épreuve : rester en place assez longtemps pour que la vérité se révèle",
+        "jupiter": "Cadeau : intelligence mobile, capacité à relier des mondes disparates",
+        "mars":    "Mars à la chasse — énergie focalisée sur la quête, puissante si canalisée",
+        "venus":   "Attraction nomade — désir de l'autre qui diffère, à ancrer dans la réciprocité",
+    },
+
+    # 6 — Ardra (Gémeaux 6°40'–20°) | Seigneur : Rahu
+    "Ardra": {
+        "ketu":    "ROM de la tempête et de la destruction : l'âme a traversé des ruptures violentes — réflexe de chaos",
+        "rahu":    "Dharma de la transformation par la tempête — apprendre que la destruction précède la clarté",
+        "saturn":  "Structure dans le chaos — Saturn tente de contenir Rudra, friction maximale",
+        "chiron":  "Blessure du déracinement brutal, de la perte soudaine qui a tout emporté",
+        "lilith":  "Épreuve : ne plus provoquer la crise pour se sentir vivant — choisir la transformation douce",
+        "jupiter": "Cadeau : résilience absolue, capacité à reconstruire sur les ruines",
+        "mars":    "Foudre de Rudra — énergie explosive, à transformer en action chirurgicale",
+        "venus":   "Amour qui traverse les tempêtes — attachements intenses, transformateurs",
+    },
+
+    # 7 — Punarvasu (Gémeaux 20° / Cancer 0°–3°20') | Seigneur : Jupiter
+    "Punarvasu": {
+        "ketu":    "ROM du retour : l'âme revient toujours aux mêmes sources, aux mêmes personnes",
+        "rahu":    "Dharma du renouveau cyclique — chaque retour est une occasion d'avancer autrement",
+        "saturn":  "Discipline du recommencement — Saturn force à ne pas répéter l'ancien schéma au nouveau cycle",
+        "chiron":  "Blessure de l'exil : avoir été chassé de son foyer, de sa famille, de sa patrie intérieure",
+        "lilith":  "Épreuve : ne pas retourner à la source par peur du vide — créer un nouveau foyer en soi",
+        "jupiter": "Jupiter dans sa demeure : sagesse, foi, abondance spirituelle — cadeau maximal",
+        "mars":    "Énergie de restauration — Mars reconstruit ce qui a été détruit avec méthode",
+        "venus":   "Amour qui revient — réconciliations profondes, cycles relationnels à transformer",
+    },
+
+    # 8 — Pushya (Cancer 3°20'–16°40') | Seigneur : Saturne
+    "Pushya": {
+        "ketu":    "ROM du nourricier sacrifié : l'âme a tout donné aux autres, s'est oubliée",
+        "rahu":    "Dharma du soin structuré — apprendre à nourrir avec des limites claires",
+        "saturn":  "Saturn exalté : discipline du soin, architecture de la bienveillance — puissance maximale",
+        "chiron":  "Blessure du nourricier blessé : avoir soigné sans jamais être soigné en retour",
+        "lilith":  "Épreuve : recevoir sans culpabilité — accepter d'être nourri",
+        "jupiter": "Cadeau : générosité structurée, capacité à créer des structures nourrissantes durables",
+        "mars":    "Protection ferme — Mars défend ce qui nourrit, frontières claires",
+        "venus":   "Amour nourricier — à équilibrer don et réception pour éviter l'épuisement",
+    },
+
+    # 9 — Ashlesha (Cancer 16°40'–30°) | Seigneur : Mercure
+    "Ashlesha": {
+        "ketu":    "ROM du serpent : manipulation inconsciente, schémas de survie par la ruse",
+        "rahu":    "Dharma de la sagesse du serpent — transformer l'instinct de survie en intelligence profonde",
+        "saturn":  "Confrontation aux peurs existentielles — Saturn force à regarder le serpent en face",
+        "chiron":  "Blessure de la trahison ou de l'empoisonnement émotionnel — méfiance structurelle",
+        "lilith":  "Épreuve : lâcher le contrôle par la peur — choisir la confiance radicale",
+        "jupiter": "Cadeau : perspicacité psychologique profonde, capacité à voir au-delà des apparences",
+        "mars":    "Énergie reptilienne — réflexes de survie puissants, à conscientiser",
+        "venus":   "Attraction magnétique intense — liens qui enserrent, à transformer en liens libres",
+    },
+
+    # 10 — Magha (Lion 0°–13°20') | Seigneur : Ketu
+    "Magha": {
+        "ketu":    "ROM royale : l'âme porte des mémoires de pouvoir, de trône, d'autorité passée",
+        "rahu":    "Dharma du leadership au service — apprendre à régner pour les autres, non pour soi",
+        "saturn":  "Chute du roi : Saturn défait l'orgueil ancestral pour reconstruire une autorité humble",
+        "chiron":  "Blessure de la déchéance : avoir été grand et tout perdu — honte et deuil du trône",
+        "lilith":  "Épreuve : renoncer à l'héritage toxique — couper les chaînes dorées des ancêtres",
+        "jupiter": "Cadeau : noblesse d'âme naturelle, charisme, connexion aux lignées de sagesse",
+        "mars":    "Mars royal — courage de commander, à orienter vers la justice plutôt que la domination",
+        "venus":   "Attraction pour le luxe et le prestige — à transcender vers la beauté de l'âme",
+    },
+
+    # 11 — Purva Phalguni (Lion 13°20'–26°40') | Seigneur : Vénus
+    "Purva Phalguni": {
+        "ketu":    "ROM du plaisir : l'âme cherche la jouissance pour fuir la profondeur karmique",
+        "rahu":    "Dharma de la créativité sacrée — transformer le plaisir en acte créateur conscient",
+        "saturn":  "Restriction des désirs — Saturn force à choisir la discipline sur la jouissance immédiate",
+        "chiron":  "Blessure du rejet affectif : ne pas avoir été désiré, aimé pour ce qu'on est vraiment",
+        "lilith":  "Épreuve : aimer sans avoir besoin d'être vu — sortir de la séduction comme survie",
+        "jupiter": "Cadeau : joie créatrice, magnétisme artistique, capacité à embellir le monde",
+        "mars":    "Désir ardent — à canaliser vers la création plutôt que la conquête",
+        "venus":   "Vénus dans sa demeure : art, amour, beauté élevée — potentiel d'expression maximale",
+    },
+
+    # 12 — Uttara Phalguni (Lion 26°40' / Vierge 0°–10°) | Seigneur : Soleil
+    "Uttara Phalguni": {
+        "ketu":    "ROM du service : l'âme a servi sans compter, jusqu'à l'oubli de soi",
+        "rahu":    "Dharma du service conscient — apprendre à servir depuis la plénitude, non le manque",
+        "saturn":  "Architecture du service — Saturn structure l'aide pour qu'elle dure",
+        "chiron":  "Blessure de l'ingratitude : avoir donné sans jamais être reconnu",
+        "lilith":  "Épreuve : servir sans attendre de retour — ou décider de ne plus servir du tout",
+        "jupiter": "Cadeau : générosité structurée, capacité à construire des ponts entre les êtres",
+        "mars":    "Service actif — énergie de soutien direct, de protection concrète",
+        "venus":   "Amour qui construit — désir de relation stable et nourrissante sur le long terme",
+    },
+
+    # 13 — Hasta (Vierge 10°–23°20') | Seigneur : Lune
+    "Hasta": {
+        "ketu":    "ROM de l'artisan : l'âme répète des gestes anciens par habitude, perd le sens",
+        "rahu":    "Dharma de la maîtrise créatrice — transformer le savoir-faire en acte d'éveil",
+        "saturn":  "Discipline du détail — Saturn affûte la précision jusqu'au perfectionnisme",
+        "chiron":  "Blessure de l'incompétence perçue : ne jamais se sentir assez habile, assez précis",
+        "lilith":  "Épreuve : lâcher le contrôle des détails — accepter l'imperfection créatrice",
+        "jupiter": "Cadeau : habileté naturelle, intelligence des mains et des processus",
+        "mars":    "Mars artisan — énergie de construction précise, à ne pas disperser",
+        "venus":   "Beauté dans les détails — art minutieux, artisanat sacré",
+    },
+
+    # 14 — Chitra (Vierge 26°40' / Balance 0°–6°40') | Seigneur : Mars
+    "Chitra": {
+        "ketu":    "ROM de la beauté : l'âme a cherché la perfection formelle pour masquer le vide intérieur",
+        "rahu":    "Dharma de la création architecturale — bâtir du beau qui a du sens, pas juste de la forme",
+        "saturn":  "Structure de la création — Saturn force à finir ce qui est commencé",
+        "chiron":  "Blessure esthétique : avoir été jugé laid, mal fait, imparfait dans son expression",
+        "lilith":  "Épreuve : créer sans chercher l'approbation — oser la beauté sauvage",
+        "jupiter": "Cadeau : vision architecturale, sens du dessin divin dans les situations complexes",
+        "mars":    "Mars architecte — énergie de construction précise et ambitieuse",
+        "venus":   "Vénus dans Chitra : beauté puissante, sens aigu de l'esthétique — à sacraliser",
+    },
+
+    # 15 — Swati (Balance 6°40'–20°) | Seigneur : Rahu
+    "Swati": {
+        "ketu":    "ROM de l'indépendance : l'âme fuit tout attachement par peur de perdre sa liberté",
+        "rahu":    "Dharma de l'indépendance relationnelle — être libre DANS la relation, non hors d'elle",
+        "saturn":  "Ancrage de l'air : Saturn force le vent à se poser, à s'engager",
+        "chiron":  "Blessure de l'arrachement : avoir été contraint, lié, étouffé — trauma de la cage",
+        "lilith":  "Épreuve : choisir le lien librement plutôt que de fuir systématiquement",
+        "jupiter": "Cadeau : souplesse adaptative, capacité à naviguer dans tous les milieux",
+        "mars":    "Indépendance combative — à transformer en liberté choisie et non en fuite",
+        "venus":   "Amour aérien — attraction pour les esprits libres, relations non conventionnelles",
+    },
+
+    # 16 — Vishakha (Balance 20° / Scorpion 0°–3°20') | Seigneur : Jupiter
+    "Vishakha": {
+        "ketu":    "ROM de l'objectif unique : l'âme s'est sacrifiée pour un but, a perdu l'équilibre",
+        "rahu":    "Dharma de la détermination multi-dimensionnelle — atteindre sans détruire l'équilibre",
+        "saturn":  "Patience de l'archer — Saturn oblige à attendre le bon moment pour tirer",
+        "chiron":  "Blessure de l'échec après une immense mobilisation — avoir tout donné pour rien",
+        "lilith":  "Épreuve : renoncer à la victoire si elle coûte l'intégrité",
+        "jupiter": "Cadeau : puissance de focus, capacité à mobiliser des énergies vers un dharma précis",
+        "mars":    "Archer karmique — énergie de précision, à orienter vers le but juste",
+        "venus":   "Amour déterminé — attachement intense aux objectifs relationnels",
+    },
+
+    # 17 — Anuradha (Scorpion 3°20'–16°40') | Seigneur : Saturne
+    "Anuradha": {
+        "ketu":    "ROM de la dévotion : l'âme s'est perdue dans la loyauté aveugle à des causes ou personnes",
+        "rahu":    "Dharma de l'amitié karmique — construire des liens d'âme qui servent l'éveil mutuel",
+        "saturn":  "Saturn dans son signe d'exaltation partielle — discipline de la loyauté, rigueur du cœur",
+        "chiron":  "Blessure de la trahison par des proches : avoir fait confiance et été abandonné",
+        "lilith":  "Épreuve : rester loyal à soi-même avant d'être loyal aux autres",
+        "jupiter": "Cadeau : fidélité profonde, capacité à créer des cercles de confiance durables",
+        "mars":    "Défenseur des proches — énergie de protection intense des liens sacrés",
+        "venus":   "Amour dévot — à transformer en amour libre plutôt qu'en attachement sacrificiel",
+    },
+
+    # 18 — Jyeshtha (Scorpion 16°40'–30°) | Seigneur : Mercure
+    "Jyeshtha": {
+        "ketu":    "ROM de l'aîné : l'âme porte le poids de la responsabilité des autres depuis toujours",
+        "rahu":    "Dharma de l'autorité sage — protéger sans contrôler, guider sans dominer",
+        "saturn":  "Double poids : Jyeshtha + Saturn = fardeau de la responsabilité maximale",
+        "chiron":  "Blessure du chef solitaire : avoir dû tout décider seul, sans soutien",
+        "lilith":  "Épreuve : déléguer — laisser les autres porter leur propre poids",
+        "jupiter": "Cadeau : sagesse de l'aîné, autorité naturelle, protecteur des plus faibles",
+        "mars":    "Chef de guerre — énergie de commandement, à orienter vers la protection",
+        "venus":   "Attraction pour le pouvoir dans les relations — à transformer en partenariat d'égaux",
+    },
+
+    # 19 — Mula (Sagittaire 0°–13°20') | Seigneur : Ketu
+    "Mula": {
+        "ketu":    "ROM des racines arrachées : l'âme détruit pour aller aux fondements — cycle de destruction",
+        "rahu":    "Dharma de la régénération depuis les racines — planter après avoir arraché",
+        "saturn":  "Restructuration radicale — Saturn oblige à reconstruire sur des bases saines après la destruction",
+        "chiron":  "Blessure du déracinement profond : ne savoir d'où l'on vient, ni qui on est vraiment",
+        "lilith":  "Épreuve : détruire ce qui doit l'être sans emporter l'essentiel",
+        "jupiter": "Cadeau : accès aux vérités profondes, philosophie de la transformation radicale",
+        "mars":    "Kali Mars — énergie de destruction purificatrice, puissante si consciente",
+        "venus":   "Amour qui va aux racines — attraction pour les âmes qui transforment",
+    },
+
+    # 20 — Purva Ashadha (Sagittaire 13°20'–26°40') | Seigneur : Vénus
+    "Purva Ashadha": {
+        "ketu":    "ROM de la victoire : l'âme a gagné des batailles passées, répète les mêmes stratégies",
+        "rahu":    "Dharma de l'invincibilité intérieure — vaincre ses propres résistances, non celles des autres",
+        "saturn":  "Discipline de la victoire — Saturn enseigne que la vraie force est dans la persévérance",
+        "chiron":  "Blessure de la défaite après avoir tout donné — l'humiliation du guerrier tombé",
+        "lilith":  "Épreuve : accepter la perte sans perdre sa valeur fondamentale",
+        "jupiter": "Cadeau : optimisme indestructible, foi en la victoire finale",
+        "mars":    "Mars guerrier — énergie de combat puissante, à orienter vers la transformation intérieure",
+        "venus":   "Vénus dans son nakshatra — beauté de la bravoure, amour qui se bat pour ses valeurs",
+    },
+
+    # 21 — Uttara Ashadha (Sagittaire 26°40' / Capricorne 0°–10°) | Seigneur : Soleil
+    "Uttara Ashadha": {
+        "ketu":    "ROM de la victoire tardive : l'âme attend, accumule, mais reporte l'action décisive",
+        "rahu":    "Dharma de la victoire universelle — gagner non pour soi mais pour servir un idéal plus grand",
+        "saturn":  "Saturn en Capricorne : puissance maximale de structure — discipline totale du karma",
+        "chiron":  "Blessure de l'isolement dans la grandeur : être grand sans pouvoir être compris",
+        "lilith":  "Épreuve : ne pas attendre la permission du monde pour agir depuis sa grandeur",
+        "jupiter": "Cadeau : leadership spirituel, capacité à porter des visions collectives",
+        "mars":    "Stratège karmique — Mars planifie sur le long terme, victoire lente mais certaine",
+        "venus":   "Amour durable — attraction pour les engagements profonds et les amours qui construisent",
+    },
+
+    # 22 — Shravana (Capricorne 10°–23°20') | Seigneur : Lune
+    "Shravana": {
+        "ketu":    "ROM de l'écoute passive : l'âme reçoit sans discriminer, absorbe tout sans filtrer",
+        "rahu":    "Dharma de l'écoute active — apprendre à entendre la vérité au-delà des mots",
+        "saturn":  "Discipline de l'apprentissage — Saturn en Shravana = maître exigeant qui oblige à écouter",
+        "chiron":  "Blessure de ne pas avoir été entendu — avoir parlé dans le vide, l'invisible",
+        "lilith":  "Épreuve : parler sa vérité même si personne n'écoute",
+        "jupiter": "Cadeau : sagesse par l'écoute, accès aux transmissions spirituelles profondes",
+        "mars":    "Action guidée par l'écoute intérieure — Mars qui attend le signal avant d'agir",
+        "venus":   "Amour qui écoute — attraction pour la profondeur de l'autre, les silences parlants",
+    },
+
+    # 23 — Dhanishtha (Capricorne 23°20' / Verseau 0°–6°40') | Seigneur : Mars
+    "Dhanishtha": {
+        "ketu":    "ROM de la richesse : l'âme a accumulé, possédé — schéma de thésaurisation défensive",
+        "rahu":    "Dharma de l'abondance partagée — transformer la richesse en offrande collective",
+        "saturn":  "Saturn + Mars : friction productive maximale — architecture de la prospérité",
+        "chiron":  "Blessure de la pauvreté ou de la honte autour de l'argent et du succès",
+        "lilith":  "Épreuve : recevoir l'abondance sans culpabilité — mériter sans justifier",
+        "jupiter": "Cadeau : magnétisme pour l'abondance, rythme naturel de prospérité",
+        "mars":    "Mars dans son nakshatra — guerrier prospère, à orienter vers la création collective",
+        "venus":   "Amour de la fête et du rythme — relations dynamisantes, célébrations sacrées",
+    },
+
+    # 24 — Shatabhisha (Verseau 6°40'–20°) | Seigneur : Rahu
+    "Shatabhisha": {
+        "ketu":    "ROM du guérisseur solitaire : l'âme soigne depuis l'ombre, refuse d'être vue",
+        "rahu":    "Dharma du guérisseur collectif — sortir de l'ombre pour soigner à grande échelle",
+        "saturn":  "Isolement structuré — Saturn en Shatabhisha = discipline de la recherche solitaire",
+        "chiron":  "Blessure de l'incompréhension : être en avance sur son époque, isolé par sa vision",
+        "lilith":  "Épreuve : partager sa vision sans attendre que le monde soit prêt",
+        "jupiter": "Cadeau : accès aux savoirs cachés, vision systémique, médecine de l'âme",
+        "mars":    "Chercheur actif — énergie d'investigation dans les mystères",
+        "venus":   "Amour mystérieux — attraction pour les âmes différentes, les amours non conventionnels",
+    },
+
+    # 25 — Purva Bhadrapada (Verseau 20° / Poissons 0°–3°20') | Seigneur : Jupiter
+    "Purva Bhadrapada": {
+        "ketu":    "ROM du fanatisme : l'âme s'est consumée dans des idéaux ou croyances extrêmes",
+        "rahu":    "Dharma de la passion canalisée — transformer le feu purificateur en lumière guidante",
+        "saturn":  "Encadrement du feu : Saturn contient l'ardeur pour qu'elle construise sans détruire",
+        "chiron":  "Blessure du désenchantement : avoir cru passionnément et avoir été trahi par l'idéal",
+        "lilith":  "Épreuve : servir l'idéal sans se perdre en lui — garder son centre dans la flamme",
+        "jupiter": "Cadeau : vision idéaliste puissante, capacité à inspirer les foules vers le bien",
+        "mars":    "Feu de transformation — Mars en Purva Bhadra = énergie radicale de purification",
+        "venus":   "Amour passionné et idéaliste — à ancrer dans la réalité sans le tuer",
+    },
+
+    # 26 — Uttara Bhadrapada (Poissons 3°20'–16°40') | Seigneur : Saturne
+    "Uttara Bhadrapada": {
+        "ketu":    "ROM de la sagesse océanique : l'âme sait tout mais ne dit rien — dissolution dans le passé",
+        "rahu":    "Dharma de la sagesse incarnée — extraire la sagesse des profondeurs pour la partager",
+        "saturn":  "Saturn exalté dans Uttara Bhadra : profondeur karmique maximale, sagesse des épreuves",
+        "chiron":  "Blessure de l'impuissance face à la souffrance collective — porter le monde sans pouvoir le sauver",
+        "lilith":  "Épreuve : accepter ses limites humaines sans renier sa profondeur divine",
+        "jupiter": "Cadeau : sagesse des profondeurs, accès aux vérités de l'âme universelle",
+        "mars":    "Guerrier de l'invisible — Mars protège les eaux profondes, défend le sacré",
+        "venus":   "Amour universel — compassion infinie, à équilibrer avec des frontières claires",
+    },
+
+    # 27 — Revati (Poissons 16°40'–30°) | Seigneur : Mercure
+    "Revati": {
+        "ketu":    "ROM de la dissolution : l'âme se perd, se dissout dans les autres, dans le rêve",
+        "rahu":    "Dharma de la guidance — devenir le passeur qui guide les autres vers la rive suivante",
+        "saturn":  "Ancrage dans le flux : Saturn tente de structurer l'insaisissable eau piscéenne",
+        "chiron":  "Blessure de l'abandon : avoir été laissé seul au bord du gouffre sans guide",
+        "lilith":  "Épreuve : ne pas se sacrifier pour guider — garder sa propre lumière en guidant",
+        "jupiter": "Cadeau : compassion universelle, capacité à guider les âmes perdues vers leur dharma",
+        "mars":    "Mars en fin de cycle — énergie diffuse à conscientiser avant le prochain Bélier",
+        "venus":   "Amour transpersonnel — à ne pas confondre avec la fusion — maintenir l'identité dans l'union",
+    },
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NODAL CYCLES — Cycles nodaux karmiques (Savepoints)
+# ══════════════════════════════════════════════════════════════════════════════
+
+NODAL_CYCLES = {
+    "return": {
+        "description": "Retour Nodal (~18,6 ans) — Reboot complet ROM/DHARMA",
+        "karma": (
+            "Moment de reconfiguration totale de l'axe karmique. "
+            "L'âme revient au point de départ de son cycle pour décider : "
+            "rejouer la même boucle ROM, ou s'engager pleinement dans son Dharma. "
+            "Choix conscient obligatoire — le plus puissant Savepoint de l'existence."
+        ),
+        "alternative": (
+            "Identifier le schéma ROM dominant des 18 dernières années. "
+            "Formuler l'engagement Dharma pour les 18 prochaines. "
+            "Activer la Porte Visible comme lieu de manifestation du nouveau cycle."
+        ),
+    },
+    "square": {
+        "description": "Carré Nodal (~9,3 ans) — Checkpoint tension boucle/update",
+        "karma": (
+            "Tension maximale entre l'ancien schéma (ROM ☋) et le nouvel appel (Dharma ☊). "
+            "L'âme est au carrefour : continuer la boucle ou effectuer la mise à jour. "
+            "Pression de friction identitaire (Pilier 6) souvent activée simultanément."
+        ),
+        "alternative": (
+            "Identifier quelle partie de la ROM résiste encore à la mise à jour. "
+            "La Porte Invisible est sous pression maximale — observer sans s'y engouffrer. "
+            "Le Stage (Porte Visible) attend l'action concrète de bascule."
+        ),
+    },
+    "opposition": {
+        "description": "Opposition Nodale (~9,3 ans) — Miroir karmique",
+        "karma": (
+            "L'axe nodal est en opposition directe avec sa position natale. "
+            "Tout ce qui a été évité dans la ROM se présente frontalement. "
+            "Les autres deviennent des miroirs du karma non intégré."
+        ),
+        "alternative": (
+            "Ce que l'autre te renvoie EST ta ROM non digérée. "
+            "Reprendre la blessure Chiron (RAM) pour transmuter la projection. "
+            "Orienter l'énergie vers le Dharma plutôt que vers le conflit extérieur."
+        ),
+    },
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HOUSE MEANINGS — Significations des maisons en Chandra Lagna
+# ══════════════════════════════════════════════════════════════════════════════
+
+HOUSE_MEANINGS = {
+    1:  {
+        "fr": "Identité, corps, présence au monde — le Soi incarné (Chandra Lagna)",
+        "en": "Identity, body, presence — the incarnated Self (Chandra Lagna)",
+        "stage_fr": "Se montrer tel qu'on est — incarner son identité sans masque",
+        "stage_en": "Show up as you are — embody identity without mask",
+    },
+    2:  {
+        "fr": "Ressources, voix, valeurs, lignée familiale — ce qu'on possède",
+        "en": "Resources, voice, values, family lineage — what one possesses",
+        "stage_fr": "Construire sa sécurité matérielle et nommer sa valeur",
+        "stage_en": "Build material security and name one's worth",
+    },
+    3:  {
+        "fr": "Communication, courage, fratrie, désirs immédiats — l'action locale",
+        "en": "Communication, courage, siblings, immediate desires — local action",
+        "stage_fr": "Agir courageusement dans son environnement proche",
+        "stage_en": "Act courageously in one's immediate environment",
+    },
+    4:  {
+        "fr": "Foyer, mère, racines, confort intérieur — le fondement",
+        "en": "Home, mother, roots, inner comfort — the foundation",
+        "stage_fr": "Créer un ancrage intérieur et extérieur stable",
+        "stage_en": "Create stable inner and outer grounding",
+    },
+    5:  {
+        "fr": "Créativité, amour romantique, enfants, intelligence — l'expression",
+        "en": "Creativity, romantic love, children, intelligence — expression",
+        "stage_fr": "Créer, jouer, aimer — exprimer son génie propre",
+        "stage_en": "Create, play, love — express one's unique genius",
+    },
+    6:  {
+        "fr": "Service, santé, obstacles, ennemis, dette karmique — la purification",
+        "en": "Service, health, obstacles, enemies, karmic debt — purification",
+        "stage_fr": "Transformer les obstacles en service — purifier le karma d'action",
+        "stage_en": "Transform obstacles into service — purify action karma",
+    },
+    7:  {
+        "fr": "Partenariats, mariage, contrats, l'autre comme miroir — la relation",
+        "en": "Partnerships, marriage, contracts, the other as mirror — relationship",
+        "stage_fr": "S'engager dans des relations d'égal à égal — voir soi dans l'autre",
+        "stage_en": "Engage in equal partnerships — see oneself in the other",
+    },
+    8:  {
+        "fr": "Transformation, mort, héritage, occulte, crise — la métamorphose",
+        "en": "Transformation, death, inheritance, occult, crisis — metamorphosis",
+        "stage_fr": "Traverser les crises sans les fuir — émerger transformé",
+        "stage_en": "Go through crises without fleeing — emerge transformed",
+    },
+    9:  {
+        "fr": "Philosophie, enseignement, père, voyages lointains, Dharma — la vision",
+        "en": "Philosophy, teaching, father, long journeys, Dharma — vision",
+        "stage_fr": "Enseigner sa sagesse — vivre selon ses principes les plus hauts",
+        "stage_en": "Teach one's wisdom — live by one's highest principles",
+    },
+    10: {
+        "fr": "Carrière, statut public, réputation, mission — le Stage karmique",
+        "en": "Career, public status, reputation, mission — the karmic Stage",
+        "stage_fr": "S'exposer publiquement dans sa mission — occuper son Stage",
+        "stage_en": "Show up publicly in one's mission — occupy one's Stage",
+    },
+    11: {
+        "fr": "Gains, réseaux, amis, aspirations collectives — la communauté",
+        "en": "Gains, networks, friends, collective aspirations — the community",
+        "stage_fr": "Contribuer au collectif — recevoir l'abondance du réseau",
+        "stage_en": "Contribute to the collective — receive the network's abundance",
+    },
+    12: {
+        "fr": "Isolement, spiritualité, pertes, archive karmique profonde — la dissolution",
+        "en": "Isolation, spirituality, losses, deep karmic archive — dissolution",
+        "stage_fr": "Intégrer la solitude comme ressource spirituelle — libérer les mémoires profondes",
+        "stage_en": "Integrate solitude as spiritual resource — release deep memories",
+    },
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LANGUAGE TEMPLATES — Prompts système bilingues
+# ══════════════════════════════════════════════════════════════════════════════
 
 SYSTEM_PROMPT_FR = """
 Tu es @siderealAstro13, une intelligence d'astrologie karmique védique sidérale.
@@ -223,19 +685,14 @@ TRANSIT ANALYSIS:
 """.strip()
 
 
-# ——— SELECTOR FUNCTION ———————————————————————————————————————————————————————
+# ══════════════════════════════════════════════════════════════════════════════
+# SELECTOR FUNCTION
+# ══════════════════════════════════════════════════════════════════════════════
 
 def get_system_prompt(user: dict) -> str:
     """
-    Returns the appropriate system prompt based on the user's language preference.
-    Reads 'lang' field from user profile dict (e.g. {'lang': 'en'}).
-    Defaults to French if not set or unrecognized.
-
-    Args:
-        user (dict): User profile from session/Google Sheets.
-
-    Returns:
-        str: The system prompt in the user's language.
+    Retourne le prompt système dans la langue du profil utilisateur.
+    Défaut : français.
     """
     lang = (user or {}).get("lang", "fr").strip().lower()
     if lang == "en":
@@ -243,7 +700,9 @@ def get_system_prompt(user: dict) -> str:
     return SYSTEM_PROMPT_FR
 
 
-# ——— LANGUAGE LABELS (for UI / logging) ——————————————————————————————————————
+# ══════════════════════════════════════════════════════════════════════════════
+# LANGUAGE LABELS
+# ══════════════════════════════════════════════════════════════════════════════
 
 SUPPORTED_LANGUAGES = {
     "fr": "Français",
@@ -253,7 +712,9 @@ SUPPORTED_LANGUAGES = {
 DEFAULT_LANG = "fr"
 
 
-# ——— PILIER 6 : FRICTION AXIS DETECTOR ———————————————————————————————————————
+# ══════════════════════════════════════════════════════════════════════════════
+# PILIER 6 — FRICTION AXIS DETECTOR
+# ══════════════════════════════════════════════════════════════════════════════
 
 ASPECT_ORBS = {
     "conjunction": 8.0,
@@ -302,13 +763,13 @@ FRICTION_LABELS = {
 
 
 def _angle_diff(a: float, b: float) -> float:
-    """Shortest angular distance between two ecliptic longitudes (0-180 deg)."""
+    """Distance angulaire minimale entre deux longitudes écliptiques (0-180°)."""
     diff = abs(a - b) % 360
     return diff if diff <= 180 else 360 - diff
 
 
 def _find_aspects(lon_a: float, lon_b: float) -> list:
-    """Return list of aspect names within orb between two longitudes."""
+    """Retourne la liste des aspects dans l'orbe entre deux longitudes."""
     diff = _angle_diff(lon_a, lon_b)
     found = []
     for name, angle in ASPECT_ANGLES.items():
@@ -319,32 +780,21 @@ def _find_aspects(lon_a: float, lon_b: float) -> list:
 
 def _detect_friction_axis(positions: dict, lang: str = "fr") -> dict:
     """
-    Detect and score the Identity Friction Axis (Pillar 6) from planetary positions.
+    Détecte et score l'Axe de Friction Identitaire (Pilier 6).
 
     Args:
-        positions (dict): Keyed by planet name (lowercase), value = dict with
-                          'lon_raw' (float, ecliptic degrees 0-360).
-                          Standard keys: 'venus', 'jupiter', 'mars', 'saturn'.
-                          Optional transit keys: 'transit_venus', 'transit_jupiter',
-                          'transit_mars', 'transit_saturn'.
-        lang (str): 'fr' or 'en' for output labels.
+        positions (dict): clés planète (lowercase), valeur = dict avec 'lon_raw' (float).
+                          Clés standard : 'venus', 'jupiter', 'mars', 'saturn'.
+                          Optionnel transit : 'transit_venus', etc.
+        lang (str): 'fr' ou 'en'.
 
     Returns:
-        dict: {
-            'aspects'         : list of {p1, p2, aspect, type, label},
-            'score_expansive' : int,
-            'score_resistant' : int,
-            'cross_friction'  : bool,
-            'summary'         : str,
-            'label'           : str  ('high'|'expansive'|'resistant'|'low'),
-            'prompt_block'    : str  (ready to inject into AI prompt)
-        }
+        dict: aspects, scores, summary, label, prompt_block.
     """
     L = FRICTION_LABELS.get(lang, FRICTION_LABELS["fr"])
     expansive = ["venus", "jupiter"]
     resistant = ["mars", "saturn"]
 
-    # Collect available longitudes (natal + optional transits)
     lons = {}
     for planet in expansive + resistant:
         for prefix in ("", "transit_"):
@@ -388,7 +838,6 @@ def _detect_friction_axis(positions: dict, lang: str = "fr") -> dict:
                     "label":  L[atype],
                 })
 
-    # Scoring & summary
     total = score_exp + score_res
     if total == 0:
         summary = L["none"]
@@ -406,7 +855,6 @@ def _detect_friction_axis(positions: dict, lang: str = "fr") -> dict:
         summary = L["summary_low"]
         label = "low"
 
-    # Prompt block ready for injection
     lines = [
         f"PILIER 6 - AXE DE FRICTION IDENTITAIRE"
         f" ({L['expansive']} vs {L['resistant']})"
