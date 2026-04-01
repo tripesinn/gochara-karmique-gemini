@@ -492,10 +492,22 @@ def geocode():
 def calculate():
     from astro_calc import calculate_transits
     from ai_interpret import get_synthesis
+    from profiles import check_and_increment_synthesis  # ← AJOUT
 
     profile = session.get("profile")
     if not profile:
         return jsonify({"error": "Non connecté"}), 401
+
+    # ── Vérification quota mensuel ────────────────────────────────────────────
+    pseudo = profile.get("pseudo", "")
+    quota = check_and_increment_synthesis(pseudo)
+    if not quota["allowed"]:
+        return jsonify({
+            "error": "quota_exceeded",
+            "message": "Tu as atteint ta limite de 3 synthèses ce mois-ci.",
+            "upgrade_url": "https://siderealastro13.com/upgrade"  # adapte l'URL
+        }), 429
+    # ─────────────────────────────────────────────────────────────────────────
 
     natal = {
         "name":   profile["name"],
