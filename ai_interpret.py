@@ -227,7 +227,7 @@ Applique le protocole en 4 étapes :
 
 3. L'ÉPREUVE KARMIQUE — Quel est le test de Lilith en cours ? Qu'est-ce qu'il rend insupportable ? Vers quoi il propulse ? Tu peux nommer ici les planètes et aspects pour créer le désir d'aller voir la carte.
 
-4. ALTERNATIVE DE CONSCIENCE + MISE EN SCÈNE — Formule la bascule intérieure. Ce que l'âme doit cesser. Ce qu'elle doit activer. La maison de la Voie de libération comme lieu de manifestation. Termine par UNE seule phrase directe et actionnable qui peut servir d'accroche email.
+4. ALTERNATIVE DE CONSCIENCE + MISE EN SCÈNE — Formule la bascule intérieure. Ce que l'âme doit cesser. Ce qu'elle doit activer. La maison de la Voie de libération comme lieu de manifestation. Termine par UNE seule phrase directe et actionnable.
 
 Développe chaque section en lecture d'âme cohérente, narrative, sans liste mécanique. Minimum 300 mots. Ne pas tronquer."""
 
