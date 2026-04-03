@@ -1,45 +1,63 @@
 <!DOCTYPE html>
-<html lang="{{ lang.code }}">
+<html lang="{{ lang.code if lang.code else 'fr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✦ Karmic Gochara</title>
+    <title>✦ {{ lang.title if lang.title else 'Karmic Gochara' }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;500&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Conservez vos styles CSS habituels ici */
-        :root { --bg: #0a0a08; --gold: #c9a84c; --text: #e8e4d8; }
-        body { background: var(--bg); color: var(--text); font-family: 'EB Garamond', serif; text-align: center; }
-        .login-card { border: 1px solid rgba(201,168,76,0.2); padding: 2rem; max-width: 400px; margin: 2rem auto; background: #111110; }
-        .login-input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: #000; border: 1px solid #2a2820; color: #fff; }
-        .btn-primary { background: var(--gold); border: none; padding: 0.8rem 1.5rem; cursor: pointer; font-weight: bold; }
-        .btn-secondary { background: transparent; border: 1px solid #2a2820; color: #8a8678; padding: 0.8rem 1.5rem; cursor: pointer; }
+        :root {
+            --bg: #0a0a08; --gold: #c9a84c; --text: #e8e4d8; --text-dim: #8a8678;
+            --border: #2a2820; --display: 'Cinzel', serif; --body: 'EB Garamond', serif;
+        }
+        body { background: var(--bg); color: var(--text); font-family: var(--body); margin: 0; text-align: center; }
+        header { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .hero-title { font-family: var(--display); font-size: clamp(2rem, 8vw, 3.5rem); margin-top: 10vh; text-transform: uppercase; }
+        .login-card { border: 1px solid rgba(201,168,76,0.2); padding: 2.5rem; max-width: 400px; margin: 3rem auto; background: #111110; }
+        .login-input { width: 100%; padding: 0.85rem; margin-bottom: 1.5rem; background: #000; border: 1px solid var(--border); color: #fff; outline: none; }
+        .btn-primary { background: var(--gold); border: none; padding: 0.85rem 1.5rem; cursor: pointer; font-family: var(--display); font-size: 0.7rem; width: 100%; margin-bottom: 10px; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.85rem 1.5rem; cursor: pointer; font-family: var(--display); font-size: 0.7rem; width: 100%; }
+        #app-section { display: none; padding: 2rem; }
+        .date-input { background: #111110; border: 1px solid var(--border); color: #fff; padding: 0.8rem; margin-bottom: 1rem; width: 100%; max-width: 300px; }
     </style>
 </head>
 <body>
 
-<header style="padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-    <div style="color: var(--gold); font-family: Cinzel;">KARMIC GOCHARA</div>
-    <select id="lang-select" onchange="setLang(this.value)" style="background: transparent; color: var(--gold); border: 1px solid var(--gold);">
-        {% for code, label in langs.items() %}
-        <option value="{{ code }}" {% if code == lang.code %}selected{% endif %}>{{ label }}</option>
+<header>
+    <div style="color: var(--gold); font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.2em;">KARMIC GOCHARA</div>
+    <select id="lang-select" onchange="setLang(this.value)" style="background: transparent; color: var(--gold); border: 1px solid var(--border); padding: 5px;">
+        {% for code, l in langs.items() %}
+        <option value="{{ code }}" {% if code == lang.code %}selected{% endif %}>{{ l.label }}</option>
         {% endfor %}
     </select>
 </header>
 
-<div id="hero-section">
-    <h1 style="font-family: Cinzel; font-size: 3rem; margin-top: 15vh;">TON <span style="color: var(--gold);">Karma</span><br>ÉCRIT DANS LES ÉTOILES</h1>
-    
+<div id="hero-section" style="{% if session_user %}display:none;{% endif %}">
+    <h1 class="hero-title">TON <span style="color: var(--gold);">Karma</span><br>ÉCRIT DANS LES ÉTOILES</h1>
     <div class="login-card">
-        <input id="pseudo-input" class="login-input" type="text" placeholder="Ton pseudo...">
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button class="btn-primary" onclick="login()">CONNEXION</button>
-            <button class="btn-secondary" onclick="register()">CRÉER UN PROFIL</button>
-        </div>
-        <div id="login-error" style="color: #c97a6b; margin-top: 10px; font-size: 0.9rem;"></div>
+        <input id="pseudo-input" class="login-input" type="text" placeholder="{{ lang.pseudo_ph if lang.pseudo_ph else 'Ton pseudo...' }}">
+        <button class="btn-primary" onclick="login()">{{ lang.login if lang.login else 'CONNEXION' }}</button>
+        <button class="btn-secondary" onclick="register()">{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}</button>
+        <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.85rem; font-style: italic;"></div>
+    </div>
+</div>
+
+<div id="app-section" style="{% if session_user %}display:block;{% endif %}">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
+        <span style="color: var(--gold); font-family: var(--display);">✦ {{ session_user }}</span>
+        <button onclick="logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">[ {{ lang.logout if lang.logout else 'Déconnexion' }} ]</button>
+    </div>
+    
+    <input type="date" id="transit-date" class="date-input" value="{{ today_iso }}">
+    <button class="btn-primary" style="max-width: 300px;" onclick="calculate()">{{ lang.calculate if lang.calculate else 'CALCULER' }}</button>
+
+    <div id="synthesis-box" style="margin-top: 3rem; text-align: left; display: none;">
+        <div id="synthesis-content" style="line-height: 1.8;"></div>
     </div>
 </div>
 
 <script>
-// Fonction pour changer la langue
 function setLang(code) {
     fetch('/set_lang', {
         method: 'POST',
@@ -48,7 +66,6 @@ function setLang(code) {
     }).then(() => location.reload());
 }
 
-// Fonction de connexion (Route Python: /login)
 function login() {
     const pseudo = document.getElementById('pseudo-input').value.trim();
     if (!pseudo) return;
@@ -59,15 +76,15 @@ function login() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.ok) { location.reload(); } // Recharge pour afficher l'app
+        if (data.ok) { location.reload(); } 
         else { document.getElementById('login-error').textContent = data.error; }
     });
 }
 
-// Fonction de création (Route Python: /register)
 function register() {
     const pseudo = document.getElementById('pseudo-input').value.trim();
     if (!pseudo) return;
+    // Note: Le backend attend 'pseudo' pour créer le profil
     fetch('/register', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -79,6 +96,8 @@ function register() {
         else { document.getElementById('login-error').textContent = data.error; }
     });
 }
-</script>
-</body>
-</html>
+
+function calculate() {
+    const date = document.getElementById('transit-date').value;
+    if (!date) return;
+    fetch('/calculate', {
