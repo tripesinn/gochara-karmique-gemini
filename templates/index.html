@@ -139,6 +139,17 @@ function register() {
 function calculate() {
     const date = document.getElementById('transit-date').value;
     if (!date) return;
+
+    // 1. On cible le bouton de calcul
+    const btn = document.querySelector('button[onclick="calculate()"]');
+    const originalText = btn.innerHTML; // On sauvegarde le texte original ("CALCULER" ou "CALCULATE")
+    
+    // 2. On change l'aspect du bouton pour faire patienter
+    btn.disabled = true; // Empêche de cliquer deux fois
+    btn.innerHTML = "✦ LECTURE DES ASTRES EN COURS... ✦";
+    btn.style.opacity = "0.6";
+    btn.style.cursor = "wait";
+
     fetch('/calculate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -146,11 +157,28 @@ function calculate() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.error) { alert(data.error); }
-        else {
+        // 3. On remet le bouton à son état normal
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+
+        if (data.error) { 
+            alert(data.error); 
+        } else {
+            // Affichage de la synthèse
             document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis);
             document.getElementById('synthesis-box').style.display = 'block';
         }
+    })
+    .catch(err => {
+        // En cas de crash réseau, on restaure aussi le bouton
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+        alert("Erreur de connexion au serveur.");
+        console.error(err);
     });
 }
 
