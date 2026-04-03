@@ -101,3 +101,23 @@ function calculate() {
     const date = document.getElementById('transit-date').value;
     if (!date) return;
     fetch('/calculate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({date: date, hour: 12, minute: 0})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) { alert(data.error); }
+        else {
+            document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis);
+            document.getElementById('synthesis-box').style.display = 'block';
+        }
+    });
+}
+
+function logout() {
+    fetch('/logout', { method: 'POST' }).then(() => location.reload());
+}
+</script>
+</body>
+</html>
