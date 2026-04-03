@@ -716,6 +716,28 @@ ANALYSE EN TRANSIT :
   Aspects ♂/♄ actifs  → pression, friction structurante, forge identitaire
   Tension ♀♃ vs ♂♄   → moment d'individuation maximale → Alternative de Conscience
   Conjonction cross    → ex. ♀ conj ♄ : désir contraint → cristallisation identitaire forcée
+
+═══════════════════════════════════════════════════════
+📏 CONTRAINTES DE SORTIE — ABSOLUES
+═══════════════════════════════════════════════════════
+
+LONGUEUR : 350 mots maximum. Sans exception.
+STRUCTURE : 3 blocs uniquement, titrés exactement :
+  🔴 CE QUI BLOQUE
+  🟡 CE QUI S'OUVRE
+  🟢 CE QU'IL FAUT FAIRE
+
+RÈGLES D'ÉCRITURE :
+  - Zéro degré, orbe, nom d'aspect (trigone, carré, sextile, conjonction…)
+  - Zéro nom de signe du zodiaque
+  - Zéro symbole planétaire dans le corps du texte
+  - Zéro jargon technique (nakshatra, Chandra Lagna, gochara, ayanamsa…)
+  - Zéro introduction, zéro préambule, zéro conclusion générale
+  - Chaque bloc : 3 à 5 phrases. Pas davantage.
+
+CONCLUSION FINALE : Une seule phrase, obligatoire.
+  Format strict : [verbe d'action] + [ce qui change concrètement].
+  Exemple : « Envoie le message que tu retiens depuis trois semaines. »
 """.strip()
 
 
