@@ -3,548 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- PWA -->
-<link rel="manifest" href="/static/manifest.json">
-<meta name="theme-color" content="#0a0a08">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Karmic Gochara">
-<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
-<title>✦ Karmic Gochara — @siderealAstro13</title>
+<title>✦ {{ ui.title if ui else 'Karmic Gochara' }}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;500&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 :root {
-  --bg: #0a0a08;
-  --bg2: #111110;
-  --bg3: #1a1a17;
-  --gold: #c9a84c;
-  --gold-dim: #8a6f2e;
-  --gold-light: #e8c97a;
-  --text: #e8e4d8;
-  --text-dim: #8a8678;
-  --text-muted: #4a4840;
-  --border: #2a2820;
-  --border-gold: rgba(201,168,76,0.2);
-  --serif: 'Cormorant Garamond', Georgia, serif;
-  --display: 'Cinzel', serif;
-  --body: 'EB Garamond', Georgia, serif;
-  --radius: 2px;
+  --bg: #0a0a08; --bg2: #111110; --gold: #c9a84c; --gold-dim: #8a6f2e;
+  --gold-light: #e8c97a; --text: #e8e4d8; --text-dim: #8a8678;
+  --text-muted: #4a4840; --border: #2a2820; --border-gold: rgba(201,168,76,0.2);
+  --serif: 'Cormorant Garamond', Georgia, serif; --display: 'Cinzel', serif;
+  --body: 'EB Garamond', Georgia, serif; --radius: 2px;
 }
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { scroll-behavior: smooth; }
-
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--body);
-  font-size: 18px;
-  line-height: 1.7;
-  min-height: 100vh;
-  overflow-x: hidden;
+  background: var(--bg); color: var(--text); font-family: var(--body);
+  font-size: 18px; line-height: 1.7; min-height: 100vh; overflow-x: hidden;
 }
-
-/* ── NOISE OVERLAY ── */
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.4;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.4;
 }
-
-/* ── HEADER ── */
 header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: 1rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
   background: linear-gradient(to bottom, rgba(10,10,8,0.95), transparent);
 }
-
-.header-brand {
-  font-family: var(--display);
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  color: var(--gold);
-  text-transform: uppercase;
-}
-
-.header-tag {
-  font-family: var(--serif);
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  letter-spacing: 0.1em;
-}
-
-/* ── LANG SELECT ── */
-#lang-select {
-  background: transparent;
-  border: 1px solid var(--border-gold);
-  color: var(--gold);
-  font-family: var(--display);
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  padding: 0.3rem 0.6rem;
-  cursor: pointer;
-  border-radius: var(--radius);
-  appearance: none;
-}
-#lang-select option { background: var(--bg2); }
-
-/* ── HERO ── */
-.hero {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 6rem 2rem 4rem;
-  position: relative;
-}
-
-.hero-sigil {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 2rem;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 0.2s;
-}
-
-.hero-eyebrow {
-  font-family: var(--display);
-  font-size: 0.6rem;
-  letter-spacing: 0.3em;
-  color: var(--gold-dim);
-  text-transform: uppercase;
-  margin-bottom: 1.5rem;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 0.4s;
-}
-
-.hero-title {
-  font-family: var(--display);
-  font-size: clamp(2rem, 8vw, 3.5rem);
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: 0.05em;
-  color: var(--text);
-  margin-bottom: 0.5rem;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 0.6s;
-}
-
-.hero-title em {
-  font-family: var(--serif);
-  font-style: italic;
-  color: var(--gold);
-  font-weight: 300;
-}
-
-.hero-sub {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 1rem;
-  color: var(--text-dim);
-  margin-bottom: 2.5rem;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 0.8s;
-}
-
-.hero-divider {
-  width: 60px;
-  height: 1px;
-  background: var(--gold-dim);
-  margin: 0 auto 2.5rem;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 1s;
-}
-
-.hero-doctrine {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 1rem;
-  color: var(--text-dim);
-  line-height: 2;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 1.2s;
-}
-
-.hero-doctrine span { color: var(--gold); }
-
-/* ── LOGIN SECTION ── */
-#login-section {
-  padding: 4rem 1.5rem 6rem;
-  max-width: 420px;
-  margin: 0 auto;
-  opacity: 0;
-  animation: fadeUp 1s ease forwards 1.4s;
-}
-
-.login-card {
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius);
-  padding: 2.5rem 2rem;
-  background: rgba(17,17,16,0.8);
-  backdrop-filter: blur(10px);
-}
-
-.login-label {
-  font-family: var(--display);
-  font-size: 0.6rem;
-  letter-spacing: 0.25em;
-  color: var(--gold-dim);
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 0.75rem;
-}
-
-.login-input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-  color: var(--text);
-  font-family: var(--serif);
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.3s;
-  margin-bottom: 1.5rem;
-}
-.login-input:focus { border-color: var(--gold-dim); }
-.login-input::placeholder { color: var(--text-muted); }
-
-.btn-row {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-primary {
-  flex: 1;
-  background: var(--gold);
-  color: var(--bg);
-  border: none;
-  padding: 0.85rem 1rem;
-  font-family: var(--display);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: background 0.2s, opacity 0.2s;
-}
-.btn-primary:hover { background: var(--gold-light); }
-
-.btn-secondary {
-  flex: 1;
-  background: transparent;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-  padding: 0.85rem 1rem;
-  font-family: var(--display);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: border-color 0.2s, color 0.2s;
-}
-.btn-secondary:hover { border-color: var(--gold-dim); color: var(--gold); }
-
-#login-error {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 0.85rem;
-  color: #c97a6b;
-  text-align: center;
-  margin-top: 1rem;
-  min-height: 1.4em;
-}
-
-/* ── MAIN APP ── */
-#app-section { display: none; padding: 5rem 0 4rem; }
-
-/* ── USER BAR ── */
-.user-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem 2rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2rem;
-}
-
-.user-name {
-  font-family: var(--display);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  color: var(--gold);
-  text-transform: uppercase;
-}
-
-.btn-logout {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-family: var(--display);
-  font-size: 0.55rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: all 0.2s;
-}
-.btn-logout:hover { border-color: var(--gold-dim); color: var(--gold); }
-
-/* ── DATE PICKER ── */
-.date-section {
-  padding: 0 1.5rem 2rem;
-}
-
-.section-label {
-  font-family: var(--display);
-  font-size: 0.6rem;
-  letter-spacing: 0.25em;
-  color: var(--gold-dim);
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  display: block;
-}
-
-.date-input {
-  width: 100%;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-  color: var(--text);
-  font-family: var(--serif);
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.3s;
-  color-scheme: dark;
-  margin-bottom: 1rem;
-}
-.date-input:focus { border-color: var(--gold-dim); }
-
-.btn-calculate {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--border-gold);
-  color: var(--gold);
-  padding: 1rem;
-  font-family: var(--display);
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: all 0.3s;
-}
-.btn-calculate:hover { background: rgba(201,168,76,0.08); }
-
-/* ── SYNTHESIS ── */
-.synthesis-section {
-  padding: 0 1.5rem;
-}
-
-#accroche-box {
-  display: none;
-  border-left: 2px solid var(--gold);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  background: rgba(201,168,76,0.04);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  animation: fadeIn 0.8s ease;
-}
-
-.accroche-text {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 1.1rem;
-  color: var(--gold-light);
-  line-height: 1.8;
-}
-
-#synthesis-box {
-  display: none;
-  animation: fadeIn 0.8s ease;
-}
-
-.synthesis-content {
-  font-family: var(--body);
-  font-size: 1rem;
-  color: var(--text);
-  line-height: 1.9;
-}
-
-.synthesis-content h1,
-.synthesis-content h2,
-.synthesis-content h3 {
-  font-family: var(--display);
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  color: var(--gold);
-  margin: 2rem 0 1rem;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-}
-
-.synthesis-content p { margin-bottom: 1.2rem; }
-
-.synthesis-content strong { color: var(--gold-light); font-weight: 400; }
-
-.synthesis-content em { font-style: italic; color: var(--text-dim); }
-
-/* ── ACTIONS ── */
-.action-row {
-  display: none;
-  gap: 0.75rem;
-  padding: 2rem 1.5rem;
-  flex-direction: column;
-}
-
-.btn-action {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: 0.85rem 1rem;
-  font-family: var(--display);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: all 0.2s;
-}
-.btn-action:hover { border-color: var(--gold-dim); color: var(--gold); }
-
-/* ── LOADING ── */
-#loading-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(10,10,8,0.85);
-  z-index: 200;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 1.5rem;
-  backdrop-filter: blur(4px);
-}
-
-.loading-sigil {
-  width: 60px;
-  height: 60px;
-  animation: rotateSlow 8s linear infinite;
-}
-
-.loading-text {
-  font-family: var(--display);
-  font-size: 0.65rem;
-  letter-spacing: 0.3em;
-  color: var(--gold-dim);
-  text-transform: uppercase;
-}
-
-/* ── STATUS ── */
-#status-msg {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-align: center;
-  padding: 1rem 1.5rem;
-  min-height: 1.5em;
-}
-
-/* ── FOOTER ── */
-footer {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  border-top: 1px solid var(--border);
-  margin-top: 2rem;
-}
-
-.footer-brand {
-  font-family: var(--display);
-  font-size: 0.6rem;
-  letter-spacing: 0.25em;
-  color: var(--gold-dim);
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
-
-.footer-sub {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-/* ── BMC ── */
-.bmc-btn {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 50;
-  background: var(--gold);
-  color: var(--bg);
-  border: none;
-  padding: 0.6rem 1rem;
-  font-family: var(--display);
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border-radius: 2rem;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  box-shadow: 0 4px 20px rgba(201,168,76,0.2);
-  transition: opacity 0.2s;
-}
-.bmc-btn:hover { opacity: 0.85; }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes rotateSlow {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-/* ── SW ── */
+.header-brand { font-family: var(--display); font-size: 0.75rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; }
+#lang-select { background: transparent; border: 1px solid var(--border-gold); color: var(--gold); font-family: var(--display); font-size: 0.65rem; padding: 0.3rem; cursor: pointer; }
+.hero { min-height: 80svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6rem 2rem 2rem; }
+.hero-title { font-family: var(--display); font-size: clamp(2rem, 8vw, 3.5rem); margin-bottom: 0.5rem; }
+.hero-title em { font-family: var(--serif); font-style: italic; color: var(--gold); }
+#login-section { padding: 2rem 1.5rem; max-width: 420px; margin: 0 auto; }
+.login-card { border: 1px solid var(--border-gold); padding: 2.5rem 2rem; background: rgba(17,17,16,0.8); backdrop-filter: blur(10px); }
+.login-input { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 0.85rem; color: var(--text); margin-bottom: 1.5rem; }
+.btn-row { display: flex; gap: 0.75rem; }
+.btn-primary { flex: 1; background: var(--gold); color: var(--bg); border: none; padding: 0.85rem; cursor: pointer; font-family: var(--display); font-size: 0.65rem; text-transform: uppercase; }
+.btn-secondary { flex: 1; background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 0.85rem; cursor: pointer; font-family: var(--display); font-size: 0.65rem; text-transform: uppercase; }
+#app-section { display: none; padding: 6rem 0 4rem; }
+.user-bar { display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+.date-section { padding: 0 1.5rem 2rem; }
+.date-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); padding: 0.85rem; color: var(--text); color-scheme: dark; margin-bottom: 1rem; }
+.btn-calculate { width: 100%; background: transparent; border: 1px solid var(--border-gold); color: var(--gold); padding: 1rem; cursor: pointer; font-family: var(--display); font-size: 0.65rem; text-transform: uppercase; }
+.synthesis-section { padding: 0 1.5rem; }
+.synthesis-content { font-family: var(--body); line-height: 1.9; }
+.synthesis-content h2 { color: var(--gold); font-family: var(--display); font-size: 0.9rem; margin-top: 2rem; }
+#loading-overlay { display: none; position: fixed; inset: 0; background: rgba(10,10,8,0.9); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.loading-sigil { width: 50px; height: 50px; animation: rotate 8s linear infinite; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <div class="header-brand">Karmic Gochara</div>
-    <div class="header-tag">@siderealAstro13</div>
-  </div>
+  <div class="header-brand">Karmic Gochara</div>
   <select id="lang-select" onchange="setLang(this.value)">
     {% for code, label in langs.items() %}
     <option value="{{ code }}" {% if code == lang.code %}selected{% endif %}>{{ label }}</option>
@@ -552,279 +65,121 @@ footer {
   </select>
 </header>
 
-<!-- LOADING -->
 <div id="loading-overlay">
-  <svg class="loading-sigil" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="40" cy="40" r="36" stroke="#c9a84c" stroke-width="0.8" stroke-dasharray="4 6" opacity="0.4"/>
-    <circle cx="40" cy="40" r="26" stroke="#c9a84c" stroke-width="0.8" opacity="0.6"/>
-    <circle cx="40" cy="40" r="16" stroke="#c9a84c" stroke-width="0.8" opacity="0.8"/>
-    <line x1="40" y1="4" x2="40" y2="76" stroke="#c9a84c" stroke-width="0.5" opacity="0.3"/>
-    <line x1="4" y1="40" x2="76" y2="40" stroke="#c9a84c" stroke-width="0.5" opacity="0.3"/>
-    <circle cx="40" cy="4" r="2" fill="#c9a84c"/>
-    <circle cx="40" cy="76" r="2" fill="#c9a84c" opacity="0.4"/>
-    <circle cx="4" cy="40" r="2" fill="#c9a84c" opacity="0.4"/>
-    <circle cx="76" cy="40" r="2" fill="#c9a84c"/>
-  </svg>
-  <div class="loading-text">{{ ui.calculating if ui else 'Lecture des astres…' }}</div>
+  <svg class="loading-sigil" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="30" stroke="#c9a84c" stroke-width="1" stroke-dasharray="4 4" /></svg>
+  <div style="font-family: var(--display); font-size: 0.6rem; color: var(--gold);">{{ ui.calc_karmic if ui else 'Lecture des astres...' }}</div>
 </div>
 
-<!-- HERO + LOGIN -->
-<div id="hero-section">
+<div id="hero-section" style="{% if session_user %}display:none;{% endif %}">
   <section class="hero">
-    <!-- Sigil SVG -->
-    <svg class="hero-sigil" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="40" r="36" stroke="#c9a84c" stroke-width="0.8" stroke-dasharray="4 8" opacity="0.5"/>
-      <circle cx="40" cy="40" r="26" stroke="#c9a84c" stroke-width="0.8" opacity="0.7"/>
-      <line x1="40" y1="14" x2="40" y2="66" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
-      <line x1="14" y1="40" x2="66" y2="40" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
-      <circle cx="40" cy="40" r="3" fill="#c9a84c" opacity="0.9"/>
-      <circle cx="40" cy="14" r="1.5" fill="#c9a84c" opacity="0.6"/>
-      <circle cx="40" cy="66" r="1.5" fill="#c9a84c" opacity="0.4"/>
-    </svg>
-
-    <div class="hero-eyebrow">@siderealAstro13 · Doctrine Évolutive Synthétique</div>
-
     <h1 class="hero-title">Ton <em>Karma</em><br>écrit dans les étoiles</h1>
-
-    <p class="hero-sub">Astrologie Védique Sidérale · Chandra Lagna · DK Ayanamsa</p>
-
-    <div class="hero-divider"></div>
-
-    <div class="hero-doctrine">
-      Ton <span>Ketu</span> révèle la prison de mémoires passées.<br>
-      Ton <span>Chiron</span> est la clé qui ouvre la porte.<br>
-      Ton <span>Stage</span> est la scène qui t'attend.
-    </div>
+    <p style="color: var(--text-dim); font-style: italic;">{{ ui.subtitle if ui else 'Astrologie Védique Sidérale' }}</p>
   </section>
 
-  <!-- LOGIN -->
   <section id="login-section">
     <div class="login-card">
-      <label class="login-label" for="pseudo-input">{{ ui.pseudo_label if ui else 'Ton pseudo' }}</label>
-      <input
-        id="pseudo-input"
-        class="login-input"
-        type="text"
-        placeholder="{{ ui.pseudo_placeholder if ui else 'Entre ton pseudo…' }}"
-        autocomplete="username"
-        autofocus
-      >
+      <input id="pseudo-input" class="login-input" type="text" placeholder="{{ ui.pseudo_ph if ui else 'Ton pseudo...' }}">
       <div class="btn-row">
         <button class="btn-primary" onclick="login()">{{ ui.login if ui else 'Connexion' }}</button>
-        <button class="btn-secondary" onclick="createProfile()">{{ ui.create if ui else 'Créer un profil' }}</button>
+        <button class="btn-secondary" onclick="register()">{{ ui.create_profile if ui else 'Créer' }}</button>
       </div>
-      <div id="login-error"></div>
+      <div id="login-error" style="color: #c97a6b; font-size: 0.8rem; margin-top: 1rem; text-align: center;"></div>
     </div>
   </section>
 </div>
 
-<!-- APP -->
-<div id="app-section">
+<div id="app-section" style="{% if session_user %}display:block;{% endif %}">
   <div class="user-bar">
-    <div class="user-name" id="display-pseudo"></div>
-    <button class="btn-logout" onclick="logout()">{{ ui.logout if ui else 'Déconnexion' }}</button>
+    <div class="user-name" id="display-pseudo" style="font-family: var(--display); color: var(--gold);">{{ session_user }}</div>
+    <button onclick="logout()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">{{ ui.logout if ui else 'Déconnexion' }}</button>
   </div>
 
   <div class="date-section">
-    <label class="section-label" for="transit-date">{{ ui.transit_date if ui else 'Date de transit' }}</label>
-    <input type="date" id="transit-date" class="date-input">
-    <button class="btn-calculate" onclick="calculate()">
-      ✦ {{ ui.calculate if ui else 'Lire les transits' }}
-    </button>
+    <input type="date" id="transit-date" class="date-input" value="{{ today_iso }}">
+    <button class="btn-calculate" onclick="calculate()">✦ {{ ui.calculate if ui else 'Calculer' }}</button>
   </div>
-
-  <div id="status-msg"></div>
 
   <div class="synthesis-section">
-    <div id="accroche-box">
-      <div class="accroche-text" id="accroche-content"></div>
-    </div>
-    <div id="synthesis-box">
+    <div id="synthesis-box" style="display:none;">
       <div class="synthesis-content" id="synthesis-content"></div>
+      <button onclick="sendEmail()" style="margin-top:2rem; width:100%; padding:1rem; background:none; border:1px solid var(--border); color:var(--gold); cursor:pointer;">
+        ✉ {{ ui.send_email if ui else 'Recevoir par email' }}
+      </button>
     </div>
-  </div>
-
-  <div class="action-row" id="action-row">
-    <button class="btn-action" onclick="sendEmail()">✉ {{ ui.send_email if ui else 'Recevoir par email' }}</button>
   </div>
 </div>
 
-<footer>
-  <div class="footer-brand">Karmic Gochara</div>
-  <div class="footer-sub">@siderealAstro13 · Doctrine Évolutive Synthétique</div>
-</footer>
-
-<a class="bmc-btn" href="https://buymeacoffee.com/jerome6" target="_blank" rel="noopener">
-  ☕ Buy me a coffee
-</a>
-
 <script>
-let lastSynthesisText = '';
-let lastTransitDate = '';
-let currentUser = null;
+let currentUser = "{{ session_user }}";
 
-// ── LANG ──
 function setLang(code) {
-  fetch('/set_lang', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({lang: code})
-  }).then(() => location.reload());
+  fetch('/set_lang', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({lang: code}) })
+  .then(() => location.reload());
 }
 
-// ── LOGIN ──
 function login() {
   const pseudo = document.getElementById('pseudo-input').value.trim();
   if (!pseudo) return;
   showLoading(true);
-  fetch('/calculate', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({pseudo: pseudo, action: 'login'})
-  })
-  .then(r => r.json())
-  .then(data => {
+  fetch('/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pseudo: pseudo}) })
+  .then(r => r.json()).then(data => {
     showLoading(false);
-    if (data.error) {
-      document.getElementById('login-error').textContent = data.error;
-    } else {
-      currentUser = pseudo;
-      showApp(pseudo);
-    }
-  })
-  .catch(() => { showLoading(false); });
-}
-
-function createProfile() {
-  const pseudo = document.getElementById('pseudo-input').value.trim();
-  if (!pseudo) return;
-  showLoading(true);
-  fetch('/calculate', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({pseudo: pseudo, action: 'create'})
-  })
-  .then(r => r.json())
-  .then(data => {
-    showLoading(false);
-    if (data.error) {
-      document.getElementById('login-error').textContent = data.error;
-    } else if (data.redirect) {
-      window.location.href = data.redirect;
-    } else {
-      currentUser = pseudo;
-      showApp(pseudo);
-    }
-  })
-  .catch(() => { showLoading(false); });
-}
-
-function logout() {
-  fetch('/logout', {method: 'POST'}).then(() => {
-    currentUser = null;
-    document.getElementById('hero-section').style.display = '';
-    document.getElementById('app-section').style.display = 'none';
-    document.getElementById('pseudo-input').value = '';
-    document.getElementById('login-error').textContent = '';
-    document.getElementById('synthesis-box').style.display = 'none';
-    document.getElementById('accroche-box').style.display = 'none';
-    document.getElementById('action-row').style.display = 'none';
+    if (!data.ok) { document.getElementById('login-error').textContent = data.error; }
+    else { location.reload(); }
   });
 }
 
-function showApp(pseudo) {
-  document.getElementById('hero-section').style.display = 'none';
-  document.getElementById('app-section').style.display = 'block';
-  document.getElementById('display-pseudo').textContent = pseudo;
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('transit-date').value = today;
+function register() {
+  const pseudo = document.getElementById('pseudo-input').value.trim();
+  if (!pseudo) return;
+  showLoading(true);
+  fetch('/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pseudo: pseudo}) })
+  .then(r => r.json()).then(data => {
+    showLoading(false);
+    if (!data.ok) { document.getElementById('login-error').textContent = data.error; }
+    else { location.reload(); }
+  });
 }
 
-// ── CALCULATE ──
+function logout() {
+  fetch('/logout', { method: 'POST' }).then(() => location.reload());
+}
+
 function calculate() {
   const date = document.getElementById('transit-date').value;
   if (!date) return;
-  lastTransitDate = date;
   showLoading(true);
-  setStatus('');
-
   fetch('/calculate', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({pseudo: currentUser, date: date, action: 'gochara'})
+    body: JSON.stringify({ date: date, hour: 12, minute: 0 })
   })
-  .then(r => r.json())
-  .then(data => {
+  .then(r => r.json()).then(data => {
     showLoading(false);
-    if (data.error) {
-      setStatus(data.error);
-    } else {
-      if (data.accroche) {
-        document.getElementById('accroche-content').textContent = data.accroche;
-        document.getElementById('accroche-box').style.display = 'block';
-      }
-      if (data.synthesis || data.reply) {
-        const text = data.synthesis || data.reply;
-        lastSynthesisText = text;
-        document.getElementById('synthesis-content').innerHTML = marked.parse(text);
-        document.getElementById('synthesis-box').style.display = 'block';
-        document.getElementById('action-row').style.display = 'flex';
-      }
+    if (data.error) { alert(data.error); }
+    else {
+      document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis);
+      document.getElementById('synthesis-box').style.display = 'block';
     }
-  })
-  .catch(e => { showLoading(false); setStatus('Erreur réseau.'); });
+  });
 }
 
-// ── EMAIL ──
 function sendEmail() {
-  if (!lastSynthesisText) return;
+  const synthesis = document.getElementById('synthesis-content').innerText;
+  const date = document.getElementById('transit-date').value;
   showLoading(true);
   fetch('/send_synthesis', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      pseudo: currentUser,
-      synthesis: lastSynthesisText,
-      date: lastTransitDate
-    })
+    body: JSON.stringify({ synthesis: synthesis, date: date })
   })
-  .then(r => r.json())
-  .then(data => {
+  .then(r => r.json()).then(data => {
     showLoading(false);
-    setStatus(data.message || data.error || '');
-  })
-  .catch(() => { showLoading(false); });
-}
-
-// ── UTILS ──
-function showLoading(show) {
-  document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-}
-
-function setStatus(msg) {
-  document.getElementById('status-msg').textContent = msg;
-}
-
-// ── SESSION CHECK ──
-{% if session_user %}
-currentUser = "{{ session_user }}";
-showApp(currentUser);
-{% endif %}
-
-// ── SW ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/static/sw.js')
-      .catch(e => console.log('SW error', e));
+    alert(data.ok ? "Email envoyé !" : "Erreur : " + data.error);
   });
 }
 
-// ── ENTER KEY ──
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    if (document.getElementById('hero-section').style.display !== 'none') login();
-  }
-});
+function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
 </script>
 </body>
 </html>
