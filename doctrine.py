@@ -401,6 +401,132 @@ NODAL_CYCLES = {
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SADE SATI — Transit de Saturne autour du Chandra Lagna (~7,5 ans)
+# Détection : Saturne dans signe(Lune)-1, signe(Lune), signe(Lune)+1
+# ══════════════════════════════════════════════════════════════════════════════
+
+SADE_SATI = {
+    "definition": (
+        "Sade Sati désigne le transit de Saturne sur les trois signes consécutifs "
+        "encadrant la Lune natale : le signe précédent (Phase 1), le signe de la Lune "
+        "(Phase 2), et le signe suivant (Phase 3). Durée totale : ~7,5 ans. "
+        "En orientation Chandra Lagna, ce transit est le phénomène de pression "
+        "saturnienne le plus direct sur l'identité émotionnelle et mémorielle de l'âme."
+    ),
+
+    "phase_1": {
+        "name":    "Phase 1 — Approche (Saturne dans le signe précédant la Lune)",
+        "house":   "Maison 12 depuis le Chandra Lagna",
+        "fr": (
+            "Saturne active la maison 12 lunaire — réservoir des mémoires karmiques profondes. "
+            "Dissolution progressive des structures anciennes, émergence de mémoires refoulées, "
+            "retrait du monde comme préparation intérieure. "
+            "Fenêtre akashique majeure : ce qui monte à la surface est ce qui doit être libéré. "
+            "Risque : s'enfermer dans la Porte Invisible par épuisement ou isolement défensif. "
+            "Alternative de Conscience : accueillir la dissolution comme nettoyage karmique, "
+            "non comme effondrement."
+        ),
+        "en": (
+            "Saturn activates the 12th lunar house — reservoir of deep karmic memories. "
+            "Progressive dissolution of old structures, emergence of repressed memories, "
+            "withdrawal from the world as inner preparation. "
+            "Major akashic window: what surfaces now is what must be released. "
+            "Risk: locking into the Invisible Door through exhaustion or defensive isolation. "
+            "Alternative de Conscience: receive dissolution as karmic cleansing, not collapse."
+        ),
+        "dasha_cross": (
+            "Si Dasha Saturne actif simultanément : pression maximale sur maison 12 lunaire — "
+            "double activation des archives akashiques. Période de retraite ou de crise profonde "
+            "quasi inévitable, mais potentiel de libération karmique exceptionnel."
+        ),
+        "piliers": ["Pilier 4 (Maison 12)", "Pilier 5 (D60 — archives akashiques)"],
+    },
+
+    "phase_2": {
+        "name":    "Phase 2 — Pic (Saturne sur la Lune natale / Chandra Lagna)",
+        "house":   "Maison 1 depuis le Chandra Lagna",
+        "fr": (
+            "Saturne transite directement sur la Lune natale — confrontation frontale à "
+            "l'identité émotionnelle, au corps, à la présence au monde. "
+            "Phase la plus intense : remise en question profonde du Chandra Lagna lui-même. "
+            "Le nakshatra de la Lune natale est sous pression saturnienne directe — "
+            "ses schémas ROM sont compressés jusqu'à l'insupportable. "
+            "Risque : dépression, sentiment d'effondrement identitaire, repli dans la ROM. "
+            "Alternative de Conscience : laisser Saturne restructurer l'identité émotionnelle — "
+            "ce qui s'effondre n'était pas le Soi réel."
+        ),
+        "en": (
+            "Saturn transits directly over the natal Moon — frontal confrontation with "
+            "emotional identity, body, and presence in the world. "
+            "Most intense phase: deep questioning of the Chandra Lagna itself. "
+            "The natal Moon's nakshatra is under direct saturnine pressure — "
+            "its ROM patterns are compressed to the unbearable. "
+            "Risk: depression, sense of identity collapse, retreat into ROM. "
+            "Alternative de Conscience: let Saturn restructure emotional identity — "
+            "what collapses was not the real Self."
+        ),
+        "dasha_cross": (
+            "Si Dasha Saturne actif simultanément : moment de transformation identitaire "
+            "le plus exigeant de l'existence. Risque maximal de boucle ROM par épuisement. "
+            "Potentiel maximal de reconstruction dharmatique si le travail Chiron est engagé."
+        ),
+        "nakshatra_note": (
+            "Lire le nakshatra de la Lune natale à la clé : c'est la texture exacte de la "
+            "pression subie et de la restructuration en cours. "
+            "Ex. Lune en Ashwini : Saturn comprime l'impulsivité et force la patience initiatique."
+        ),
+        "piliers": ["Pilier 1 (Chandra Lagna)", "Pilier 4 (Saturne)", "Pilier 3 (Chiron — fenêtre RAM)"],
+    },
+
+    "phase_3": {
+        "name":    "Phase 3 — Intégration (Saturne dans le signe suivant la Lune)",
+        "house":   "Maison 2 depuis le Chandra Lagna",
+        "fr": (
+            "Saturne active la maison 2 lunaire — ressources, voix, valeurs, lignée. "
+            "Phase de reconstruction : ce qui a été défait en Phase 1-2 doit maintenant "
+            "être rebâti sur des bases plus authentiques. "
+            "Pression sur la parole, les ressources matérielles et la définition de sa valeur. "
+            "Risque : reconstruire les mêmes structures anciennes par réflexe ROM. "
+            "Alternative de Conscience : nommer sa vraie valeur et construire une sécurité "
+            "ancrée dans le Dharma, non dans les anciens schémas."
+        ),
+        "en": (
+            "Saturn activates the 2nd lunar house — resources, voice, values, lineage. "
+            "Reconstruction phase: what was undone in Phases 1-2 must now be rebuilt "
+            "on more authentic foundations. "
+            "Pressure on speech, material resources, and self-worth definition. "
+            "Risk: rebuilding the same old structures through ROM reflex. "
+            "Alternative de Conscience: name one's true worth and build security "
+            "rooted in Dharma, not in old patterns."
+        ),
+        "dasha_cross": (
+            "Si Dasha Jupiter actif simultanément : fenêtre favorable à la reconstruction — "
+            "Jupiter ouvre les cadeaux karmiques pendant que Saturne structure la maison 2. "
+            "Combinaison productive si le travail des phases précédentes a été accompli."
+        ),
+        "piliers": ["Pilier 4 (Jupiter / Saturn)", "Pilier 1 (Axe nodal — réorientation ressources)"],
+    },
+
+    "detection_note": (
+        "Détection technique : comparer la longitude de Saturne transit avec le signe de la "
+        "Lune natale (Whole Sign). "
+        "Phase 1 : signe(Saturne) == signe(Lune) - 1. "
+        "Phase 2 : signe(Saturne) == signe(Lune). "
+        "Phase 3 : signe(Saturne) == signe(Lune) + 1. "
+        "Croiser avec le Dasha/Antardasha actif et les transits nodaux pour évaluer "
+        "l'intensité globale de la période."
+    ),
+
+    "rahu_ketu_cross": (
+        "Si Sade Sati coïncide avec un transit nodal majeur (Rahu ou Ketu sur la Lune, "
+        "ou retour/carré nodal) : période de mutation karmique exceptionnelle. "
+        "La pression saturnienne sur le Chandra Lagna combinée à l'activation nodale "
+        "force une reconfiguration complète de l'axe ROM/DHARMA."
+    ),
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # HOUSE MEANINGS — Significations des maisons en Chandra Lagna
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -507,8 +633,9 @@ Tu ne dilues jamais l'analyse. Tu vas au bout de chaque section sans jamais tron
 
 ⚸  LILITH = ÉPREUVE KARMIQUE (Karmic Trial)
    Déclencheur système entre ROM et RAM.
-   Rend le confinement dans la Porte Invisible insupportable.
-   Force le basculement vers le Dharma ☊.
+   Son nakshatra et sa maison depuis le Chandra Lagna précisent le registre de vie
+   où la pression karmique atteint son point de rupture —
+   créant la rupture qui force le mouvement vers le nakshatra de Rahu.
 
 ♄/♅ SATURNE/URANUS = PORTES
    Porte Visible  = mi-point petit arc ♄↔♅ → lieu de résolution consciente, le STAGE.
@@ -556,6 +683,13 @@ DIVISIONNELS VÉDIQUES (Amsas) :
   D60 Shastiamsa → archives akashiques, karma des incarnations profondes
 
 TEMPORALITÉ : Court terme (transits rapides) / Moyen terme (Jupiter, Saturne) / Long terme (Nœuds, cycles nodaux)
+
+SADE SATI : Transit de Saturne sur les 3 signes autour de la Lune natale (~7,5 ans).
+  Phase 1 (signe précédant la Lune) → maison 12 lunaire : dissolution, archives akashiques
+  Phase 2 (signe de la Lune)        → maison 1 lunaire  : pic, restructuration identitaire
+  Phase 3 (signe suivant la Lune)   → maison 2 lunaire  : reconstruction des ressources
+  Croiser systématiquement avec le Dasha/Antardasha actif et les transits nodaux.
+  Sade Sati + Dasha Saturne = pression maximale. Sade Sati + transit nodal = mutation karmique complète.
 
 ═══════════════════════════════════════════════════════
 🔥 PILIER 6 : L'AXE DE FRICTION IDENTITAIRE
@@ -607,8 +741,9 @@ You never dilute your analysis. You complete every section without truncation.
    Chiron is the key ⚷ : it unlocks the RAM buffer for transmutation.
 
 ⚸  LILITH = KARMIC TRIAL — system trigger between ROM and RAM.
-   Makes confinement in the Invisible Door unbearable.
-   Forces the shift toward Dharma ☊.
+   Her nakshatra and house from Chandra Lagna specify the life domain
+   where karmic pressure reaches its breaking point —
+   creating the rupture that forces movement toward the nakshatra of Rahu.
 
 ♄/♅ SATURN/URANUS = THE DOORS
    Visible Door  = short-arc midpoint ♄↔♅ → conscious resolution zone, the STAGE.
@@ -656,6 +791,13 @@ VEDIC DIVISIONALS (Amsas):
   D60 Shastiamsa → akashic records, karma from deep past incarnations
 
 TEMPORALITY: Short-term (fast transits) / Mid-term (Jupiter, Saturn) / Long-term (Nodes, nodal cycles)
+
+SADE SATI: Saturn transit over the 3 signs surrounding the natal Moon (~7.5 years).
+  Phase 1 (sign before Moon) → 12th lunar house : dissolution, akashic archive activation
+  Phase 2 (Moon's sign)      → 1st lunar house  : peak, emotional identity restructuring
+  Phase 3 (sign after Moon)  → 2nd lunar house  : reconstruction of resources and values
+  Always cross with active Dasha/Antardasha and nodal transits.
+  Sade Sati + Saturn Dasha = maximum pressure. Sade Sati + nodal transit = full karmic mutation.
 
 ═══════════════════════════════════════════════════════
 🔥 PILLAR 6 : THE IDENTITY FRICTION AXIS
