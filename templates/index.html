@@ -35,12 +35,20 @@
 
 <div id="hero-section" style="{% if session_user %}display:none;{% endif %}">
     <h1 class="hero-title">TON <span style="color: var(--gold);">Karma</span><br>ÉCRIT DANS LES ÉTOILES</h1>
-    <div class="login-card">
-        <input id="pseudo-input" class="login-input" type="text" placeholder="{{ lang.pseudo_ph if lang.pseudo_ph else 'Ton pseudo...' }}">
-        <button class="btn-primary" onclick="login()">{{ lang.login if lang.login else 'CONNEXION' }}</button>
-        <button class="btn-secondary" onclick="register()">{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}</button>
-        <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.85rem; font-style: italic;"></div>
+   <div class="login-card">
+    <input id="pseudo-input" class="login-input" type="text" placeholder="Ton pseudo...">
+    
+    <div id="registration-fields" style="display: none; border-top: 1px solid var(--border); pt-3; margin-top: 1rem; padding-top: 1rem;">
+        <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 10px;">DÉTAILS DE NAISSANCE</p>
+        <input id="birth-date" class="login-input" type="date">
+        <input id="birth-time" class="login-input" type="time">
+        <input id="birth-city" class="login-input" type="text" placeholder="Ville de naissance">
     </div>
+
+    <button id="login-btn" class="btn-primary" onclick="login()">CONNEXION</button>
+    <button id="register-btn" class="btn-secondary" onclick="showRegister()">CRÉER UN PROFIL</button>
+    
+    <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.85rem; font-style: italic;"></div>
 </div>
 
 <div id="app-section" style="{% if session_user %}display:block;{% endif %}">
