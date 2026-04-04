@@ -15,11 +15,13 @@
         header { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
         .hero-title { font-family: var(--display); font-size: clamp(2rem, 8vw, 3.5rem); margin-top: 10vh; text-transform: uppercase; }
         .login-card { border: 1px solid rgba(201,168,76,0.2); padding: 2.5rem; max-width: 400px; margin: 3rem auto; background: #111110; }
-        .login-input { width: 100%; padding: 0.85rem; margin-bottom: 1.5rem; background: #000; border: 1px solid var(--border); color: #fff; outline: none; }
-        .btn-primary { background: var(--gold); border: none; padding: 0.85rem 1.5rem; cursor: pointer; font-family: var(--display); font-size: 0.7rem; width: 100%; margin-bottom: 10px; }
+        .login-input { width: 100%; padding: 0.85rem; margin-bottom: 1.5rem; background: #000; border: 1px solid var(--border); color: #fff; outline: none; box-sizing: border-box; }
+        .btn-primary { background: var(--gold); border: none; padding: 0.85rem 1.5rem; cursor: pointer; font-family: var(--display); font-size: 0.7rem; width: 100%; margin-bottom: 10px; transition: opacity 0.3s; }
         .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.85rem 1.5rem; cursor: pointer; font-family: var(--display); font-size: 0.7rem; width: 100%; }
         #app-section { display: none; padding: 2rem; }
         .date-input { background: #111110; border: 1px solid var(--border); color: #fff; padding: 0.8rem; margin-bottom: 1rem; width: 100%; max-width: 300px; }
+        .registration-area { display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: left; }
+        .label-small { font-size: 0.7rem; color: var(--gold); font-family: var(--display); margin-bottom: 5px; display: block; letter-spacing: 0.1em; }
     </style>
 </head>
 <body>
@@ -35,20 +37,26 @@
 
 <div id="hero-section" style="{% if session_user %}display:none;{% endif %}">
     <h1 class="hero-title">TON <span style="color: var(--gold);">Karma</span><br>ÉCRIT DANS LES ÉTOILES</h1>
-   <div class="login-card">
-    <input id="pseudo-input" class="login-input" type="text" placeholder="Ton pseudo...">
     
-    <div id="registration-fields" style="display: none; border-top: 1px solid var(--border); pt-3; margin-top: 1rem; padding-top: 1rem;">
-        <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 10px;">DÉTAILS DE NAISSANCE</p>
-        <input id="birth-date" class="login-input" type="date">
-        <input id="birth-time" class="login-input" type="time">
-        <input id="birth-city" class="login-input" type="text" placeholder="Ville de naissance">
-    </div>
+    <div class="login-card">
+        <input id="pseudo-input" class="login-input" type="text" placeholder="{{ lang.pseudo_ph if lang.pseudo_ph else 'Ton pseudo...' }}">
+        
+        <div id="registration-fields" class="registration-area">
+            <span class="label-small">Date de Naissance</span>
+            <input id="birth-date" class="login-input" type="date">
+            
+            <span class="label-small">Heure de Naissance</span>
+            <input id="birth-time" class="login-input" type="time">
+            
+            <span class="label-small">Ville de Naissance</span>
+            <input id="birth-city" class="login-input" type="text" placeholder="Ex: Paris">
+        </div>
 
-    <button id="login-btn" class="btn-primary" onclick="login()">CONNEXION</button>
-    <button id="register-btn" class="btn-secondary" onclick="showRegister()">CRÉER UN PROFIL</button>
-    
-    <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.85rem; font-style: italic;"></div>
+        <button id="main-action-btn" class="btn-primary" onclick="login()">{{ lang.login if lang.login else 'CONNEXION' }}</button>
+        <button id="toggle-reg-btn" class="btn-secondary" onclick="toggleRegistration()">{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}</button>
+        
+        <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.85rem; font-style: italic;"></div>
+    </div>
 </div>
 
 <div id="app-section" style="{% if session_user %}display:block;{% endif %}">
@@ -74,18 +82,38 @@ function setLang(code) {
     }).then(() => location.reload());
 }
 
+// Bascule l'affichage entre Login et Inscription
+function toggleRegistration() {
+    const fields = document.getElementById('registration-fields');
+    const mainBtn = document.getElementById('main-action-btn');
+    const toggleBtn = document.getElementById('toggle-reg-btn');
+    const errDiv = document.getElementById('login-error');
+
+    if (fields.style.display === 'none' || fields.style.display === '') {
+        fields.style.display = 'block';
+        mainBtn.innerHTML = "S'INSCRIRE ET SE CONNECTER";
+        mainBtn.onclick = register;
+        toggleBtn.innerHTML = "RETOUR À LA CONNEXION";
+        errDiv.textContent = "";
+    } else {
+        fields.style.display = 'none';
+        mainBtn.innerHTML = "{{ lang.login if lang.login else 'CONNEXION' }}";
+        mainBtn.onclick = login;
+        toggleBtn.innerHTML = "{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}";
+        errDiv.textContent = "";
+    }
+}
+
 function login() {
     const pseudo = document.getElementById('pseudo-input').value.trim();
     const errDiv = document.getElementById('login-error');
     
-    // 1. Vérification si vide
     if (!pseudo) {
         errDiv.style.color = "#c97a6b";
         errDiv.textContent = "Veuillez entrer un pseudo.";
         return;
     }
 
-    // 2. Message de chargement
     errDiv.style.color = "var(--gold)";
     errDiv.textContent = "Connexion en cours...";
 
@@ -105,28 +133,36 @@ function login() {
     })
     .catch(err => {
         errDiv.style.color = "#c97a6b";
-        errDiv.textContent = "Erreur serveur. Vérifiez les logs Render.";
-        console.error("Erreur réseau:", err);
+        errDiv.textContent = "Erreur serveur.";
+        console.error(err);
     });
 }
 
 function register() {
     const pseudo = document.getElementById('pseudo-input').value.trim();
+    const birthDate = document.getElementById('birth-date').value;
+    const birthTime = document.getElementById('birth-time').value;
+    const birthCity = document.getElementById('birth-city').value.trim();
     const errDiv = document.getElementById('login-error');
     
-    if (!pseudo) {
+    if (!pseudo || !birthDate || !birthTime || !birthCity) {
         errDiv.style.color = "#c97a6b";
-        errDiv.textContent = "Veuillez entrer un pseudo pour créer un profil.";
+        errDiv.textContent = "Veuillez remplir toutes les coordonnées de naissance.";
         return;
     }
 
     errDiv.style.color = "var(--gold)";
-    errDiv.textContent = "Création en cours...";
+    errDiv.textContent = "Création du profil astral...";
 
     fetch('/register', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({pseudo: pseudo})
+        body: JSON.stringify({
+            pseudo: pseudo,
+            birth_date: birthDate,
+            birth_time: birthTime,
+            birth_city: birthCity
+        })
     })
     .then(r => r.json())
     .then(data => {
@@ -139,8 +175,7 @@ function register() {
     })
     .catch(err => {
         errDiv.style.color = "#c97a6b";
-        errDiv.textContent = "Erreur serveur. Vérifiez les logs Render.";
-        console.error("Erreur réseau:", err);
+        errDiv.textContent = "Erreur de connexion au serveur.";
     });
 }
 
@@ -148,15 +183,12 @@ function calculate() {
     const date = document.getElementById('transit-date').value;
     if (!date) return;
 
-    // 1. On cible le bouton de calcul
     const btn = document.querySelector('button[onclick="calculate()"]');
-    const originalText = btn.innerHTML; // On sauvegarde le texte original ("CALCULER" ou "CALCULATE")
+    const originalText = btn.innerHTML;
     
-    // 2. On change l'aspect du bouton pour faire patienter
-    btn.disabled = true; // Empêche de cliquer deux fois
+    btn.disabled = true;
     btn.innerHTML = "✦ LECTURE DES ASTRES EN COURS... ✦";
     btn.style.opacity = "0.6";
-    btn.style.cursor = "wait";
 
     fetch('/calculate', {
         method: 'POST',
@@ -165,28 +197,22 @@ function calculate() {
     })
     .then(r => r.json())
     .then(data => {
-        // 3. On remet le bouton à son état normal
         btn.disabled = false;
         btn.innerHTML = originalText;
         btn.style.opacity = "1";
-        btn.style.cursor = "pointer";
 
         if (data.error) { 
             alert(data.error); 
         } else {
-            // Affichage de la synthèse
             document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis);
             document.getElementById('synthesis-box').style.display = 'block';
         }
     })
     .catch(err => {
-        // En cas de crash réseau, on restaure aussi le bouton
         btn.disabled = false;
         btn.innerHTML = originalText;
         btn.style.opacity = "1";
-        btn.style.cursor = "pointer";
         alert("Erreur de connexion au serveur.");
-        console.error(err);
     });
 }
 
