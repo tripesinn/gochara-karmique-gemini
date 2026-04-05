@@ -361,7 +361,8 @@ def get_synthesis(chart_data: dict, user: dict = None, lang: str = "fr") -> str:
     lang_name = LANG_NAMES.get(lang, "English")
 
     if lang == "fr":
-        prompt = f"""Analyse siderealAstro13 des transits de {name} — {date} à {time}.
+        prompt = f"""LANGUE : français uniquement. Aucun mot anglais. Écris "socialement" pas "socially", "profondément" pas "deeply", etc.
+Analyse siderealAstro13 des transits de {name} — {date} à {time}.
 CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucun récapitulatif des positions natales, aucune introduction.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
