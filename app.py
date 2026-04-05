@@ -390,6 +390,11 @@ def service_worker():
     return send_from_directory("static", "sw.js", mimetype="application/javascript")
 
 
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy-policy.html")
+
+
 @app.route("/")
 def index():
     tz = pytz.timezone("Europe/Paris")
