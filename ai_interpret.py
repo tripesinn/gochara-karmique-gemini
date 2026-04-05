@@ -209,6 +209,71 @@ def _build_natal_context(user: dict) -> str:
     return "\n".join(lines) if lines else ""
 
 
+def _build_amsa_bloc(chart_data: dict, lang: str = "fr") -> str:
+    """
+    Formate les positions divisionnelles D9/D10/D60 des planètes clés
+    (natal uniquement — les Amsas décrivent la nature fixe de l'âme).
+    Retourne un bloc texte prêt à injecter dans le prompt.
+    """
+    natal = chart_data.get("natal", {})
+    if not natal:
+        return ""
+
+    # Planètes clés par Amsa
+    D9_PLANETS  = ["Lune ☽", "ASC ↑", "Nœud Nord ☊", "Nœud Sud ☋", "Vénus ♀", "Jupiter ♃"]
+    D10_PLANETS = ["Soleil ☀", "Saturne ♄", "Mars ♂", "Jupiter ♃", "MC ↑"]
+    D60_PLANETS = ["Lune ☽", "Soleil ☀", "Nœud Sud ☋", "Chiron ⚷", "Saturne ♄"]
+
+    def fmt(planet_key: str, amsa: str) -> str:
+        p = natal.get(planet_key)
+        if not p:
+            return None
+        data = p.get(amsa)
+        if not data:
+            return None
+        sign    = data.get("sign", "")
+        part    = data.get("part", "")
+        lord    = data.get("lord", "")   # D60 seulement
+        lord_s  = f" [{lord}]" if lord else ""
+        return f"  {planet_key:<22} {sign}{lord_s} (part {part})"
+
+    lines_d9  = [r for p in D9_PLANETS  if (r := fmt(p, "d9"))]
+    lines_d10 = [r for p in D10_PLANETS if (r := fmt(p, "d10"))]
+    lines_d60 = [r for p in D60_PLANETS if (r := fmt(p, "d60"))]
+
+    if not any([lines_d9, lines_d10, lines_d60]):
+        return ""
+
+    if lang == "en":
+        header  = "DIVISIONAL CHARTS (NATAL AMSAS)"
+        d9_lbl  = "D9 — Navamsha (dharma, soul purpose, marriage)"
+        d10_lbl = "D10 — Dashamsha (professional karma, public action)"
+        d60_lbl = "D60 — Shashtyamsha (karmic specificity, soul imprint)"
+        instr   = ("Use these Amsas to deepen the natal reading: "
+                   "the Navamsha sign refines the soul's incarnation dharma; "
+                   "the Dashamsha reveals the professional mission; "
+                   "the Shashtyamsha lord names the karmic sub-color of each planet.")
+    else:
+        header  = "CHARTS DIVISIONNELS (AMSAS NATAUX)"
+        d9_lbl  = "D9 — Navamsha (dharma, vocation de l'âme, mariage)"
+        d10_lbl = "D10 — Dashamsha (karma professionnel, action publique)"
+        d60_lbl = "D60 — Shashtyamsha (spécificité karmique, empreinte de l'âme)"
+        instr   = ("Utilise ces Amsas pour approfondir la lecture natale : "
+                   "le signe Navamsha affine le dharma d'incarnation de l'âme ; "
+                   "le Dashamsha révèle la mission professionnelle ; "
+                   "le seigneur Shashtyamsha nomme la sous-couleur karmique de chaque planète.")
+
+    bloc = f"\n{'─'*62}\n{header}\n{'─'*62}\n"
+    if lines_d9:
+        bloc += f"\n{d9_lbl}\n" + "\n".join(lines_d9) + "\n"
+    if lines_d10:
+        bloc += f"\n{d10_lbl}\n" + "\n".join(lines_d10) + "\n"
+    if lines_d60:
+        bloc += f"\n{d60_lbl}\n" + "\n".join(lines_d60) + "\n"
+    bloc += f"\n{instr}\n"
+    return bloc
+
+
 def _detect_nodal_cycle(user: dict, chart_data: dict) -> str:
     """
     Détecte si un cycle nodal est actif.
@@ -277,6 +342,7 @@ def get_synthesis(chart_data: dict, user: dict = None, lang: str = "fr") -> str:
     natal_context  = _build_natal_context(user)
     nodal_cycle    = _detect_nodal_cycle(user, chart_data)
     transit_frict  = _detect_transit_friction(chart_data, lang=lang)
+    amsa_bloc      = _build_amsa_bloc(chart_data, lang=lang)
     date           = chart_data.get("transit_date", "")
     time           = chart_data.get("transit_time", "")
     name           = user.get("name", "l'utilisateur")
@@ -288,7 +354,7 @@ def get_synthesis(chart_data: dict, user: dict = None, lang: str = "fr") -> str:
     if lang == "en":
         prompt = f"""siderealAstro13 transit analysis for {name} — {date} at {time}.
 INSTRUCTION: start directly with "## 1. KARMIC MEMORY". No preamble, no recap of natal positions, no introduction.
-{natal_bloc}{nodal_bloc}{frict_bloc}
+{natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
 Active aspects (with nakshatra themes if available):
 {aspects_text}
@@ -307,7 +373,7 @@ Develop each section as coherent soul-reading, narrative, no mechanical lists. M
     else:
         prompt = f"""Analyse siderealAstro13 des transits de {name} — {date} à {time}.
 CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucun récapitulatif des positions natales, aucune introduction.
-{natal_bloc}{nodal_bloc}{frict_bloc}
+{natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
 Aspects actifs (avec thèmes nakshatra si disponibles) :
 {aspects_text}

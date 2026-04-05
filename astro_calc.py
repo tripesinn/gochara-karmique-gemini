@@ -121,6 +121,92 @@ def lon_to_nakshatra(lon: float) -> dict:
     }
 
 
+# ── Amsas (charts divisionnels) ──────────────────────────────────────────────
+
+# D9 — Navamsha (9 parts de 3°20′ par signe)
+# Signe de départ selon l'élément du signe radical :
+#   Feu  (Bélier=0, Lion=4, Sagittaire=8)  → Bélier   (0)
+#   Terre(Taureau=1, Vierge=5, Capricorne=9) → Capricorne(9)
+#   Air  (Gémeaux=2, Balance=6, Verseau=10) → Balance  (6)
+#   Eau  (Cancer=3, Scorpion=7, Poissons=11)→ Cancer   (3)
+_D9_START = [0, 9, 6, 3, 0, 9, 6, 3, 0, 9, 6, 3]
+
+
+def lon_to_d9(lon: float) -> dict:
+    lon = lon % 360
+    sign_idx = int(lon / 30)
+    pos = lon % 30
+    nav_num = int(pos / (30.0 / 9))   # 0-8
+    d9_sign = (_D9_START[sign_idx] + nav_num) % 12
+    return {
+        "sign":     SIGNS[d9_sign],
+        "symbol":   SIGN_SYMBOLS[d9_sign],
+        "display":  f"{SIGN_SYMBOLS[d9_sign]} {SIGNS[d9_sign]}",
+        "part":     nav_num + 1,        # 1-9
+    }
+
+
+# D10 — Dashamsha (10 parts de 3° par signe)
+# Signes impairs (Bélier, Gémeaux… → index 0-based pair) : départ = signe radical
+# Signes pairs  (Taureau, Cancer… → index 0-based impair) : départ = 9e signe depuis lui
+def lon_to_d10(lon: float) -> dict:
+    lon = lon % 360
+    sign_idx = int(lon / 30)
+    pos = lon % 30
+    dasha_num = int(pos / 3.0)         # 0-9
+    if sign_idx % 2 == 0:              # signe impair (Bélier=1er=impair)
+        start = sign_idx
+    else:                              # signe pair
+        start = (sign_idx + 8) % 12
+    d10_sign = (start + dasha_num) % 12
+    return {
+        "sign":     SIGNS[d10_sign],
+        "symbol":   SIGN_SYMBOLS[d10_sign],
+        "display":  f"{SIGN_SYMBOLS[d10_sign]} {SIGNS[d10_sign]}",
+        "part":     dasha_num + 1,      # 1-10
+    }
+
+
+# D60 — Shashtyamsha (60 parts de 0°30′ par signe)
+# Signes impairs : départ Bélier ; signes pairs : départ Capricorne
+_D60_LORDS = [
+    "Ghora",          "Rakshasa",       "Deva",           "Kubera",
+    "Yaksha",         "Kinnara",        "Bhrashta",       "Kulaghna",
+    "Garuda",         "Agni",           "Maya",           "Apampathi",
+    "Marut",          "Kaala",          "Sarpa",          "Amrita",
+    "Indu",           "Mridu",          "Komala",         "Heramba",
+    "Brahma",         "Vishnu",         "Maheshwara",     "Deva",
+    "Ardra",          "Kalinasa",       "Kshiteesh",      "Kamalakara",
+    "Gulika",         "Mrityu",         "Kaala",          "Davagni",
+    "Ghora",          "Yama",           "Kantaka",        "Suddha",
+    "Amrita",         "Poorna Chandra", "Vishhadagdha",   "Kulanasha",
+    "Vamshakshaya",   "Utpata",         "Kaala",          "Saumya",
+    "Komala",         "Sheetala",       "Karaladamshtra", "Chandramukhi",
+    "Praveena",       "Kaala Pavaka",   "Dandayudha",     "Nirmala",
+    "Saumya",         "Krura",          "Atisheetala",    "Amrita",
+    "Payodhi",        "Brahma",         "Vishnu",         "Maheshwara",
+]  # 60 seigneurs
+
+
+def lon_to_d60(lon: float) -> dict:
+    lon = lon % 360
+    sign_idx = int(lon / 30)
+    pos = lon % 30
+    shasht_num = int(pos / 0.5)        # 0-59
+    if sign_idx % 2 == 0:              # signe impair → Bélier
+        start = 0
+    else:                              # signe pair → Capricorne
+        start = 9
+    d60_sign = (start + shasht_num) % 12
+    return {
+        "sign":     SIGNS[d60_sign],
+        "symbol":   SIGN_SYMBOLS[d60_sign],
+        "display":  f"{SIGN_SYMBOLS[d60_sign]} {SIGNS[d60_sign]}",
+        "part":     shasht_num + 1,    # 1-60
+        "lord":     _D60_LORDS[shasht_num],
+    }
+
+
 def lon_to_display(lon: float) -> str:
     lon = lon % 360
     idx = int(lon / 30)
@@ -207,6 +293,9 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
                 "nakshatra":  nak_data["nakshatra"],
                 "pada":       nak_data["pada"],
                 "nak_lord":   nak_data["lord"],
+                "d9":         lon_to_d9(planet_lon),
+                "d10":        lon_to_d10(planet_lon),
+                "d60":        lon_to_d60(planet_lon),
             }
         except Exception:
             positions[name] = None
@@ -225,6 +314,9 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
             "nakshatra":  nak_data["nakshatra"],
             "pada":       nak_data["pada"],
             "nak_lord":   nak_data["lord"],
+            "d9":         lon_to_d9(ks_lon),
+            "d10":        lon_to_d10(ks_lon),
+            "d60":        lon_to_d60(ks_lon),
         }
 
     # ── Moonrise Chart : ASC = début du signe de la Lune ─────────────────────
@@ -241,6 +333,9 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
             "nakshatra":  nak_data["nakshatra"],
             "pada":       nak_data["pada"],
             "nak_lord":   nak_data["lord"],
+            "d9":         lon_to_d9(moon_sign_start),
+            "d10":        lon_to_d10(moon_sign_start),
+            "d60":        lon_to_d60(moon_sign_start),
         }
 
     # ── MC ───────────────────────────────────────────────────────────────────
@@ -257,6 +352,9 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
             "nakshatra":  nak_data["nakshatra"],
             "pada":       nak_data["pada"],
             "nak_lord":   nak_data["lord"],
+            "d9":         lon_to_d9(mc_lon),
+            "d10":        lon_to_d10(mc_lon),
+            "d60":        lon_to_d60(mc_lon),
         }
     except Exception:
         pass
@@ -358,6 +456,9 @@ def calculate_transits(natal: dict, transit_loc: dict,
                     "pada":       v.get("pada", ""),
                     "nak_lord":   v.get("nak_lord", ""),
                     "lon_raw":    v.get("lon_raw", v.get("lon", 0)),
+                    "d9":         v.get("d9"),
+                    "d10":        v.get("d10"),
+                    "d60":        v.get("d60"),
                 }
         return result
 
