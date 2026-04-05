@@ -401,7 +401,7 @@ Apply the 4-step protocol:
 Develop each section as coherent soul-reading, narrative, no mechanical lists. Minimum 300 words. Do not truncate.
 LANGUAGE RULE: every single sentence must be in {lang_name}. No French or English words unless they are proper astrological terms (nakshatra names, ROM, RAM, Stage)."""
 
-    synthesis_model = os.environ.get("SYNTHESIS_MODEL", "claude-sonnet-4-6")
+    synthesis_model = os.environ.get("SYNTHESIS_MODEL", "claude-haiku-4-5-20251001")
     msg = _get_client().messages.create(
         model=synthesis_model,
         max_tokens=4000,
