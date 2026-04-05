@@ -10,3 +10,5 @@ services:
         sync: false          # À saisir manuellement dans Render
       - key: PYTHON_VERSION
         value: "3.11.0"
+      - key: CRON_SECRET
+        sync: false          # Token secret pour sécuriser /cron/daily

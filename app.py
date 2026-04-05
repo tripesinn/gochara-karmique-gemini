@@ -501,7 +501,8 @@ def index():
         lang=lang,
         ui=lang,  # On utilise 'lang' pour remplir 'ui'
         langs=LANGS,  # On envoie le dictionnaire complet pour la boucle for
-        session_user=session.get('pseudo', '')
+        session_user=session.get('pseudo', ''),
+        session_profile=session.get('profile', {}),
     )
 
 @app.route("/set_lang", methods=["POST"])
@@ -776,6 +777,96 @@ def send_synthesis():
     except Exception as exc:
         app.logger.error("Resend exception : %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+# ── Alertes transit : toggle utilisateur ──────────────────────────────────────
+@app.route("/toggle_alerts", methods=["POST"])
+def toggle_alerts():
+    from profiles import set_alerts
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
+
+    data    = request.get_json() or {}
+    enabled = bool(data.get("enabled", False))
+    pseudo  = profile.get("pseudo", "")
+
+    email = (profile.get("email") or "").strip()
+    if enabled and not email:
+        return jsonify({"ok": False, "error": "Un email est requis pour activer les alertes."}), 400
+
+    ok = set_alerts(pseudo, enabled)
+    if ok:
+        profile["alerts_enabled"] = int(enabled)
+        session["profile"] = profile
+    return jsonify({"ok": ok, "alerts_enabled": int(enabled)})
+
+
+# ── Calendrier mensuel des transits ───────────────────────────────────────────
+@app.route("/calendar")
+def calendar_route():
+    from calendar_calc import get_monthly_transits
+    from datetime import date as _date
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "Non connecté"}), 401
+
+    today = _date.today()
+    year  = int(request.args.get("year",  today.year))
+    month = int(request.args.get("month", today.month))
+
+    try:
+        data = get_monthly_transits(profile, year, month)
+        return jsonify({"ok": True, "year": year, "month": month, "days": data})
+    except Exception as exc:
+        app.logger.error("Erreur calendrier : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Rapport PDF annuel ────────────────────────────────────────────────────────
+@app.route("/report/annual")
+def annual_report():
+    from annual_report import generate_annual_pdf
+    from flask import Response
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "Non connecté"}), 401
+
+    lang = session.get("lang", "fr")
+    try:
+        pdf_bytes = generate_annual_pdf(profile, lang=lang)
+        from datetime import date as _date
+        filename  = f"karmic_gochara_{profile.get('pseudo', 'rapport')}_{_date.today().year}.pdf"
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as exc:
+        app.logger.error("Erreur rapport PDF : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Cron quotidien : alertes transit ──────────────────────────────────────────
+@app.route("/cron/daily", methods=["POST"])
+def cron_daily():
+    from transit_alerts import run_daily_alerts
+
+    secret = os.environ.get("CRON_SECRET", "")
+    if secret:
+        auth = request.headers.get("Authorization", "")
+        if auth != f"Bearer {secret}":
+            return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        results = run_daily_alerts()
+        app.logger.info("Cron alertes : %s", results)
+        return jsonify({"ok": True, **results})
+    except Exception as exc:
+        app.logger.error("Erreur cron daily : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
 
 
 # ── Lancement ─────────────────────────────────────────────────────────────────

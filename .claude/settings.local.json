@@ -12,7 +12,9 @@
       "Bash(python -c \"from PIL import Image; print\\('Pillow OK'\\)\")",
       "Bash(pip install:*)",
       "Read(//c/Users/hp/Pictures/Screenshots/jerome/git clone/**)",
-      "Bash(cp -r \"karmic.gochara\" \"karmic.gochara_backup_2026-04-05\")"
+      "Bash(cp -r \"karmic.gochara\" \"karmic.gochara_backup_2026-04-05\")",
+      "Bash(python -c ':*)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app.py'\\).read\\(\\)\\); print\\('OK app.py'\\)\")"
     ]
   }
 }

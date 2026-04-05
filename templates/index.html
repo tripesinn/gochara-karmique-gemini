@@ -248,6 +248,43 @@
             <span id="email-status" style="display: block; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-dim);"></span>
         </div>
     </div>
+
+    <!-- ── Outils supplémentaires ───────────────────────────────────────────── -->
+    <div style="max-width: 800px; margin: 2.5rem auto 0; padding: 0 20px;">
+        <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;">
+
+            <!-- Calendrier mensuel -->
+            <button class="btn-secondary" onclick="toggleCalendar()" style="max-width: 220px; font-size: 0.82rem;">
+                📅 Calendrier mensuel
+            </button>
+
+            <!-- Rapport PDF annuel -->
+            <button class="btn-secondary" onclick="downloadAnnualReport()" id="btn-annual-report" style="max-width: 220px; font-size: 0.82rem;">
+                📄 Rapport annuel PDF
+            </button>
+
+            <!-- Toggle alertes -->
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: var(--text-dim);">
+                <input type="checkbox" id="alerts-toggle"
+                    {% if session_profile and session_profile.get('alerts_enabled') %}checked{% endif %}
+                    onchange="toggleAlerts(this.checked)"
+                    style="accent-color: var(--gold); width: 16px; height: 16px;">
+                🔔 Alertes transit par email
+            </label>
+            <span id="alerts-status" style="font-size: 0.78rem; color: var(--text-dim);"></span>
+        </div>
+
+        <!-- ── Panel calendrier ─────────────────────────────────────────────── -->
+        <div id="calendar-panel" style="display:none; margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button onclick="shiftMonth(-1)" class="btn-secondary" style="width:auto; padding: 0.5rem 1rem; font-size: 0.82rem;">← Préc.</button>
+                <span id="calendar-title" style="color: var(--gold); font-family: var(--display); font-size: 1rem;"></span>
+                <button onclick="shiftMonth(1)" class="btn-secondary" style="width:auto; padding: 0.5rem 1rem; font-size: 0.82rem;">Suiv. →</button>
+            </div>
+            <div id="calendar-loading" style="display:none; text-align:center; color: var(--text-dim); font-size:0.85rem;">Calcul en cours…</div>
+            <div id="calendar-content"></div>
+        </div>
+    </div>
 </div>
 
 <a id="btn-coffee" href="https://buymeacoffee.com/jerome6" target="_blank" rel="noopener">
@@ -514,6 +551,130 @@ function logout() {
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
+}
+
+// ── Alertes transit ───────────────────────────────────────────────────────────
+async function toggleAlerts(enabled) {
+    const status = document.getElementById('alerts-status');
+    status.textContent = 'Mise à jour…';
+    try {
+        const res  = await fetch('/toggle_alerts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            status.textContent = enabled
+                ? '✓ Alertes activées — tu recevras un email à chaque transit important.'
+                : '✓ Alertes désactivées.';
+            status.style.color = '#6a9f6a';
+        } else {
+            status.textContent = '✗ ' + (data.error || 'Erreur');
+            status.style.color = '#c06060';
+            document.getElementById('alerts-toggle').checked = !enabled;
+        }
+    } catch {
+        status.textContent = '✗ Erreur réseau.';
+        status.style.color = '#c06060';
+        document.getElementById('alerts-toggle').checked = !enabled;
+    }
+}
+
+// ── Calendrier mensuel ────────────────────────────────────────────────────────
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth() + 1;
+let calOpen  = false;
+
+const MONTH_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+function toggleCalendar() {
+    const panel = document.getElementById('calendar-panel');
+    calOpen = !calOpen;
+    panel.style.display = calOpen ? 'block' : 'none';
+    if (calOpen) loadCalendar();
+}
+
+function shiftMonth(delta) {
+    calMonth += delta;
+    if (calMonth > 12) { calMonth = 1;  calYear++; }
+    if (calMonth < 1)  { calMonth = 12; calYear--; }
+    loadCalendar();
+}
+
+async function loadCalendar() {
+    const title   = document.getElementById('calendar-title');
+    const loading = document.getElementById('calendar-loading');
+    const content = document.getElementById('calendar-content');
+
+    title.textContent   = `${MONTH_FR[calMonth]} ${calYear}`;
+    loading.style.display = 'block';
+    content.innerHTML   = '';
+
+    try {
+        const res  = await fetch(`/calendar?year=${calYear}&month=${calMonth}`);
+        const data = await res.json();
+        loading.style.display = 'none';
+
+        if (data.error) { content.innerHTML = `<p style="color:#c06060;">${data.error}</p>`; return; }
+
+        const days = data.days || {};
+        if (!Object.keys(days).length) {
+            content.innerHTML = '<p style="color:var(--text-dim);text-align:center;font-size:0.85rem;">Aucun transit majeur ce mois-ci.</p>';
+            return;
+        }
+
+        let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+        for (const [dateKey, events] of Object.entries(days).sort()) {
+            const day = dateKey.split('-')[2];
+            html += `<div style="background:#0f0f22;border:1px solid var(--border);border-radius:3px;padding:10px 14px;">`;
+            html += `<div style="color:var(--gold);font-size:0.78rem;font-family:var(--display);margin-bottom:6px;">${day} ${MONTH_FR[calMonth]} ${calYear}</div>`;
+            for (const e of events) {
+                const retro = e.retrograde ? ' <span style="color:#c06060;">℞</span>' : '';
+                html += `<div style="display:flex;gap:8px;align-items:baseline;margin-top:4px;">
+                    <span style="color:${e.transit_color};font-size:0.85rem;font-weight:bold;">${e.transit_label}${retro}</span>
+                    <span style="color:var(--text-dim);font-size:0.75rem;">⊕</span>
+                    <span style="color:${e.natal_color};font-size:0.82rem;">${e.natal_label}</span>
+                    <span style="color:var(--text-dim);font-size:0.72rem;margin-left:auto;">${e.orb}°</span>
+                </div>`;
+            }
+            html += '</div>';
+        }
+        html += '</div>';
+        content.innerHTML = html;
+    } catch {
+        loading.style.display = 'none';
+        content.innerHTML = '<p style="color:#c06060;">Erreur de connexion.</p>';
+    }
+}
+
+// ── Rapport PDF annuel ────────────────────────────────────────────────────────
+async function downloadAnnualReport() {
+    const btn = document.getElementById('btn-annual-report');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération en cours… (1-2 min)';
+    try {
+        const res = await fetch('/report/annual');
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            alert('Erreur : ' + (data.error || res.statusText));
+            return;
+        }
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `karmic_gochara_${new Date().getFullYear()}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch {
+        alert('Erreur réseau lors de la génération du PDF.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
 }
 </script>
 </body>
