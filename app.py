@@ -372,8 +372,16 @@ LANGS = {
 
 
 def get_lang():
-    code = session.get("lang", "fr")
-    return LANGS.get(code, LANGS["fr"])
+    if "lang" not in session:
+        accept = request.headers.get("Accept-Language", "fr")
+        for part in accept.replace(" ", "").split(","):
+            prefix = part.split(";")[0].split("-")[0].lower()
+            if prefix in LANGS:
+                session["lang"] = prefix
+                break
+        else:
+            session["lang"] = "fr"
+    return LANGS.get(session["lang"], LANGS["fr"])
 
 
 # ── Routes publiques ──────────────────────────────────────────────────────────
