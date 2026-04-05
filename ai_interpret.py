@@ -397,3 +397,70 @@ Développe chaque section en lecture d'âme cohérente, narrative, sans liste m�
         messages=[{"role": "user", "content": prompt}],
     )
     return msg.content[0].text
+
+
+def build_prompt_only(chart_data: dict, user: dict = None, lang: str = "fr") -> dict:
+    """
+    Construit le prompt complet SANS appeler Claude.
+    Utilisé par /synthesis/prompt pour l'inférence locale (Gemma 4 via AI Core).
+    Retourne {"system": "...", "user": "..."} prêt à injecter dans n'importe quel LLM.
+    """
+    user = user or {}
+    lang = user.get("lang", lang)
+
+    aspects_text  = _aspects_to_text(chart_data.get("aspects", []))
+    natal_context = _build_natal_context(user)
+    nodal_cycle   = _detect_nodal_cycle(user, chart_data)
+    transit_frict = _detect_transit_friction(chart_data, lang=lang)
+    amsa_bloc     = _build_amsa_bloc(chart_data, lang=lang)
+    date          = chart_data.get("transit_date", "")
+    time          = chart_data.get("transit_time", "")
+    name          = user.get("name", "l'utilisateur")
+
+    natal_bloc = f"\nThème natal de référence :\n{natal_context}\n" if natal_context else ""
+    nodal_bloc = nodal_cycle  if nodal_cycle  else ""
+    frict_bloc = transit_frict if transit_frict else ""
+
+    if lang == "en":
+        user_prompt = f"""siderealAstro13 transit analysis for {name} — {date} at {time}.
+INSTRUCTION: start directly with "## 1. KARMIC MEMORY". No preamble, no recap of natal positions, no introduction.
+{natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
+
+Active aspects (with nakshatra themes if available):
+{aspects_text}
+
+Apply the 4-step protocol:
+
+1. KARMIC MEMORY (ROM ☋) — Which transits activate least-resistance patterns? Describe what the soul does when caught in this trap, in direct narrative language.
+
+2. THE WOUND IN PROCESSING (RAM ⚷) — Which transits activate Chiron or the Door Axis? Is the Invisible Door under pressure? Is the Visible Door / Stage being activated? Describe the movement, not the mechanics.
+
+3. KARMIC TRIAL (⚸) — What is Lilith's current test? What does it make unbearable? Where does it propel?
+
+4. ALTERNATIVE DE CONSCIENCE + STAGING — Formulate the inner shift. What the soul must stop. What it must activate. End with ONE single direct and actionable sentence.
+
+Develop each section as coherent soul-reading, narrative, no mechanical lists. Minimum 300 words. Do not truncate."""
+    else:
+        user_prompt = f"""Analyse siderealAstro13 des transits de {name} — {date} à {time}.
+CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucun récapitulatif des positions natales, aucune introduction.
+{natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
+
+Aspects actifs (avec thèmes nakshatra si disponibles) :
+{aspects_text}
+
+Applique le protocole en 4 étapes :
+
+1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quels transits activent les schémas de moindre résistance ? Décris ce que l'âme fait quand elle est dans ce piège, en langage narratif direct.
+
+2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Quels transits activent Chiron ou l'Axe des Portes ? La Porte Invisible est-elle sous pression ? La Voie de libération / Stage est-elle activée ?
+
+3. L'ÉPREUVE KARMIQUE (⚸) — Quel est le test de Lilith en cours ? Qu'est-ce qu'il rend insupportable ? Vers quoi il propulse ?
+
+4. ALTERNATIVE DE CONSCIENCE + MISE EN SCÈNE — Formule la bascule intérieure. Ce que l'âme doit cesser. Ce qu'elle doit activer. Termine par UNE seule phrase directe et actionnable.
+
+Développe chaque section en lecture d'âme cohérente, narrative, sans liste mécanique. Minimum 300 mots. Ne pas tronquer."""
+
+    return {
+        "system": _build_system_prompt(user),
+        "user":   user_prompt,
+    }

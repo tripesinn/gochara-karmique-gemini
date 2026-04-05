@@ -779,6 +779,57 @@ def send_synthesis():
         return jsonify({"ok": False, "error": str(exc)}), 500
 
 
+# ── Inférence locale : retourne le prompt sans appeler Claude ─────────────────
+@app.route("/synthesis/prompt", methods=["POST"])
+def synthesis_prompt():
+    """
+    Construit et retourne le prompt (system + user) sans appeler Claude.
+    Utilisé par le plugin Gemma 4 / AI Core sur Android pour l'inférence locale.
+    """
+    from astro_calc import calculate_transits
+    from ai_interpret import build_prompt_only
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "Non connecté"}), 401
+
+    natal = {
+        "name":   profile["name"],
+        "year":   profile["year"],  "month":  profile["month"],
+        "day":    profile["day"],   "hour":   profile["hour"],
+        "minute": profile["minute"],"lat":    profile["lat"],
+        "lon":    profile["lon"],   "tz":     profile["tz"],
+        "city":   profile["city"],
+    }
+
+    data      = request.get_json() or {}
+    date_str  = data.get("date", "")
+    hour      = int(data.get("hour", 12))
+    minute    = int(data.get("minute", 0))
+    transit_loc = {
+        "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
+        "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
+        "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
+        "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
+    }
+    lang = session.get("lang", "fr")
+
+    try:
+        year, month, day = map(int, date_str.split("-"))
+        chart_data = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
+        prompts    = build_prompt_only(chart_data, profile, lang=lang)
+        return jsonify({
+            "ok":          True,
+            "system":      prompts["system"],
+            "user":        prompts["user"],
+            "aspects":     chart_data.get("aspects", []),
+            "transit_date": chart_data.get("transit_date", ""),
+        })
+    except Exception as exc:
+        app.logger.error("Erreur synthesis/prompt : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
+
+
 # ── Alertes transit : toggle utilisateur ──────────────────────────────────────
 @app.route("/toggle_alerts", methods=["POST"])
 def toggle_alerts():
