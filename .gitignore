@@ -5,6 +5,9 @@ __pycache__/
 .env
 venv/
 
+# Propriété intellectuelle — doctrine karmique (hébergée via Render Secret Files)
+doctrine.py
+
 # Node / Capacitor
 node_modules/
 www/
