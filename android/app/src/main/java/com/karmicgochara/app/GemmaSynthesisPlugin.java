@@ -37,11 +37,12 @@ import java.util.concurrent.Executors;
 public class GemmaSynthesisPlugin extends Plugin {
 
     // ── URL de téléchargement du modèle Gemma 3 (1B, int4, CPU) ─────────────
-    // Gemma 3 1B — ~400 Mo, fonctionne sur CPU, compatible MediaPipe 0.10.24+
-    // Remplacer par gemma3-4b-it-cpu-int4.task (~1.5 Go) pour plus de qualité.
-    // Docs : https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/android
+    // Gemma 3 1B — ~400 Mo, CPU only, compatible MediaPipe 0.10.24+
+    // Source : HuggingFace google/gemma-3-1b-it (format MediaPipe .task)
+    // Remplacer par la version 4B (~1.5 Go) pour une meilleure qualité narrative.
+    // Alternative manuelle : adb push gemma3.task /sdcard/Android/data/com.karmicgochara.app/files/Downloads/
     private static final String MODEL_DOWNLOAD_URL =
-            "https://storage.googleapis.com/mediapipe-models/llm_inference/gemma3-1b-it-cpu-int4/float32/1/gemma3-1b-it-cpu-int4.task";
+            "https://huggingface.co/google/gemma-3-1b-it-mediapipe/resolve/main/gemma3-1b-it-cpu-int4.task";
 
     private static final String MODEL_FILENAME = "gemma3.task";
     private static final int    MAX_TOKENS     = 2048;

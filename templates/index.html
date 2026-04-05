@@ -215,6 +215,23 @@
         <span style="color: var(--gold); font-family: var(--display);">✦ {{ session_user }}</span>
         <button onclick="logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">[ {{ lang.logout if lang.logout else 'Déconnexion' }} ]</button>
     </div>
+
+    <!-- ── Bannière IA locale (Android uniquement, dismissible) ──────────── -->
+    <div id="banner-local-ai" style="display:none; margin-bottom:1.5rem; background:linear-gradient(135deg,#0f1a0f,#0f0f1a); border:1px solid #2a4a2a; border-radius:3px; padding:14px 16px; position:relative;">
+        <div style="font-size:0.82rem; color:#6ab56a; font-family:var(--display); margin-bottom:4px;">✦ IA locale disponible</div>
+        <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.5;">
+            Télécharge le patch IA (~400 Mo) pour générer ta synthèse karmique <strong style="color:var(--text);">hors ligne, sans serveur</strong>, directement sur ton téléphone.
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+            <button onclick="openGemmaManager();dismissLocalAIBanner();" class="btn-secondary" style="width:auto;padding:0.5rem 1rem;font-size:0.78rem;border-color:#2a4a2a;color:#6ab56a;">
+                ⬇ Télécharger le patch IA
+            </button>
+            <button onclick="dismissLocalAIBanner()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.78rem;">
+                Plus tard
+            </button>
+        </div>
+        <button onclick="dismissLocalAIBanner()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">×</button>
+    </div>
     
     <input type="date" id="transit-date" class="date-input" value="{{ today_iso }}">
     <br>
@@ -745,7 +762,30 @@ document.addEventListener('DOMContentLoaded', () => {
     Gemma.checkModel().then(status => {
         if (status.exists) updateGemmaIndicator(status);
     });
+
+    // Bannière IA locale — Android natif uniquement, une seule fois
+    initLocalAIBanner();
 });
+
+function initLocalAIBanner() {
+    const isNative   = window.Capacitor?.isNativePlatform?.() ?? false;
+    const dismissed  = localStorage.getItem('localAIBannerDismissed');
+    const banner     = document.getElementById('banner-local-ai');
+    if (!banner) return;
+
+    if (isNative && !dismissed) {
+        // Vérifie que le modèle n'est pas déjà là
+        Gemma.checkModel().then(status => {
+            if (!status.exists) banner.style.display = 'block';
+        });
+    }
+}
+
+function dismissLocalAIBanner() {
+    const banner = document.getElementById('banner-local-ai');
+    if (banner) banner.style.display = 'none';
+    localStorage.setItem('localAIBannerDismissed', '1');
+}
 
 function updateGemmaIndicator(status) {
     let ind = document.getElementById('gemma-indicator');
