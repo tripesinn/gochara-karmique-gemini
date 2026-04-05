@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+
+# Node / Capacitor
+node_modules/
+www/
+
+# Android (généré — committer si tu veux versionner le projet natif)
+# android/

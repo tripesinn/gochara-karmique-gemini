@@ -3,7 +3,11 @@
     "allow": [
       "Bash(find \"/c/Users/hp/Pictures/Screenshots/jerome/git clone/karmic.gochara\" -maxdepth 2 -not -path '*/.git/*' -not -path '*/__pycache__/*' -not -path '*/.vscode/*' -type f -exec du -h {} +)",
       "Bash(sort -k2)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm --version)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx cap:*)"
     ]
   }
 }

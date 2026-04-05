@@ -1,0 +1,28 @@
+{
+  "appId": "com.karmicgochara.app",
+  "appName": "Karmic Gochara",
+  "webDir": "www",
+  "server": {
+    "url": "https://karmic-gochara.netlify.app",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0a0a08",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#0a0a08"
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0a0a08"
+  },
+  "ios": {
+    "backgroundColor": "#0a0a08"
+  }
+}
