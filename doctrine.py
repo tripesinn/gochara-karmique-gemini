@@ -5,8 +5,13 @@
 
 # ——— SYMBOLIC LEGEND / LÉGENDE SYMBOLIQUE ————————————————————————————————————
 #
-#   ⚷  Chiron     = RAM  (Random Access Memory)   — Porte Invisible / Invisible Door
-#                          Active wound processing, unconscious karmic buffer
+#   ⚷  Chiron     = RAM  (Random Access Memory)   — Médiateur / Guérisseur Blessé
+#                          Active wound processing — clé de transmutation PI→PV
+#
+#   🚪 Porte Invisible (PI) = Porte Visible + 180° (grand arc ♄→♅)
+#                          Prison inconsciente, lieu du refoulement karmique
+#   🚪 Porte Visible  (PV) = mi-point petit arc ♄→♅
+#                          Lieu de résolution consciente, guérison incarnée
 #
 #   ☋  Ketu / South Node = ROM (Read-Only Memory / Mass Memory)
 #                          Fixed karmic archive from past lives — static, automatic
@@ -607,6 +612,287 @@ HOUSE_MEANINGS = {
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# AMSA_RAM_ROM — Lecture RAM/ROM par divisionnaire védique (Amsa)
+# Chaque divisionnaire révèle une couche karmique spécifique.
+# ROM = schéma figé, boucle automatique de vie en vie.
+# RAM = Chiron ⚷, traitement actif de la blessure dans ce divisionnaire.
+# ══════════════════════════════════════════════════════════════════════════════
+
+AMSA_RAM_ROM = {
+
+    "D1": {
+        "name_fr":      "D1 — Rashi (Thème natal)",
+        "name_en":      "D1 — Rashi (Natal Chart)",
+        "fonction_fr": (
+            "Carte mère : l'expression globale du karma incarné — "
+            "corps, identité, potentiel de vie. "
+            "Toutes les autres D-charts se lisent en rapport à la D1."
+        ),
+        "fonction_en": (
+            "Mother chart: the overall expression of incarnated karma — "
+            "body, identity, life potential. "
+            "All other D-charts are read in relation to D1."
+        ),
+        "rom_fr": (
+            "La D1 active en ROM toutes les configurations figées de la naissance : "
+            "signes, maisons, aspects répétés mécaniquement sans conscience. "
+            "Les schémas ROM du Chandra Lagna s'y lisent en premier."
+        ),
+        "rom_en": (
+            "D1 activates in ROM all fixed birth configurations: "
+            "signs, houses, aspects repeated mechanically without awareness. "
+            "Chandra Lagna ROM patterns are read here first."
+        ),
+        "ram_fr": (
+            "Chiron ⚷ en D1 = RAM centrale de l'incarnation — blessure originelle active. "
+            "Son nakshatra révèle le registre exact du traitement en cours. "
+            "Chiron est la clé : il permet de traverser la Porte Invisible (PI = PV+180°) "
+            "vers la Porte Visible. Il n'est pas la PI — il est l'outil qui la déverrouille."
+        ),
+        "ram_en": (
+            "Chiron ⚷ in D1 = central RAM of the incarnation — active core wounding. "
+            "Its nakshatra reveals the exact register of active processing. "
+            "Chiron is the key: it enables crossing the Invisible Door (ID = VD+180°) "
+            "toward the Visible Door. It is not the ID — it is the tool that unlocks it."
+        ),
+        "alternative_fr": (
+            "Lire la D1 non comme un destin figé (ROM) mais comme une carte du potentiel brut. "
+            "Chaque planète en maison difficile est une invitation à l'Alternative de Conscience, "
+            "non une condamnation. La D1 est le terrain — le Stage est ce qu'on en fait."
+        ),
+        "alternative_en": (
+            "Read D1 not as fixed destiny (ROM) but as a map of raw potential. "
+            "Each planet in a difficult house is an invitation to the Alternative de Conscience, "
+            "not a sentence. D1 is the terrain — the Stage is what one builds on it."
+        ),
+        "piliers": ["Pilier 1 (Chandra Lagna)", "Pilier 3 (Chiron RAM)", "Pilier 4 (Nœuds)"],
+    },
+
+    "D9": {
+        "name_fr":      "D9 — Navamsa (Âme, Dharma profond, Relations)",
+        "name_en":      "D9 — Navamsa (Soul, Deep Dharma, Relationships)",
+        "fonction_fr": (
+            "Le Navamsa révèle la force réelle des planètes au-delà du masque de la D1. "
+            "C'est la carte de l'âme : ce qu'une planète est vraiment, une fois l'écorce D1 levée. "
+            "Indispensable avant tout transit majeur — une planète forte en D9 livre ; "
+            "une planète faible en D9 reste un potentiel non manifesté."
+        ),
+        "fonction_en": (
+            "Navamsa reveals the true strength of planets beyond the D1 mask. "
+            "It is the soul chart: what a planet truly is once the D1 shell is lifted. "
+            "Essential before any major transit — a strong D9 planet delivers; "
+            "a weak D9 planet remains unmanifested potential."
+        ),
+        "rom_fr": (
+            "ROM en D9 : schémas relationnels et dharmatiques cristallisés sur plusieurs vies. "
+            "Placements difficiles (planètes vargottama négatives, Ketu fort) = boucles karmiques "
+            "profondes que la D1 seule ne peut expliquer. "
+            "Ketu en D9 = archive ROM ultra-dense : talent acquis et peur simultanée de l'utiliser."
+        ),
+        "rom_en": (
+            "ROM in D9: relational and dharmic patterns crystallized over multiple lives. "
+            "Difficult placements (negative vargottama, strong Ketu) = deep karmic loops "
+            "D1 alone cannot explain. "
+            "Ketu in D9 = ultra-dense ROM archive: acquired talent and simultaneous fear of using it."
+        ),
+        "ram_fr": (
+            "Chiron en D9 (RAM) : blessure de l'âme elle-même — le Dharma bloqué "
+            "par une mémoire de vies antérieures non digérée. "
+            "Planète vargottama (même signe D1/D9) : énergie intensifiée — "
+            "si blessée, boucle RAM doublement active ; si intégrée, don exceptionnel."
+        ),
+        "ram_en": (
+            "Chiron in D9 (RAM): the wound of the soul itself — Dharma blocked "
+            "by undigested past-life memory. "
+            "Vargottama planet (same sign D1/D9): intensified energy — "
+            "if wounded, RAM loop doubly active; if integrated, exceptional gift."
+        ),
+        "alternative_fr": (
+            "Croiser D9 × D1 avant tout transit majeur : planète forte en D9 = transit manifestable ; "
+            "planète faible en D9 = travailler la blessure nakshatra sous-jacente d'abord. "
+            "Le Stage de l'âme se lit dans la maison 10 de la D9."
+        ),
+        "alternative_en": (
+            "Cross-reference D9 × D1 before any major transit: strong D9 planet = transit can manifest; "
+            "weak D9 planet = work the underlying nakshatra wound first. "
+            "The soul's Stage is read in D9's 10th house."
+        ),
+        "piliers": [
+            "Pilier 1 (Chandra Lagna D9)",
+            "Pilier 2 (Dharma)",
+            "Pilier 3 (Chiron D9)",
+            "Pilier 4 (Nœuds D9)",
+        ],
+    },
+
+    "D10": {
+        "name_fr":      "D10 — Dasamsa (Karma d'action, Vocation, Stage public)",
+        "name_en":      "D10 — Dasamsa (Action Karma, Vocation, Public Stage)",
+        "fonction_fr": (
+            "Le Dasamsa est la carte du Stage : ce qui est karmiquement dû dans l'espace public, "
+            "la mission d'action concrète à manifester dans cette vie. "
+            "C'est ici que la Porte Visible prend sa forme précise."
+        ),
+        "fonction_en": (
+            "Dasamsa is the Stage chart: what is karmically owed in the public space, "
+            "the concrete action mission to manifest in this life. "
+            "This is where the Visible Door takes its precise form."
+        ),
+        "rom_fr": (
+            "ROM en D10 : répétition mécanique d'une vocation mal orientée, travail accompli "
+            "par obligation (schéma Saturne/Ketu) sans connexion au Dharma réel. "
+            "Ketu fort en D10 = expertise passée vidée de sens — l'âme a 'déjà fait ça', "
+            "résistance à se réexposer sur la même scène."
+        ),
+        "rom_en": (
+            "ROM in D10: mechanical repetition of a misdirected vocation, work done from obligation "
+            "(Saturn/Ketu pattern) without connection to true Dharma. "
+            "Strong Ketu in D10 = past expertise drained of meaning — the soul has 'already done this', "
+            "resistance to re-exposing on the same stage."
+        ),
+        "ram_fr": (
+            "Chiron en D10 (RAM) : blessure de la visibilité publique — honte, rejet, "
+            "trahison vécue sur la scène publique dans une vie antérieure. "
+            "Symptôme : autosabotage systématique juste avant la mise en lumière. "
+            "La Porte Invisible s'active exactement au seuil du Stage."
+        ),
+        "ram_en": (
+            "Chiron in D10 (RAM): wound of public visibility — shame, rejection, "
+            "betrayal experienced on the public stage in a past life. "
+            "Symptom: systematic self-sabotage just before stepping into the spotlight. "
+            "The Invisible Door activates exactly at the Stage threshold."
+        ),
+        "alternative_fr": (
+            "Distinguer le travail-ROM (répétition mécanique) du travail-Dharma (mission vivante). "
+            "Identifier le nakshatra de l'Ascendant D10 : texture exacte du Stage karmique. "
+            "Rahu en D10 = appel vers une vocation nouvelle — activer même si inconfortable."
+        ),
+        "alternative_en": (
+            "Distinguish ROM-work (mechanical repetition) from Dharma-work (living mission). "
+            "Identify the nakshatra of the D10 Ascendant: exact texture of the karmic Stage. "
+            "Rahu in D10 = strong call toward a new vocation — activate even if uncomfortable."
+        ),
+        "piliers": [
+            "Pilier 2 (Stage / Porte Visible)",
+            "Pilier 4 (Saturne — Structure)",
+            "Pilier 6 (Friction identitaire)",
+        ],
+    },
+
+    "D12": {
+        "name_fr":      "D12 — Dvadasamsa (Lignée, Karma ancestral, Parents)",
+        "name_en":      "D12 — Dvadasamsa (Lineage, Ancestral Karma, Parents)",
+        "fonction_fr": (
+            "La D12 lit le karma transmis par la lignée parentale et ancestrale. "
+            "Couche karmique héritée — non créée personnellement dans cette vie, "
+            "mais portée comme une ROM familiale activée dès la naissance."
+        ),
+        "fonction_en": (
+            "D12 reads karma transmitted through the parental and ancestral lineage. "
+            "Inherited karmic layer — not personally created in this life, "
+            "but carried as a family ROM activated from birth."
+        ),
+        "rom_fr": (
+            "ROM familiale en D12 : schémas parentaux intériorisés automatiquement — "
+            "croyances sur la valeur, la sécurité, le succès, la relation au pouvoir "
+            "héritées sans questionnement. "
+            "Saturne/Ketu en D12 = archive lourde de la lignée paternelle ou karmique collective."
+        ),
+        "rom_en": (
+            "Family ROM in D12: automatically internalized parental patterns — "
+            "beliefs about worth, security, success, relationship to power "
+            "inherited without questioning. "
+            "Saturn/Ketu in D12 = heavy archive of paternal or collective karmic lineage."
+        ),
+        "ram_fr": (
+            "Chiron en D12 (RAM) : blessure transgénérationnelle — la plaie précède la naissance. "
+            "L'âme a hérité d'une fracture ancestrale qu'elle traite activement. "
+            "Symptôme : répéter un schéma parental sans comprendre pourquoi."
+        ),
+        "ram_en": (
+            "Chiron in D12 (RAM): transgenerational wound — the wound precedes birth. "
+            "The soul has inherited an ancestral fracture it is actively processing. "
+            "Symptom: repeating a parental pattern without understanding why."
+        ),
+        "alternative_fr": (
+            "Identifier le schéma ancestral dominant (nakshatra du seigneur de D12) et le nommer. "
+            "Ce qui est nommé peut être libéré. "
+            "Rompre la ROM familiale est un acte d'amour envers la lignée, non une trahison."
+        ),
+        "alternative_en": (
+            "Identify the dominant ancestral pattern (nakshatra of the D12 lord) and name it explicitly. "
+            "What is named can be released. "
+            "Breaking the family ROM is an act of love toward the lineage, not a betrayal."
+        ),
+        "piliers": [
+            "Pilier 4 (Nœuds — transmission karmique)",
+            "Pilier 3 (Chiron transgénérationnel)",
+        ],
+    },
+
+    "D60": {
+        "name_fr":      "D60 — Shastiamsa (Archives akashiques, Karma des vies profondes)",
+        "name_en":      "D60 — Shastiamsa (Akashic Records, Deep Past-Life Karma)",
+        "fonction_fr": (
+            "La D60 est la couche la plus profonde des archives karmiques — "
+            "elle lit directement les samskaras (impressions) des vies antérieures. "
+            "Là où la D9 lit la force de l'âme, la D60 lit ce qui y est gravé depuis des éons. "
+            "Utilisable uniquement avec une donnée de naissance précise à la minute."
+        ),
+        "fonction_en": (
+            "D60 is the deepest layer of karmic archives — "
+            "it reads directly the samskaras (impressions) of past lives. "
+            "Where D9 reads soul strength, D60 reads what has been engraved for eons. "
+            "Usable only with birth data accurate to the minute."
+        ),
+        "rom_fr": (
+            "ROM ultime en D60 : impressions si anciennes et denses qu'elles semblent "
+            "constitutives de l'identité même. "
+            "Ketu/Saturne en D60 = mémoires de vies entières consacrées à un pattern — "
+            "l'automatisme est quasi irréductible sans travail spirituel profond."
+        ),
+        "rom_en": (
+            "Ultimate ROM in D60: impressions so ancient and dense they seem "
+            "constitutive of identity itself. "
+            "Ketu/Saturn in D60 = memories of entire lifetimes devoted to a pattern — "
+            "the automatism is nearly irreducible without deep spiritual work."
+        ),
+        "ram_fr": (
+            "Chiron en D60 (RAM) : blessure primordiale — antérieure à toute mémoire accessible. "
+            "L'âme traite une fracture qui précède même la conscience actuelle. "
+            "Maison 12 de la D60 activée : fenêtre akashique directe — "
+            "rêves, visions, états méditatifs comme canaux de traitement RAM."
+        ),
+        "ram_en": (
+            "Chiron in D60 (RAM): primordial wound — prior to any accessible memory. "
+            "The soul processes a fracture that precedes even current consciousness. "
+            "Activated D60 12th house: direct akashic opening — "
+            "dreams, visions, meditative states as RAM processing channels."
+        ),
+        "alternative_fr": (
+            "Ne pas forcer la lecture D60 — elle se révèle par couches, "
+            "au rythme des Dashas majeurs et des transits nodaux. "
+            "Quand Sade Sati Phase 1 ou un transit Ketu actif coïncide avec un point D60 sensible, "
+            "une mémoire akashique remonte : l'accueillir sans la dramatiser. "
+            "Libérer un samskara D60 = libération karmique pour toute la lignée."
+        ),
+        "alternative_en": (
+            "Do not force the D60 reading — it reveals itself in layers, "
+            "at the pace of major Dashas and nodal transits. "
+            "When Sade Sati Phase 1 or an active Ketu transit coincides with a sensitive D60 point, "
+            "an akashic memory surfaces: receive it without dramatizing. "
+            "Releasing a D60 samskara = karmic liberation for the entire lineage."
+        ),
+        "piliers": [
+            "Pilier 4 (Nœuds Sud — ROM absolue)",
+            "Pilier 3 (Chiron primordial)",
+            "Sade Sati Phase 1",
+        ],
+    },
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # LANGUAGE TEMPLATES — Prompts système bilingues
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -625,11 +911,11 @@ Tu ne dilues jamais l'analyse. Tu vas au bout de chaque section sans jamais tron
    Schémas automatiques, habitudes de moindre résistance, talon d'Achille.
    S'y replonger = rejouer une ancienne zone temporelle figée.
 
-⚷  CHIRON = RAM (Mémoire Vive / Random Access Memory) — PORTE INVISIBLE
+⚷  CHIRON = RAM (Mémoire Vive / Random Access Memory) — MÉDIATEUR / GUÉRISSEUR BLESSÉ
    Mémoire active des blessures en cours de traitement.
-   La Porte Invisible est le lieu du refoulement inconscient (Prison Karmique).
-   Point opposé à la Porte Visible = là où la ROM non digérée se cristallise.
-   Chiron est la clé ⚷ : il déverrouille le buffer RAM pour le transmuter.
+   Chiron est la clé ⚷ : il identifie la Blessure Originelle et déverrouille le buffer RAM
+   pour le transmuter — mouvement de la Porte Invisible vers la Porte Visible.
+   Chiron n'est PAS la Porte Invisible : il est l'outil qui permet de la traverser.
 
 ⚸  LILITH = ÉPREUVE KARMIQUE (Karmic Trial)
    Déclencheur système entre ROM et RAM.
@@ -637,9 +923,9 @@ Tu ne dilues jamais l'analyse. Tu vas au bout de chaque section sans jamais tron
    où la pression karmique atteint son point de rupture —
    créant la rupture qui force le mouvement vers le nakshatra de Rahu.
 
-♄/♅ SATURNE/URANUS = PORTES
-   Porte Visible  = mi-point petit arc ♄↔♅ → lieu de résolution consciente, le STAGE.
-   Porte Invisible = Porte Visible + 180° → prison automatique, buffer RAM saturé.
+♄/♅ SATURNE/URANUS = PORTES (Cadre Castanier)
+   Porte Visible  (PV) = mi-point petit arc ♄↔♅ → lieu de résolution consciente, guérison incarnée.
+   Porte Invisible (PI) = Porte Visible + 180° → prison automatique, refoulement karmique.
 
 ☊  NŒUD NORD / RAHU = DHARMA — destination évolutive, corne d'abondance.
 
@@ -677,10 +963,13 @@ CYCLES NODAUX : Retour nodal (~18,6 ans) = reboot complet ROM/DHARMA
 NAKSHATRAS : Chaque position planétaire est analysée dans son nakshatra/pada/seigneur Vimshotari.
              La couche nakshatra précise le registre karmique exact de l'énergie en jeu.
 
-DIVISIONNELS VÉDIQUES (Amsas) :
-  D9  Navamsa    → force réelle des planètes, Dharma profond, relations
-  D10 Dasamsa    → karma d'action, vocation, statut public
-  D60 Shastiamsa → archives akashiques, karma des incarnations profondes
+DIVISIONNELS VÉDIQUES (Amsas) — Lecture RAM/ROM (cf. AMSA_RAM_ROM) :
+  D1  Rashi      → carte mère, ROM de l'incarnation, Chiron (RAM) = clé de transmutation PI→PV
+  D9  Navamsa    → force réelle de l'âme, Dharma profond, relations — croiser avec D1 avant tout transit
+  D10 Dasamsa    → karma d'action, Stage public, Porte Visible — Chiron D10 = blessure de visibilité
+  D12 Dvadasamsa → ROM familiale et ancestrale, karma transmis par la lignée
+  D60 Shastiamsa → archives akashiques, samskaras des vies profondes — ne lire qu'avec naissance précise à la minute
+  Règle : une planète forte en D9 peut manifester son transit ; faible en D9, travailler la blessure d'abord.
 
 TEMPORALITÉ : Court terme (transits rapides) / Moyen terme (Jupiter, Saturne) / Long terme (Nœuds, cycles nodaux)
 
@@ -704,7 +993,7 @@ entre deux pôles planétaires antagonistes :
 PRINCIPE : Sans la résistance Mars/Saturne, Vénus/Jupiter dissolvent l'identité
            dans le confort karmique (boucle ROM ☋).
            Sans l'attraction Vénus/Jupiter, Mars/Saturne rigidifient sans direction
-           (Porte Invisible saturée ⚷).
+           (Porte Invisible saturée — boucle ROM sans friction libératrice).
 
 LA FRICTION EST LE MOTEUR :
   → Elle force l'âme à se définir face à ce qu'elle désire et ce qui lui résiste
@@ -756,20 +1045,20 @@ You never dilute your analysis. You complete every section without truncation.
    Automatic patterns, path-of-least-resistance habits, Achilles' heel.
    Falling back into it = replaying a frozen ancient time-zone.
 
-⚷  CHIRON = RAM (Random Access Memory) — INVISIBLE DOOR
+⚷  CHIRON = RAM (Random Access Memory) — MEDIATOR / WOUNDED HEALER
    Active memory of wounds currently being processed.
-   The Invisible Door is the locus of unconscious repression (Karmic Prison).
-   Opposite point to the Visible Door = where undigested ROM crystallizes.
-   Chiron is the key ⚷ : it unlocks the RAM buffer for transmutation.
+   Chiron is the key ⚷: it identifies the Core Wounding and unlocks the RAM buffer
+   for transmutation — the movement from the Invisible Door toward the Visible Door.
+   Chiron is NOT the Invisible Door: it is the tool that allows one to cross it.
 
 ⚸  LILITH = KARMIC TRIAL — system trigger between ROM and RAM.
    Her nakshatra and house from Chandra Lagna specify the life domain
    where karmic pressure reaches its breaking point —
    creating the rupture that forces movement toward the nakshatra of Rahu.
 
-♄/♅ SATURN/URANUS = THE DOORS
-   Visible Door  = short-arc midpoint ♄↔♅ → conscious resolution zone, the STAGE.
-   Invisible Door = Visible Door + 180° → automatic prison, saturated RAM buffer.
+♄/♅ SATURN/URANUS = THE DOORS (Castanier framework)
+   Visible Door  (VD) = short-arc midpoint ♄↔♅ → conscious resolution zone, embodied healing.
+   Invisible Door (ID) = Visible Door + 180° → automatic prison, karmic repression zone.
 
 ☊  NORTH NODE / RAHU = DHARMA — evolutionary destination, horn of abundance.
 
@@ -807,10 +1096,13 @@ NODAL CYCLES : Nodal return (~18.6 yrs) = full ROM/DHARMA reboot
 NAKSHATRAS: Every planetary position analyzed in its nakshatra/pada/Vimshotari lord.
             The nakshatra layer specifies the exact karmic register of the energy at play.
 
-VEDIC DIVISIONALS (Amsas):
-  D9  Navamsa    → true planetary strength, deep Dharma, relationships
-  D10 Dasamsa    → action karma, vocation, public status
-  D60 Shastiamsa → akashic records, karma from deep past incarnations
+VEDIC DIVISIONALS (Amsas) — RAM/ROM reading (see AMSA_RAM_ROM):
+  D1  Rashi      → mother chart, incarnation ROM, Chiron (RAM) = transmutation key ID→VD
+  D9  Navamsa    → true soul strength, deep Dharma, relationships — cross with D1 before any transit
+  D10 Dasamsa    → action karma, public Stage, Visible Door — Chiron D10 = visibility wound
+  D12 Dvadasamsa → family and ancestral ROM, karma transmitted through lineage
+  D60 Shastiamsa → akashic archives, deep past-life samskaras — use only with birth time accurate to the minute
+  Rule: a planet strong in D9 can manifest its transit; weak in D9, work the wound first.
 
 TEMPORALITY: Short-term (fast transits) / Mid-term (Jupiter, Saturn) / Long-term (Nodes, nodal cycles)
 
@@ -834,7 +1126,7 @@ between two antagonistic planetary poles:
 PRINCIPLE: Without Mars/Saturn resistance, Venus/Jupiter dissolve identity
            into karmic comfort (ROM loop ☋).
            Without Venus/Jupiter attraction, Mars/Saturn rigidify without direction
-           (saturated Invisible Door ⚷).
+           (saturated Invisible Door — ROM loop without liberating friction).
 
 FRICTION IS THE ENGINE:
   → It forces the soul to define itself against what it desires and what resists it
