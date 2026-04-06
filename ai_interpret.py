@@ -366,18 +366,25 @@ Analyse siderealAstro13 des transits de {name} — {date} à {time}.
 CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucun récapitulatif des positions natales, aucune introduction.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
-Aspects actifs (avec thèmes nakshatra si disponibles) :
+Aspects actifs (données brutes — NE PAS les citer tels quels dans le texte) :
 {aspects_text}
+
+STYLE OBLIGATOIRE : tu écris comme un lecteur d'âme, pas comme un astrologue technique.
+- Traduis chaque aspect en vécu concret, en pattern comportemental reconnaissable.
+- Ne cite jamais les aspects bruts ("T.Saturne conjoint N.Chiron orbe 2°"). Traduis-les en ce que {name} ressent ou fait.
+- Parle directement à {name} : "tu", "ton", "ta". Nomme-le dans ce qu'il vit.
+- Exemple de ton juste : "C'est la signature de ton Nœud Sud : tu as oublié ta capacité à dire non, à te poser comme premier acteur de ton existence."
+- À la fin de chaque section (1, 2, 3), glisse un APERÇU : une phrase courte en italique qui ouvre une porte sans tout révéler. Cet aperçu donne envie d'aller plus loin.
 
 Applique le protocole en 4 étapes :
 
-1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quels transits activent les schémas de moindre résistance ? Décris ce que l'âme fait quand elle est dans ce piège, en langage narratif direct.
+1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quel piège l'âme de {name} rejoue-t-elle en ce moment ? Décris le comportement automatique, la sensation familière, ce que ça lui coûte. Termine par un aperçu en italique.
 
-2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Quels transits activent Chiron ou l'Axe des Portes ? La Porte Invisible est-elle sous pression ? La Voie de libération / Stage est-elle activée ? Décris le mouvement, pas la mécanique.
+2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Qu'est-ce qui est en train d'être touché, réveillé, bousculé dans la blessure profonde de {name} ? La Porte Invisible est-elle sous pression ? La Voie de libération s'ouvre-t-elle ? Décris le mouvement vécu, pas la mécanique. Termine par un aperçu en italique.
 
-3. L'ÉPREUVE KARMIQUE (⚸) — Quel est le test de Lilith en cours ? Qu'est-ce qu'il rend insupportable ? Vers quoi il propulse ? Tu peux nommer ici les planètes et aspects pour créer le désir d'aller voir la carte.
+3. L'ÉPREUVE KARMIQUE (⚸) — Qu'est-ce que la période rend insupportable à {name} ? Quel endroit de sa vie frotte le plus fort ? Vers quoi ça le pousse malgré lui ? Termine par un aperçu en italique.
 
-4. ALTERNATIVE DE CONSCIENCE + MISE EN SCÈNE — Formule la bascule intérieure. Ce que l'âme doit cesser. Ce qu'elle doit activer. La maison de la Porte Visible comme lieu de manifestation. Termine par UNE seule phrase directe et actionnable.
+4. ALTERNATIVE DE CONSCIENCE — Formule la bascule en une vision claire. Ce que {name} doit cesser de faire. Ce qu'il doit oser activer. Termine par UNE seule phrase directe, actionnable, qui s'adresse à {name} personnellement.
 
 Développe chaque section en lecture d'âme cohérente, narrative, sans liste mécanique. Minimum 300 mots. Ne pas tronquer.
 RÈGLE DE LANGUE : chaque phrase doit être entièrement en français. Aucun mot dans une autre langue."""
@@ -386,18 +393,25 @@ RÈGLE DE LANGUE : chaque phrase doit être entièrement en français. Aucun mot
 INSTRUCTION: start directly with "## 1. KARMIC MEMORY". No preamble, no recap of natal positions, no introduction.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
-Active aspects (with nakshatra themes if available):
+Active aspects (raw data — do NOT quote them as-is in the text):
 {aspects_text}
+
+MANDATORY STYLE: you write as a soul reader, not a technical astrologer.
+- Translate each aspect into lived experience, into a recognizable behavioral pattern.
+- Never quote raw aspects ("T.Saturn conjunct N.Chiron orb 2°"). Translate them into what {name} feels or does.
+- Speak directly to {name}: "you", "your". Name them in what they are living.
+- Example of the right tone: "This is the signature of your South Node: you've forgotten your capacity to say no, to place yourself as the first actor of your own existence."
+- At the end of each section (1, 2, 3), add an INSIGHT: one short sentence in italics that opens a door without revealing everything. This insight creates desire to go further.
 
 Apply the 4-step protocol:
 
-1. KARMIC MEMORY (ROM ☋) — Which transits activate least-resistance patterns? Describe what the soul does when caught in this trap, in direct narrative language.
+1. KARMIC MEMORY (ROM ☋) — What trap is {name}'s soul replaying right now? Describe the automatic behavior, the familiar feeling, what it costs them. End with an insight in italics.
 
-2. THE WOUND IN PROCESSING (RAM ⚷) — Which transits activate Chiron or the Door Axis? Is the Invisible Door under pressure? Is the Visible Door / Stage being activated? Describe the movement, not the mechanics.
+2. THE WOUND IN PROCESSING (RAM ⚷) — What is being touched, awakened, shaken in {name}'s core wound right now? Is the Invisible Door under pressure? Is the path of liberation opening? Describe the lived movement, not the mechanics. End with an insight in italics.
 
-3. KARMIC TRIAL (⚸) — What is Lilith's current test? What does it make unbearable? Where does it propel? You may name planets and aspects here to create desire to explore the chart.
+3. KARMIC TRIAL (⚸) — What does this period make unbearable for {name}? Which area of their life chafes the hardest? Where does it push them despite themselves? End with an insight in italics.
 
-4. ALTERNATIVE DE CONSCIENCE + STAGING — Formulate the inner shift. What the soul must stop. What it must activate. The Visible Door's house as manifestation space. End with ONE single direct and actionable sentence.
+4. ALTERNATIVE OF CONSCIOUSNESS — Formulate the inner shift as a clear vision. What {name} must stop doing. What they must dare to activate. End with ONE single direct, actionable sentence addressed personally to {name}.
 
 Develop each section as coherent soul-reading, narrative, no mechanical lists. Minimum 300 words. Do not truncate.
 LANGUAGE RULE: every single sentence must be in {lang_name}. No French or English words unless they are proper astrological terms (nakshatra names, ROM, RAM, Stage)."""
@@ -439,18 +453,24 @@ def build_prompt_only(chart_data: dict, user: dict = None, lang: str = "fr") -> 
 INSTRUCTION: start directly with "## 1. KARMIC MEMORY". No preamble, no recap of natal positions, no introduction.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
-Active aspects (with nakshatra themes if available):
+Active aspects (raw data — do NOT quote them as-is in the text):
 {aspects_text}
+
+MANDATORY STYLE: soul reader, not technical astrologer.
+- Translate each aspect into lived experience, into a recognizable behavioral pattern.
+- Never quote raw aspects. Translate them into what {name} feels or does.
+- Speak directly to {name}: "you", "your". Name them in what they are living.
+- At the end of each section (1, 2, 3), add an INSIGHT: one short sentence in italics that opens a door without revealing everything.
 
 Apply the 4-step protocol:
 
-1. KARMIC MEMORY (ROM ☋) — Which transits activate least-resistance patterns? Describe what the soul does when caught in this trap, in direct narrative language.
+1. KARMIC MEMORY (ROM ☋) — What trap is {name}'s soul replaying right now? Describe the automatic behavior, the familiar feeling, what it costs them. End with an insight in italics.
 
-2. THE WOUND IN PROCESSING (RAM ⚷) — Which transits activate Chiron or the Door Axis? Is the Invisible Door under pressure? Is the Visible Door / Stage being activated? Describe the movement, not the mechanics.
+2. THE WOUND IN PROCESSING (RAM ⚷) — What is being touched, awakened, shaken in {name}'s core wound right now? Describe the lived movement, not the mechanics. End with an insight in italics.
 
-3. KARMIC TRIAL (⚸) — What is Lilith's current test? What does it make unbearable? Where does it propel?
+3. KARMIC TRIAL (⚸) — What does this period make unbearable for {name}? Where does it push them despite themselves? End with an insight in italics.
 
-4. ALTERNATIVE DE CONSCIENCE + STAGING — Formulate the inner shift. What the soul must stop. What it must activate. End with ONE single direct and actionable sentence.
+4. ALTERNATIVE OF CONSCIOUSNESS — Formulate the inner shift as a clear vision. What {name} must stop doing. What they must dare to activate. End with ONE single direct, actionable sentence addressed personally to {name}.
 
 Develop each section as coherent soul-reading, narrative, no mechanical lists. Minimum 300 words. Do not truncate."""
     else:
@@ -458,18 +478,24 @@ Develop each section as coherent soul-reading, narrative, no mechanical lists. M
 CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucun récapitulatif des positions natales, aucune introduction.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
 
-Aspects actifs (avec thèmes nakshatra si disponibles) :
+Aspects actifs (données brutes — NE PAS les citer tels quels dans le texte) :
 {aspects_text}
+
+STYLE OBLIGATOIRE : lecteur d'âme, pas astrologue technique.
+- Traduis chaque aspect en vécu concret, en pattern reconnaissable.
+- Ne cite jamais les aspects bruts. Traduis-les en ce que {name} ressent ou fait.
+- Parle directement à {name} : "tu", "ton", "ta".
+- À la fin de chaque section (1, 2, 3), glisse un APERÇU : une phrase courte en italique qui ouvre une porte sans tout révéler.
 
 Applique le protocole en 4 étapes :
 
-1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quels transits activent les schémas de moindre résistance ? Décris ce que l'âme fait quand elle est dans ce piège, en langage narratif direct.
+1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quel piège l'âme de {name} rejoue-t-elle en ce moment ? Décris le comportement automatique, la sensation familière, ce que ça lui coûte. Termine par un aperçu en italique.
 
-2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Quels transits activent Chiron ou l'Axe des Portes ? La Porte Invisible est-elle sous pression ? La Voie de libération / Stage est-elle activée ?
+2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Qu'est-ce qui est en train d'être touché, réveillé dans la blessure profonde de {name} ? Décris le mouvement vécu, pas la mécanique. Termine par un aperçu en italique.
 
-3. L'ÉPREUVE KARMIQUE (⚸) — Quel est le test de Lilith en cours ? Qu'est-ce qu'il rend insupportable ? Vers quoi il propulse ?
+3. L'ÉPREUVE KARMIQUE (⚸) — Qu'est-ce que la période rend insupportable à {name} ? Vers quoi ça le pousse malgré lui ? Termine par un aperçu en italique.
 
-4. ALTERNATIVE DE CONSCIENCE + MISE EN SCÈNE — Formule la bascule intérieure. Ce que l'âme doit cesser. Ce qu'elle doit activer. Termine par UNE seule phrase directe et actionnable.
+4. ALTERNATIVE DE CONSCIENCE — Formule la bascule en une vision claire. Ce que {name} doit cesser. Ce qu'il doit oser activer. Termine par UNE seule phrase directe et actionnable, adressée personnellement à {name}.
 
 Développe chaque section en lecture d'âme cohérente, narrative, sans liste mécanique. Minimum 300 mots. Ne pas tronquer."""
 
