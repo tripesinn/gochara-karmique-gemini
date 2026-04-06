@@ -84,7 +84,7 @@ LANGS = {
         "hero_cta": "Accéder à ta synthèse",
         "geo_auto": "Position auto ou saisir une ville…",
         "pillar1_title": "Mémoire Karmique",
-        "pillar2_title": "Porte Invisible",
+        "pillar2_title": "Blessure Originelle",
         "pillar3_title": "Mise en Scène",
     },
     "en": {
@@ -146,7 +146,7 @@ LANGS = {
         "hero_cta": "Access your synthesis",
         "geo_auto": "Auto position or type a city…",
         "pillar1_title": "Karmic Memory",
-        "pillar2_title": "Invisible Door",
+        "pillar2_title": "Core Wound",
         "pillar3_title": "The Stage",
     },
     "es": {
@@ -208,7 +208,7 @@ LANGS = {
         "hero_cta": "Acceder a tu síntesis",
         "geo_auto": "Posición auto o escribe una ciudad…",
         "pillar1_title": "Memoria Kármica",
-        "pillar2_title": "Puerta Invisible",
+        "pillar2_title": "Herida Original",
         "pillar3_title": "La Escena",
     },
     "pt": {
@@ -270,7 +270,7 @@ LANGS = {
         "hero_cta": "Acessar sua síntese",
         "geo_auto": "Posição auto ou digitar uma cidade…",
         "pillar1_title": "Memória Kármica",
-        "pillar2_title": "Porta Invisível",
+        "pillar2_title": "Ferida Original",
         "pillar3_title": "O Palco",
     },
     "de": {
@@ -332,7 +332,7 @@ LANGS = {
         "hero_cta": "Zugang zu deiner Synthese",
         "geo_auto": "Automatische Position oder Stadt eingeben…",
         "pillar1_title": "Karmisches Gedächtnis",
-        "pillar2_title": "Unsichtbare Tür",
+        "pillar2_title": "Urwunde",
         "pillar3_title": "Die Bühne",
     },
     "nl": {
@@ -394,7 +394,7 @@ LANGS = {
         "hero_cta": "Toegang tot je synthese",
         "geo_auto": "Auto positie of typ een stad…",
         "pillar1_title": "Karmisch Geheugen",
-        "pillar2_title": "Onzichtbare Deur",
+        "pillar2_title": "Oerwond",
         "pillar3_title": "Het Podium",
     },
     "it": {
@@ -456,7 +456,7 @@ LANGS = {
         "hero_cta": "Accedi alla tua sintesi",
         "geo_auto": "Posizione auto o digita una città…",
         "pillar1_title": "Memoria Karmica",
-        "pillar2_title": "Porta Invisibile",
+        "pillar2_title": "Ferita Originale",
         "pillar3_title": "La Scena",
     },
 }
