@@ -9,7 +9,10 @@ Lilith    : Vraie (Osculating Apogee)
 Orbe      : < 3°
 """
 
-import swisseph as swe
+try:
+    import swisseph as swe          # pyswisseph si disponible
+except ImportError:
+    import swisseph_ctypes as swe   # fallback ctypes (pas de compilation)
 from datetime import datetime
 import pytz
 

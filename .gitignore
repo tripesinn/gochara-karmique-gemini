@@ -1,3 +1,6 @@
+# Swiss Ephemeris DLL (Windows local uniquement)
+*.dll
+
 # Python
 __pycache__/
 *.pyc

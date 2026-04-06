@@ -315,19 +315,7 @@
             <div style="color:var(--gold);font-family:var(--display);font-size:0.85rem;margin-bottom:10px;">✦ Gemma 3 — Inférence locale</div>
             <div id="gemma-status-text" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:12px;">Vérification…</div>
 
-            <!-- Token HuggingFace (requis pour télécharger Gemma) -->
-            <div id="hf-token-block" style="margin-bottom:12px;display:none;">
-                <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:6px;">
-                    Gemma nécessite un compte HuggingFace avec les CGU acceptées sur <a href="https://huggingface.co/litert-community/Gemma3-1B-IT" target="_blank" rel="noopener" style="color:var(--gold);">ce repo</a>.<br>
-                    <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" style="color:var(--gold);">Crée un token "Read"</a> puis colle-le ci-dessous.
-                </div>
-                <div style="display:flex;gap:6px;">
-                    <input id="hf-token-input" type="password" placeholder="hf_xxxxxxxxxxxxxxxxxxxx"
-                        style="flex:1;background:#0a0a18;border:1px solid #2a2a4a;border-radius:2px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:0.78rem;"
-                        value="">
-                    <button onclick="saveHfToken()" class="btn-secondary" style="width:auto;padding:6px 12px;font-size:0.78rem;">Sauver</button>
-                </div>
-            </div>
+
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn-secondary" onclick="gemmaDownload()" id="btn-gemma-dl" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;">
@@ -481,11 +469,14 @@ function calculate() {
             alert(data.error);
         } else {
             lastSynthesis = data.synthesis;
-            document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis);
-            document.getElementById('synthesis-box').style.display = 'block';
-            document.getElementById('email-status').textContent = '';
-            // Scroll automatique vers le résultat
-            document.getElementById('synthesis-box').scrollIntoView({ behavior: 'smooth' });
+            if (data.local_ai_mode) {
+                openGemmaManager();
+            } else {
+                document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis || '');
+                document.getElementById('synthesis-box').style.display = 'block';
+                document.getElementById('email-status').textContent = '';
+                document.getElementById('synthesis-box').scrollIntoView({ behavior: 'smooth' });
+            }
         }
     })
     .catch(err => {
@@ -554,7 +545,7 @@ async function fetchCitySuggestions(q) {
         const r = await fetch(`/geocode?q=${encodeURIComponent(q)}`);
         const results = await r.json();
         showSuggestions(results);
-    } catch { hideSuggestions(); }
+    } catch(e) { console.error('geocode error:', e); hideSuggestions(); }
 }
 
 function showSuggestions(results) {
@@ -634,13 +625,24 @@ if ('serviceWorker' in navigator) {
 // Deux backends : APK natif (Java plugin) ou navigateur web (WebAssembly + OPFS)
 
 // ── Backend WEB : MediaPipe Tasks GenAI JS + stockage OPFS ───────────────────
-const GEMMA_WASM_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.14/wasm';
-const GEMMA_SDK_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.14/genai_bundle.mjs';
+const GEMMA_WASM_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.26/wasm';
+const GEMMA_SDK_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.26/genai_bundle.mjs';
+
+// Polyfill Chrome 131+ : requestAdapterInfo() supprimée → adapter.info (synchrone)
+if (typeof navigator !== 'undefined' && navigator.gpu) {
+    const _origRequestAdapter = navigator.gpu.requestAdapter.bind(navigator.gpu);
+    navigator.gpu.requestAdapter = async (...args) => {
+        const adapter = await _origRequestAdapter(...args);
+        if (adapter && typeof adapter.requestAdapterInfo !== 'function') {
+            adapter.requestAdapterInfo = async () => adapter.info ?? {};
+        }
+        return adapter;
+    };
+}
 const GEMMA_MODEL_URLS = {
-    // litert-community/Gemma3-1B-IT — variante web (WebAssembly/OPFS)
-    e2b: 'https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4-web.task',
-    // E4B : placeholder — à mettre à jour quand Gemma3 4B litert disponible
-    e4b: 'https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4-web.task',
+    // Servi depuis Cloudflare R2 — pas de token requis
+    e2b: 'https://models.karmicgochara.app/gemma3-1b-it-int4-web.task',
+    e4b: 'https://models.karmicgochara.app/gemma3-1b-it-int4-web.task',
 };
 const GEMMA_FILENAMES = { e2b: 'gemma_e2b.task', e4b: 'gemma_e4b.task' };
 
@@ -700,12 +702,8 @@ const GemmaWeb = {
             }
         } catch {}
 
-        // Token HuggingFace requis pour les modèles Gemma
-        const hfToken = localStorage.getItem('hf_token') || '';
-        const headers = hfToken ? { 'Authorization': 'Bearer ' + hfToken } : {};
-        const res = await fetch(url, { headers });
-        if (res.status === 401) throw new Error('Token HuggingFace invalide. Crée un token "Read" sur huggingface.co/settings/tokens et saisis-le ci-dessus.');
-        if (res.status === 403) throw new Error('Accès refusé (403) — accepte les CGU sur huggingface.co/litert-community/Gemma3-1B-IT en cliquant "Agree and access repository", puis réessaie.');
+        // Téléchargement depuis R2 — pas d'authentification requise
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status} — vérifier la connexion`);
 
         const total  = parseInt(res.headers.get('content-length') || '0');
@@ -879,7 +877,7 @@ async function calculateWithRouting() {
 
 function showSynthesis(text, remaining) {
     lastSynthesis = text;
-    document.getElementById('synthesis-content').innerHTML = marked.parse(text);
+    document.getElementById('synthesis-content').innerHTML = marked.parse(text || '');
     document.getElementById('synthesis-box').style.display = 'block';
     document.getElementById('email-status').textContent = '';
     document.getElementById('synthesis-box').scrollIntoView({ behavior: 'smooth' });
@@ -1245,9 +1243,6 @@ async function refreshGemmaStatus() {
         btnDl.style.display   = 'block';
         btnLoad.style.display = 'none';
         if (indicator) indicator.textContent = '';
-        // Afficher le bloc token HF si mode web
-        const tokenBlock = document.getElementById('hf-token-block');
-        if (tokenBlock && isWeb) tokenBlock.style.display = 'block';
     }
 }
 

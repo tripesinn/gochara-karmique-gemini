@@ -578,7 +578,6 @@ def geocode():
             headers={"User-Agent": "Karmic.Gochara/1.0"},
             timeout=5,
         )
-        time.sleep(1)
         return jsonify(r.json())
     except Exception:
         try:
