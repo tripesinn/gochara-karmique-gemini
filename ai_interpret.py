@@ -479,19 +479,23 @@ ACTION: One clear shift — what to stop, what to activate."""
     else:
         user_prompt = f"""Analyse karmique de transit pour {name} — {date}.
 Natal : {natal_mini}
-Aspects actifs :
+Aspects actifs (À UTILISER IMPÉRATIVEMENT) :
 {aspects_text}
 
-Écris 4 sections directement. Aucune question. Aucun préambule. Tutoie {name}.
+MISSION : Explique comment ces aspects activent spécifiquement la ROM ou la RAM.
+Écris 4 sections : MÉMOIRE, BLESSURE, ÉPREUVE, ACTION.
+Interdiction de répéter 'votre volonté'. Sois concret.
+INSTRUCTION CRUCIALE : Nomme au moins une planète des 'Aspects actifs' dans chaque section pour justifier ton analyse.
+CONSIGNE TECHNIQUE : Tu dois obligatoirement citer au moins un nom de planète issu de la liste 'Aspects actifs' dans chaque section. Explique concrètement comment cette planète influence la ROM ou la RAM de {name}."""
 
-MÉMOIRE (ROM) : Quel piège karmique se rejoue ?
-BLESSURE (RAM) : Quelle blessure est activée ?
-ÉPREUVE (Lilith) : Qu'est-ce qui est insupportable en ce moment ?
-ACTION : Une bascule — ce qu'il faut cesser, ce qu'il faut activer."""
-
-    system = ("Tu es @siderealAstro13. Ton rôle est de faire une lecture d'âme technique "
-              "en 4 étapes : ROM, RAM, LILITH, ACTION. "
-              "Utilise uniquement les données fournies. Sois bref (200 mots max).")
+    system = (
+        "Tu es @siderealAstro13. Utilise cette légende pour l'analyse : "
+        "ROM (Ketu)=Mémoires passées/automatisme. "
+        "RAM (Chiron)=Traitement actif de la blessure. "
+        "LILITH=Point de rupture/épreuve. "
+        "ACTION=Dharma/Bascule. "
+        "Tutoie l'utilisateur. Sois direct, pas de blabla. 200 mots max."
+    )
 
     return {
         "system": system,
