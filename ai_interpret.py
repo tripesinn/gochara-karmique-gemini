@@ -209,10 +209,11 @@ def _build_natal_context(user: dict) -> str:
     return "\n".join(lines) if lines else ""
 
 
-def _build_amsa_bloc(chart_data: dict, lang: str = "fr") -> str:
+def _build_amsa_bloc(chart_data: dict, lang: str = "fr", compact: bool = False) -> str:
     """
     Formate les positions divisionnelles D9/D10/D60 des planètes clés
     (natal uniquement — les Amsas décrivent la nature fixe de l'âme).
+    compact=True : D60 limité à Lune+Ketu, sans texte d'instruction (mode Gemma).
     Retourne un bloc texte prêt à injecter dans le prompt.
     """
     natal = chart_data.get("natal", {})
@@ -222,7 +223,7 @@ def _build_amsa_bloc(chart_data: dict, lang: str = "fr") -> str:
     # Planètes clés par Amsa
     D9_PLANETS  = ["Lune ☽", "ASC ↑", "Nœud Nord ☊", "Nœud Sud ☋", "Vénus ♀", "Jupiter ♃"]
     D10_PLANETS = ["Soleil ☀", "Saturne ♄", "Mars ♂", "Jupiter ♃", "MC ↑"]
-    D60_PLANETS = ["Lune ☽", "Soleil ☀", "Nœud Sud ☋", "Chiron ⚷", "Saturne ♄"]
+    D60_PLANETS = ["Lune ☽", "Nœud Sud ☋"] if compact else ["Lune ☽", "Soleil ☀", "Nœud Sud ☋", "Chiron ⚷", "Saturne ♄"]
 
     def fmt(planet_key: str, amsa: str) -> str:
         p = natal.get(planet_key)
@@ -270,7 +271,8 @@ def _build_amsa_bloc(chart_data: dict, lang: str = "fr") -> str:
         bloc += f"\n{d10_lbl}\n" + "\n".join(lines_d10) + "\n"
     if lines_d60:
         bloc += f"\n{d60_lbl}\n" + "\n".join(lines_d60) + "\n"
-    bloc += f"\n{instr}\n"
+    if not compact:
+        bloc += f"\n{instr}\n"
     return bloc
 
 
@@ -435,11 +437,11 @@ def build_prompt_only(chart_data: dict, user: dict = None, lang: str = "fr") -> 
     user = user or {}
     lang = user.get("lang", lang)
 
-    aspects_text  = _aspects_to_text(chart_data.get("aspects", []))
+    aspects_text  = _aspects_to_text(chart_data.get("aspects", []), max_aspects=5)
     natal_context = _build_natal_context(user)
     nodal_cycle   = _detect_nodal_cycle(user, chart_data)
     transit_frict = _detect_transit_friction(chart_data, lang=lang)
-    amsa_bloc     = _build_amsa_bloc(chart_data, lang=lang)
+    amsa_bloc     = _build_amsa_bloc(chart_data, lang=lang, compact=True)
     date          = chart_data.get("transit_date", "")
     time          = chart_data.get("transit_time", "")
     name          = user.get("name", "l'utilisateur")
@@ -449,55 +451,43 @@ def build_prompt_only(chart_data: dict, user: dict = None, lang: str = "fr") -> 
     frict_bloc = transit_frict if transit_frict else ""
 
     if lang == "en":
-        user_prompt = f"""siderealAstro13 transit analysis for {name} — {date} at {time}.
-INSTRUCTION: start directly with "## 1. KARMIC MEMORY". No preamble, no recap of natal positions, no introduction.
+        user_prompt = f"""Transit reading for {name} — {date}.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
-
-Active aspects (raw data — do NOT quote them as-is in the text):
+Key aspects:
 {aspects_text}
 
-MANDATORY STYLE: soul reader, not technical astrologer.
-- Translate each aspect into lived experience, into a recognizable behavioral pattern.
-- Never quote raw aspects. Translate them into what {name} feels or does.
-- Speak directly to {name}: "you", "your". Name them in what they are living.
-- At the end of each section (1, 2, 3), add an INSIGHT: one short sentence in italics that opens a door without revealing everything.
+Write 4 sections. Be direct, Soul Reader style, max 250 words total. No preamble.
 
-Apply the 4-step protocol:
+## 1. MEMORY (ROM)
+What karmic trap is replaying? Name the automatic behavior.
 
-1. KARMIC MEMORY (ROM ☋) — What trap is {name}'s soul replaying right now? Describe the automatic behavior, the familiar feeling, what it costs them. End with an insight in italics.
+## 2. WOUND (RAM)
+What core wound is activated? What is moving?
 
-2. THE WOUND IN PROCESSING (RAM ⚷) — What is being touched, awakened, shaken in {name}'s core wound right now? Describe the lived movement, not the mechanics. End with an insight in italics.
+## 3. TRIAL (Lilith)
+What is unbearable right now? Where does it push {name}?
 
-3. KARMIC TRIAL (⚸) — What does this period make unbearable for {name}? Where does it push them despite themselves? End with an insight in italics.
-
-4. ALTERNATIVE OF CONSCIOUSNESS — Formulate the inner shift as a clear vision. What {name} must stop doing. What they must dare to activate. End with ONE single direct, actionable sentence addressed personally to {name}.
-
-Develop each section as coherent soul-reading, narrative, no mechanical lists. Minimum 300 words. Do not truncate."""
+## 4. ACTION (Alternative)
+One clear shift. What to stop. What to activate. End with one direct sentence to {name}."""
     else:
-        user_prompt = f"""Analyse siderealAstro13 des transits de {name} — {date} à {time}.
-CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucun récapitulatif des positions natales, aucune introduction.
+        user_prompt = f"""Lecture de transit pour {name} — {date}.
 {natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
-
-Aspects actifs (données brutes — NE PAS les citer tels quels dans le texte) :
+Aspects clés :
 {aspects_text}
 
-STYLE OBLIGATOIRE : lecteur d'âme, pas astrologue technique.
-- Traduis chaque aspect en vécu concret, en pattern reconnaissable.
-- Ne cite jamais les aspects bruts. Traduis-les en ce que {name} ressent ou fait.
-- Parle directement à {name} : "tu", "ton", "ta".
-- À la fin de chaque section (1, 2, 3), glisse un APERÇU : une phrase courte en italique qui ouvre une porte sans tout révéler.
+Écris 4 sections. Sois direct, style Soul Reader, max 250 mots au total. Aucun préambule.
 
-Applique le protocole en 4 étapes :
+## 1. MÉMOIRE (ROM)
+Quel piège karmique se rejoue ? Nomme le comportement automatique.
 
-1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quel piège l'âme de {name} rejoue-t-elle en ce moment ? Décris le comportement automatique, la sensation familière, ce que ça lui coûte. Termine par un aperçu en italique.
+## 2. BLESSURE (RAM)
+Quelle blessure profonde est activée ? Qu'est-ce qui se meut ?
 
-2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Qu'est-ce qui est en train d'être touché, réveillé dans la blessure profonde de {name} ? Décris le mouvement vécu, pas la mécanique. Termine par un aperçu en italique.
+## 3. ÉPREUVE (Lilith)
+Qu'est-ce qui est insupportable en ce moment ? Vers quoi ça pousse {name} ?
 
-3. L'ÉPREUVE KARMIQUE (⚸) — Qu'est-ce que la période rend insupportable à {name} ? Vers quoi ça le pousse malgré lui ? Termine par un aperçu en italique.
-
-4. ALTERNATIVE DE CONSCIENCE — Formule la bascule en une vision claire. Ce que {name} doit cesser. Ce qu'il doit oser activer. Termine par UNE seule phrase directe et actionnable, adressée personnellement à {name}.
-
-Développe chaque section en lecture d'âme cohérente, narrative, sans liste mécanique. Minimum 300 mots. Ne pas tronquer."""
+## 4. ACTION (Alternative)
+Une bascule claire. Ce qu'il faut cesser. Ce qu'il faut activer. Termine par une phrase directe à {name}."""
 
     return {
         "system": _build_system_prompt(user),
