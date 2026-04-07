@@ -741,6 +741,28 @@ def calculate():
 
         result["synthesis"] = synthesis
         result["remaining"] = quota["remaining"]
+
+        # Sauvegarde la localisation de transit si elle a changé
+        if data.get("transit_city") and data["transit_city"] != profile.get("transit_city"):
+            try:
+                from profiles import update_profile
+                updated = update_profile(profile["email"], {
+                    **profile,
+                    "transit_city": transit_loc["city"],
+                    "transit_lat":  transit_loc["lat"],
+                    "transit_lon":  transit_loc["lon"],
+                    "transit_tz":   transit_loc["tz"],
+                })
+                if updated:
+                    session["profile"] = {**profile, **{
+                        "transit_city": transit_loc["city"],
+                        "transit_lat":  transit_loc["lat"],
+                        "transit_lon":  transit_loc["lon"],
+                        "transit_tz":   transit_loc["tz"],
+                    }}
+            except Exception:
+                pass  # Non bloquant
+
         return jsonify(result)
     except Exception as exc:
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
