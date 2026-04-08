@@ -25,8 +25,7 @@ www/
 # Android (généré — committer uniquement les sources)
 android/.gradle/
 android/app/build/
-android/.idea/workspace.xml
-android/.idea/deploymentTargetSelector.xml
+android/.idea/
 
 # Cloudflare Wrangler (état local, cache R2, DB miniflare)
 .wrangler/
