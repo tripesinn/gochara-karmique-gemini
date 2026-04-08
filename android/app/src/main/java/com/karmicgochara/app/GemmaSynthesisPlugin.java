@@ -50,8 +50,6 @@ public class GemmaSynthesisPlugin extends Plugin {
     // ── Paramètres d'inférence ────────────────────────────────────────────────
     private static final int   MAX_TOKENS_SYNTHESIS = 2048;  // synthèse quotidienne
     private static final int   MAX_TOKENS_REPORT    = 4096;  // rapport annuel
-    private static final float TEMPERATURE          = 0.7f;
-    private static final int   TOP_K                = 40;
 
     // ── État runtime ──────────────────────────────────────────────────────────
     private LlmInference    llm2b       = null;  // E2B chargé
@@ -125,8 +123,6 @@ public class GemmaSynthesisPlugin extends Plugin {
                 LlmInferenceOptions options = LlmInferenceOptions.builder()
                         .setModelPath(modelFile.getAbsolutePath())
                         .setMaxTokens(maxTokens)
-                        .setTemperature(TEMPERATURE)
-                        .setTopK(TOP_K)
                         .build();
 
                 LlmInference llm = LlmInference.createFromOptions(getContext(), options);

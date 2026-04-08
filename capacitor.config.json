@@ -3,7 +3,7 @@
   "appName": "Karmic Gochara",
   "webDir": "www",
   "server": {
-    "url": "https://karmic-gochara.netlify.app",
+    "url": "https://karmicgochara.app",
     "cleartext": false
   },
   "plugins": {
