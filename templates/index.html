@@ -207,6 +207,55 @@
         <button id="toggle-reg-btn" class="btn-secondary" onclick="toggleRegistration()">{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}</button>
 
         <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.88rem; font-style: italic;"></div>
+
+        <div style="margin-top: 1.2rem; border-top: 1px solid rgba(201,168,76,0.1); padding-top: 1.2rem;">
+            <button class="btn-secondary" onclick="toggleGuestForm()" style="font-size: 0.65rem; opacity: 0.7;">
+                Continuer sans compte →
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Mode invité ────────────────────────────────────────────────────── -->
+    <div id="guest-section" style="display:none; max-width: 420px; margin: 0 auto 3rem; padding: 0 20px;">
+        <p style="font-size: 0.8rem; color: var(--text-dim); font-style: italic; margin-bottom: 1.2rem;">
+            Aucune donnée enregistrée · Lecture du transit du jour uniquement
+        </p>
+        <span class="label-small">Date de naissance</span>
+        <input id="guest-birthdate" class="login-input" type="date">
+        <span class="label-small">Heure <span style="opacity:0.5">(optionnel)</span></span>
+        <input id="guest-birthtime" class="login-input" type="time">
+        <span class="label-small">Ville de naissance <span style="opacity:0.5">(optionnel)</span></span>
+        <input id="guest-birthplace" class="login-input" type="text" placeholder="ex : Paris, France">
+
+        <button class="btn-primary" onclick="calculateGuest()" id="guest-btn">
+            <span id="guest-btn-text">Révèle mon transit</span>
+        </button>
+        <button class="btn-secondary" onclick="toggleGuestForm()" style="margin-top: 8px; font-size: 0.65rem; opacity: 0.6;">
+            ← Retour connexion
+        </button>
+
+        <!-- Résultat invité -->
+        <div id="guest-result" style="display:none; margin-top: 2rem;">
+            <div style="border: 1px solid rgba(201,168,76,0.2); border-top: 2px solid var(--gold); padding: 1.5rem; background: rgba(201,168,76,0.04); text-align: left; position: relative;">
+                <div style="font-family: var(--mono); font-size: 0.65rem; color: var(--gold-dim); letter-spacing: 0.2em; margin-bottom: 1rem;">
+                    ✦ TRANSIT DU JOUR — MODE SYMBOLIQUE
+                </div>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">Chandra Lagna : <strong id="guest-lagna" style="color: var(--gold);">—</strong></span>
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">ROM : <strong id="guest-rom" style="color: var(--text);">—</strong></span>
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">Stage : <strong id="guest-stage" style="color: var(--text);">—</strong></span>
+                </div>
+                <p id="guest-hook" style="font-size: 1.05rem; font-style: italic; line-height: 1.7; color: var(--text); margin: 0 0 1.5rem;"></p>
+                <div style="border-top: 1px solid rgba(201,168,76,0.15); padding-top: 1rem;">
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.8rem;">
+                        L'Alternative de Conscience (section #4) révèle la bascule exacte à faire aujourd'hui.
+                    </p>
+                    <button class="btn-primary" onclick="toggleGuestForm()" style="font-size: 0.72rem;">
+                        ✦ Créer un compte — Synthèse complète gratuite
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -368,6 +417,55 @@ function setLang(code) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({lang: code})
     }).then(() => location.reload());
+}
+
+function toggleGuestForm() {
+    const gs = document.getElementById('guest-section');
+    const hs = document.getElementById('hero-section');
+    const visible = gs.style.display === 'block';
+    gs.style.display = visible ? 'none' : 'block';
+    // Masque le hero quand le formulaire invité est visible (évite la confusion)
+    document.querySelector('.login-card').style.display = visible ? '' : 'none';
+    document.getElementById('guest-result').style.display = 'none';
+}
+
+async function calculateGuest() {
+    const birthdate  = document.getElementById('guest-birthdate').value;
+    const birthtime  = document.getElementById('guest-birthtime').value;
+    const birthplace = document.getElementById('guest-birthplace').value.trim();
+
+    if (!birthdate) {
+        document.getElementById('guest-birthdate').style.borderColor = '#c97a6b';
+        setTimeout(() => document.getElementById('guest-birthdate').style.borderColor = '', 1500);
+        return;
+    }
+
+    const btn = document.getElementById('guest-btn');
+    const btnText = document.getElementById('guest-btn-text');
+    btn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span>Calcul en cours…';
+
+    try {
+        const r = await fetch('/calculate_guest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ birthdate, birthtime, birthplace }),
+        });
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+
+        document.getElementById('guest-lagna').textContent = data.lagna || '—';
+        document.getElementById('guest-rom').textContent   = data.rom   || '—';
+        document.getElementById('guest-stage').textContent = data.stage || '—';
+        document.getElementById('guest-hook').textContent  = data.hook  || '';
+        document.getElementById('guest-result').style.display = 'block';
+        document.getElementById('guest-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+        alert('Erreur : ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Révèle mon transit';
+    }
 }
 
 function toggleRegistration() {
