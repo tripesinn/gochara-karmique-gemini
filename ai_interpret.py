@@ -2,6 +2,10 @@
 ai_interpret.py — Gochara Karmique
 Intelligence siderealAstro13 | Astrologie védique sidérale (Chandra Lagna)
 Doctrine centralisée dans doctrine.py — ce fichier ne contient que la logique d'appel API.
+
+Vault Karpathy (karmic_vault/) injecté dans _build_system_prompt() en remplacement
+du SYSTEM_PROMPT_FR/EN de doctrine.py. Plus compact (~800 tokens vs ~2000),
+structuré pour Claude ET Gemma 4 Mini (migration progressive).
 """
 
 import anthropic
@@ -15,6 +19,35 @@ from doctrine import (
     NODAL_CYCLES,
     HOUSE_MEANINGS,
 )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# VAULT KARPATHY — chargement des fichiers Markdown doctrinaux
+# ══════════════════════════════════════════════════════════════════════════════
+
+_VAULT_DIR = os.path.join(os.path.dirname(__file__), "karmic_vault")
+
+def _load_vault(include_keywords: bool = True) -> str:
+    """
+    Charge le vault doctrinal Markdown compressé (~800-1300 tokens).
+    Remplace get_system_prompt() de doctrine.py dans _build_system_prompt().
+    Fallback silencieux vers get_system_prompt() si le vault est absent.
+
+    include_keywords=True  → injecte 02_planet_keywords.md (transits actifs)
+    include_keywords=False → 00 + 01 seulement (hook freemium léger)
+    """
+    try:
+        master = open(os.path.join(_VAULT_DIR, "00_MASTER_CONTEXT.md"), encoding="utf-8").read()
+        rules  = open(os.path.join(_VAULT_DIR, "01_output_rules.md"),   encoding="utf-8").read()
+        vault  = master + "\n\n---\n\n" + rules
+        if include_keywords:
+            kw_path = os.path.join(_VAULT_DIR, "02_planet_keywords.md")
+            if os.path.exists(kw_path):
+                vault += "\n\n---\n\n" + open(kw_path, encoding="utf-8").read()
+        return vault
+    except FileNotFoundError:
+        # Vault absent → fallback doctrine.py (comportement identique à avant)
+        return None
 
 # ── Client singleton ──────────────────────────────────────────────────────────
 _client = None
@@ -30,12 +63,19 @@ def _get_client():
 # PROMPT SYSTÈME — personnalisé par utilisateur, doctrine centralisée
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _build_system_prompt(user: dict) -> str:
+def _build_system_prompt(user: dict, use_vault: bool = True) -> str:
     """
     Construit le prompt système complet.
-    Base = doctrine.get_system_prompt(user) — source unique de vérité, multi-langue.
-    Injection du bloc natal personnalisé en fin de prompt.
-    Injection du bloc friction identitaire (Pilier 6) si positions disponibles.
+
+    use_vault=True (défaut) :
+        Base = vault Karpathy (karmic_vault/00_MASTER_CONTEXT.md + 01 + 02)
+        ~800-1300 tokens, structuré Markdown, optimal pour Claude ET Gemma.
+        Fallback automatique vers get_system_prompt() si vault absent.
+
+    use_vault=False :
+        Base = doctrine.get_system_prompt(user) — comportement legacy.
+
+    Dans les deux cas : injection du bloc natal personnalisé + friction (Pilier 6).
     """
     user = user or {}
     lang = user.get("lang", "fr")
@@ -130,8 +170,14 @@ def _build_system_prompt(user: dict) -> str:
         friction_bloc = f"\n{friction['prompt_block']}\n"
 
     # ── Assemblage final ──────────────────────────────────────────────────────
-    # get_system_prompt() retourne le prompt doctrine complet dans la bonne langue
-    return get_system_prompt(user) + natal_bloc + friction_bloc
+    # Vault Karpathy si disponible, sinon fallback doctrine.py
+    if use_vault:
+        vault_content = _load_vault(include_keywords=True)
+        base_prompt = vault_content if vault_content else get_system_prompt(user)
+    else:
+        base_prompt = get_system_prompt(user)
+
+    return base_prompt + natal_bloc + friction_bloc
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -437,7 +483,7 @@ LANGUAGE RULE: every single sentence must be in {lang_name}. No French or Englis
     msg = _get_client().messages.create(
         model=synthesis_model,
         max_tokens=4000,
-        system=_build_system_prompt(user),
+        system=_build_system_prompt(user, use_vault=True),
         messages=[{"role": "user", "content": prompt}],
     )
     return msg.content[0].text
