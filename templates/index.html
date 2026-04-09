@@ -235,7 +235,26 @@
     </div>
     {% endif %}
 
-    <input type="date" id="transit-date" class="date-input" value="{{ today_iso }}">
+    <!-- ── Hook natal — affiché dès le login ──────────────────────────────── -->
+    <div id="hook-natal-box" style="display:none; max-width:600px; margin:0 auto 2.5rem; padding:0 20px;">
+        <div style="border-left:2px solid var(--gold-dim); padding:1rem 1.2rem; background:var(--mist);">
+            <div style="font-family:var(--mono); font-size:0.65rem; letter-spacing:0.2em; color:var(--gold-dim); margin-bottom:0.6rem; text-transform:uppercase;">✦ Lecture natale</div>
+            <div id="hook-natal-text" style="font-style:italic; font-size:1rem; line-height:1.75; color:rgba(245,240,232,0.82);"></div>
+        </div>
+    </div>
+
+    <!-- ── Hook transit — affiché après sélection date+lieu ──────────────── -->
+    <div id="hook-transit-box" style="display:none; max-width:600px; margin:0 auto 2rem; padding:0 20px;">
+        <div style="border-left:2px solid var(--gold); padding:1rem 1.2rem; background:rgba(201,168,76,0.06);">
+            <div style="font-family:var(--mono); font-size:0.65rem; letter-spacing:0.2em; color:var(--gold-dim); margin-bottom:0.6rem; text-transform:uppercase;">◆ Signal du jour</div>
+            <div id="hook-transit-text" style="font-style:italic; font-size:1rem; line-height:1.75; color:rgba(245,240,232,0.88);"></div>
+            <div id="hook-transit-spinner" style="display:none; color:var(--text-dim); font-size:0.82rem; margin-top:0.5rem;">
+                <span class="spinner"></span> Lecture des aspects…
+            </div>
+        </div>
+    </div>
+
+        <input type="date" id="transit-date" class="date-input" value="{{ today_iso }}">
     <br>
     <div style="max-width: 300px; margin: 0 auto; position: relative;">
         <div style="font-size: 0.7rem; color: var(--text-dim); font-family: var(--display); letter-spacing: 0.05em; text-align: left; margin-bottom: 4px;">LIEU DE TRANSIT</div>
@@ -405,8 +424,16 @@ function login() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.ok) location.reload();
-        else { errDiv.style.color = "#c97a6b"; errDiv.textContent = data.error || "Inconnu."; }
+        if (data.ok) {
+            // Afficher le hook natal avant le reload si disponible
+            if (data.hook_natal) {
+                sessionStorage.setItem('hook_natal', data.hook_natal);
+            }
+            location.reload();
+        } else {
+            errDiv.style.color = "#c97a6b";
+            errDiv.textContent = data.error || "Inconnu.";
+        }
     });
 }
 
@@ -487,6 +514,71 @@ function calculate() {
 }
 
 let lastSynthesis = '';
+// ══ Hooks natal + transit ════════════════════════════════════════════════════
+
+// Hook natal : lu depuis sessionStorage après reload post-login
+(function initHookNatal() {
+    const hook = sessionStorage.getItem('hook_natal');
+    if (hook) {
+        const box  = document.getElementById('hook-natal-box');
+        const text = document.getElementById('hook-natal-text');
+        if (box && text) {
+            text.textContent = hook;
+            box.style.display = 'block';
+        }
+        sessionStorage.removeItem('hook_natal');
+    }
+})();
+
+// Hook transit : appelé quand date + lieu sont prêts
+async function fetchHookTransit() {
+    const date = document.getElementById('transit-date').value;
+    if (!date || !transitGeo) return;
+
+    const spinner = document.getElementById('hook-transit-spinner');
+    const text    = document.getElementById('hook-transit-text');
+    const box     = document.getElementById('hook-transit-box');
+
+    // Afficher spinner, vider le texte précédent
+    if (box)     box.style.display  = 'block';
+    if (text)    text.textContent   = '';
+    if (spinner) spinner.style.display = 'block';
+
+    try {
+        const res = await fetch('/hook/transit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                date,
+                hour: 12, minute: 0,
+                transit_lat:  transitGeo.lat,
+                transit_lon:  transitGeo.lon,
+                transit_city: transitGeo.city,
+                transit_tz:   transitGeo.tz,
+            })
+        });
+        const data = await res.json();
+        if (data.ok && data.hook) {
+            if (text) text.textContent = data.hook;
+        }
+    } catch(e) {
+        console.warn('Hook transit échoué :', e);
+    } finally {
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+// Déclencher hook transit aussi quand la date change (si lieu déjà sélectionné)
+document.addEventListener('DOMContentLoaded', () => {
+    const dateInput = document.getElementById('transit-date');
+    if (dateInput) {
+        dateInput.addEventListener('change', () => {
+            if (transitGeo) fetchHookTransit();
+        });
+    }
+});
+
+
 let transitGeo = null; // { lat, lon, city, tz }
 
 function useGeolocation() {
@@ -517,6 +609,7 @@ function useGeolocation() {
             icon.textContent = '✓';
             input.value = transitGeo.city;
             input.disabled = false;
+            fetchHookTransit();
         },
         (err) => {
             icon.textContent = '📍';
@@ -568,6 +661,7 @@ function showSuggestions(results) {
             document.getElementById('transit-city-input').value = name;
             document.getElementById('geo-icon').textContent = '✓';
             hideSuggestions();
+            fetchHookTransit();
         };
         box.appendChild(div);
     });
