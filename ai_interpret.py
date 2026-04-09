@@ -547,3 +547,141 @@ CONSIGNE TECHNIQUE : Tu dois obligatoirement citer au moins un nom de planète i
         "system": system,
         "user":   user_prompt,
     }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SYNTHÈSE STREAMING — Server-Sent Events (SSE)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_synthesis_stream(chart_data: dict, user: dict = None, lang: str = "fr"):
+    """
+    Version streaming de get_synthesis().
+    Génère la synthèse karmique token par token via Server-Sent Events (SSE).
+
+    Usage dans app.py :
+    ─────────────────────────────────────────────────────────────────
+    from flask import Response, stream_with_context
+    from ai_interpret import get_synthesis_stream
+
+    @app.route("/synthesis_stream")
+    def synthesis_stream():
+        chart_data = session.get("last_chart_data", {})
+        user = session.get("profile", {})
+        return Response(
+            stream_with_context(get_synthesis_stream(chart_data, user)),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
+    ─────────────────────────────────────────────────────────────────
+
+    Côté frontend (JavaScript) :
+    ─────────────────────────────────────────────────────────────────
+    const evtSource = new EventSource("/synthesis_stream");
+    const container = document.getElementById("synthesis");
+    container.innerHTML = "";
+
+    evtSource.onmessage = (e) => {
+        if (e.data === "[DONE]") { evtSource.close(); return; }
+        // Rétablir les vrais sauts de ligne
+        container.innerHTML += e.data.replace(/\\n/g, "\n");
+    };
+    evtSource.onerror = () => evtSource.close();
+    ─────────────────────────────────────────────────────────────────
+
+    Yields : chaînes SSE "data: <token>\\n\\n"
+    """
+    user = user or {}
+    lang = user.get("lang", lang)
+
+    aspects_text  = _aspects_to_text(chart_data.get("aspects", []))
+    natal_context = _build_natal_context(user)
+    nodal_cycle   = _detect_nodal_cycle(user, chart_data)
+    transit_frict = _detect_transit_friction(chart_data, lang=lang)
+    amsa_bloc     = _build_amsa_bloc(chart_data, lang=lang)
+    date          = chart_data.get("transit_date", "")
+    time          = chart_data.get("transit_time", "")
+    name          = user.get("name", "l'utilisateur")
+
+    # ── Garde-fous ────────────────────────────────────────────────────────────
+    _NO_ASPECT_FR = "Aucun aspect actif dans l'orbe de 3°."
+    if not aspects_text or aspects_text.strip() == _NO_ASPECT_FR:
+        yield "data: ⚠️ Aucun aspect de transit actif détecté.\n\n"
+        yield "data: [DONE]\n\n"
+        return
+    if not natal_context:
+        yield "data: ⚠️ Thème natal manquant.\n\n"
+        yield "data: [DONE]\n\n"
+        return
+
+    natal_bloc = f"\nThème natal de référence :\n{natal_context}\n" if natal_context else ""
+    nodal_bloc = nodal_cycle if nodal_cycle else ""
+    frict_bloc = transit_frict if transit_frict else ""
+
+    LANG_NAMES = {
+        "fr": "français", "en": "English", "es": "español",
+        "pt": "português", "de": "Deutsch", "nl": "Nederlands", "it": "italiano",
+    }
+    lang_name = LANG_NAMES.get(lang, "English")
+
+    if lang == "fr":
+        prompt = f"""Tu ES @siderealAstro13. Ne te comporte pas comme un assistant. Analyse directement les données ci-dessous selon la doctrine karmique.
+Interdiction de reformuler le prompt. Tu dois rédiger une analyse basée exclusivement sur les aspects et positions fournis.
+
+LANGUE : français uniquement. Aucun mot anglais.
+Analyse siderealAstro13 des transits de {name} — {date} à {time}.
+CONSIGNE : commence directement par "## 1. LA MÉMOIRE KARMIQUE". Aucune note préalable, aucune introduction.
+{natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
+
+Aspects actifs (NE PAS les citer tels quels) :
+{aspects_text}
+
+STYLE OBLIGATOIRE : lecteur d'âme, pas astrologue technique.
+- Traduis chaque aspect en vécu concret, pattern comportemental reconnaissable.
+- Parle directement à {name} : "tu", "ton", "ta".
+- À la fin de chaque section (1, 2, 3), un APERÇU en italique.
+
+1. LA MÉMOIRE KARMIQUE (ROM ☋) — Quel piège rejoue-t-elle ? Décris le comportement automatique, ce que ça coûte. Aperçu en italique.
+2. LA BLESSURE EN TRAITEMENT (RAM ⚷) — Qu'est-ce qui est réveillé ? La Porte Invisible est-elle sous pression ? Aperçu en italique.
+3. L'ÉPREUVE KARMIQUE (⚸) — Qu'est-ce que la période rend insupportable ? Vers quoi ça pousse malgré lui ? Aperçu en italique.
+4. ALTERNATIVE DE CONSCIENCE — Ce que {name} doit cesser. Ce qu'il doit oser. UNE phrase directe, actionnable.
+
+Minimum 300 mots. Ne pas tronquer. Tout en français."""
+    else:
+        prompt = f"""You ARE @siderealAstro13. Do not behave as an assistant. Analyse the data below directly according to karmic doctrine.
+
+siderealAstro13 transit analysis for {name} — {date} at {time}.
+INSTRUCTION: start directly with "## 1. KARMIC MEMORY". No preamble.
+{natal_bloc}{amsa_bloc}{nodal_bloc}{frict_bloc}
+
+Active aspects (do NOT quote them as-is):
+{aspects_text}
+
+MANDATORY STYLE: soul reader, not technical astrologer.
+- Translate each aspect into lived experience.
+- Speak directly to {name}: "you", "your".
+- End sections 1, 2, 3 with an INSIGHT in italics.
+
+1. KARMIC MEMORY (ROM ☋) — What trap replays? Insight in italics.
+2. THE WOUND IN PROCESSING (RAM ⚷) — What is awakened? Insight in italics.
+3. KARMIC TRIAL (⚸) — What is unbearable? Insight in italics.
+4. ALTERNATIVE OF CONSCIOUSNESS — ONE direct, actionable sentence to {name}.
+
+Minimum 300 words. Do not truncate. Language: {lang_name}."""
+
+    synthesis_model = os.environ.get("SYNTHESIS_MODEL", "claude-haiku-4-5-20251001")
+
+    # ── Streaming Anthropic SDK ───────────────────────────────────────────────
+    with _get_client().messages.stream(
+        model=synthesis_model,
+        max_tokens=4000,
+        system=_build_system_prompt(user, use_vault=True),
+        messages=[{"role": "user", "content": prompt}],
+    ) as stream:
+        for text_chunk in stream.text_stream:
+            safe = text_chunk.replace("\n", "\\n")
+            yield f"data: {safe}\n\n"
+
+    yield "data: [DONE]\n\n"

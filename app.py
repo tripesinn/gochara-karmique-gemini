@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 import pytz
-from flask import Flask, jsonify, render_template, request, session, send_from_directory
+from flask import Flask, jsonify, render_template, request, session, send_from_directory, Response, stream_with_context
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -742,6 +742,11 @@ def calculate():
         result["synthesis"] = synthesis
         result["remaining"] = quota["remaining"]
 
+        # Sauvegarde chart_data en session pour /synthesis_stream
+        session["last_chart_data"]    = result
+        session["last_enriched_profile"] = enriched_profile
+        session.modified = True
+
         # Sauvegarde la localisation de transit dans la session (toujours)
         if transit_loc.get("city"):
             new_transit = {
@@ -765,6 +770,48 @@ def calculate():
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
         return jsonify({"error": str(exc)}), 500
 
+
+
+
+@app.route("/synthesis_stream")
+def synthesis_stream():
+    """
+    Streaming SSE de la synthèse karmique.
+    Utilise chart_data + enriched_profile stockés en session par /calculate.
+
+    Frontend JS :
+        const container = document.getElementById("synthesis-output");
+        container.innerHTML = "";
+        const evtSource = new EventSource("/synthesis_stream");
+        evtSource.onmessage = (e) => {
+            if (e.data === "[DONE]") { evtSource.close(); return; }
+            container.innerHTML += e.data.replace(/\\n/g, "\n");
+        };
+        evtSource.onerror = () => evtSource.close();
+    """
+    from ai_interpret import get_synthesis_stream
+
+    profile = session.get("profile")
+    if not profile:
+        return Response("data: Non connecté\n\ndata: [DONE]\n\n",
+                        mimetype="text/event-stream")
+
+    chart_data       = session.get("last_chart_data")
+    enriched_profile = session.get("last_enriched_profile") or profile
+    lang             = session.get("lang", "fr")
+
+    if not chart_data:
+        return Response("data: Lance d'abord un calcul.\n\ndata: [DONE]\n\n",
+                        mimetype="text/event-stream")
+
+    return Response(
+        stream_with_context(get_synthesis_stream(chart_data, enriched_profile, lang=lang)),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control":     "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 @app.route("/send_synthesis", methods=["POST"])
 def send_synthesis():
