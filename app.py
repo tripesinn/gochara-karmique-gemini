@@ -591,18 +591,51 @@ def login():
     session["profile"] = profile
     session["pseudo"] = pseudo
 
-    # ── Hook natal : généré au login, mis en cache 7 jours ───────────────────
+    # ── Hook natal : généré au login depuis données Sheets ───────────────────
+    # Le profil contient chandra_lagna_sign si natal déjà calculé à l'inscription
     hook_natal = ""
     cache_key  = f"hook_natal_{pseudo}"
     if session.get(cache_key):
         hook_natal = session[cache_key]
-    else:
+    elif profile.get("chandra_lagna_sign"):
+        # Natal disponible dans Sheets → hook immédiat
         try:
             from ai_interpret import get_hook_natal
             hook_natal = get_hook_natal(profile)
             session[cache_key] = hook_natal
         except Exception as exc:
-            app.logger.warning("Hook natal échoué : %s", exc)
+            app.logger.warning("Hook natal login échoué : %s", exc)
+    else:
+        # Ancien profil sans natal stocké → calcul à la volée (non bloquant)
+        try:
+            from astro_calc import calculate_transits
+            from profiles import save_natal_to_sheet
+            from ai_interpret import get_hook_natal
+            from datetime import date as _date
+
+            natal_input = {
+                "name":   profile["name"],
+                "year":   profile["year"],   "month":  profile["month"],
+                "day":    profile["day"],    "hour":   profile["hour"],
+                "minute": profile["minute"], "lat":    profile["lat"],
+                "lon":    profile["lon"],    "tz":     profile["tz"],
+                "city":   profile["city"],
+            }
+            today = _date.today()
+            transit_loc = {
+                "city": profile["city"], "lat": profile["lat"],
+                "lon":  profile["lon"],  "tz":  profile["tz"],
+            }
+            natal_result     = calculate_transits(natal_input, transit_loc,
+                                                  today.year, today.month, today.day, 12, 0)
+            enriched         = _enrich_profile_with_natal(profile, natal_result.get("natal", {}))
+            save_natal_to_sheet(pseudo, enriched)  # stocké pour la prochaine fois
+            session["profile"] = enriched
+            profile = enriched
+            hook_natal = get_hook_natal(profile)
+            session[cache_key] = hook_natal
+        except Exception as exc:
+            app.logger.warning("Hook natal login (calcul volée) échoué : %s", exc)
 
     return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal})
 
@@ -624,9 +657,48 @@ def register():
     except Exception as exc:
         app.logger.error("Erreur Sheets register : %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+    # ── Calcul natal immédiat + stockage Sheets ───────────────────────────────
+    try:
+        from astro_calc import calculate_transits
+        from profiles import save_natal_to_sheet
+        from datetime import date as _date
+
+        natal_input = {
+            "name":   profile["name"],
+            "year":   profile["year"],   "month":  profile["month"],
+            "day":    profile["day"],    "hour":   profile["hour"],
+            "minute": profile["minute"], "lat":    profile["lat"],
+            "lon":    profile["lon"],    "tz":     profile["tz"],
+            "city":   profile["city"],
+        }
+        today = _date.today()
+        # Transit = même lieu que natal, date du jour (on veut juste le natal)
+        transit_loc = {
+            "city": profile["city"], "lat": profile["lat"],
+            "lon":  profile["lon"],  "tz":  profile["tz"],
+        }
+        natal_result     = calculate_transits(natal_input, transit_loc,
+                                              today.year, today.month, today.day, 12, 0)
+        enriched_profile = _enrich_profile_with_natal(profile, natal_result.get("natal", {}))
+        save_natal_to_sheet(pseudo, enriched_profile)
+        profile = enriched_profile  # profil enrichi en session
+    except Exception as exc:
+        app.logger.warning("Calcul natal register échoué (non bloquant) : %s", exc)
+        # Non bloquant — l'inscription réussit quand même
+
     session["profile"] = profile
     session["pseudo"] = pseudo
-    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
+
+    # ── Hook natal dès l'inscription ─────────────────────────────────────────
+    hook_natal = ""
+    try:
+        from ai_interpret import get_hook_natal
+        hook_natal = get_hook_natal(profile)
+    except Exception as exc:
+        app.logger.warning("Hook natal register échoué : %s", exc)
+
+    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal})
 
 
 @app.route("/logout", methods=["POST"])

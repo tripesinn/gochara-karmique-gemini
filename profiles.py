@@ -35,7 +35,33 @@ COLS = [
     "syntheses_count",      # Q
     "syntheses_reset_date", # R
     "alerts_enabled",       # S
+    # ── Natal calculé — stocké à l'inscription ──────────────────────────────
+    "chandra_lagna_sign",   # T
+    "chandra_lagna_deg",    # U
+    "ketu_sign",            # V
+    "ketu_house",           # W
+    "ketu_nakshatra",       # X
+    "rahu_sign",            # Y
+    "rahu_house",           # Z
+    "rahu_nakshatra",       # AA
+    "chiron_sign",          # AB
+    "chiron_house",         # AC
+    "chiron_nakshatra",     # AD
+    "lilith_sign",          # AE
+    "lilith_house",         # AF
+    "saturn_sign",          # AG
+    "saturn_house",         # AH
+    "jupiter_sign",         # AI
+    "jupiter_house",        # AJ
+    "porte_visible_sign",   # AK
+    "porte_visible_house",  # AL
+    "porte_visible_deg",    # AM
+    "porte_invisible_sign", # AN
+    "porte_invisible_house",# AO
 ]
+
+# Champs nataux — sous-ensemble de COLS pour update ciblé
+NATAL_COLS = COLS[19:]  # de T à AO
 
 SYNTHESIS_QUOTA = 3  # max synthèses par mois (plan free)
 
@@ -107,6 +133,29 @@ def _row_to_profile(row: list) -> dict:
         "syntheses_count":      _safe(16, int, 0),
         "syntheses_reset_date": _safe(17) or _current_month_str(),
         "alerts_enabled":       _safe(18, int, 0),
+        # ── Natal calculé ────────────────────────────────────────────────────
+        "chandra_lagna_sign":   _safe(19),
+        "chandra_lagna_deg":    _safe(20),
+        "ketu_sign":            _safe(21),
+        "ketu_house":           _safe(22),
+        "ketu_nakshatra":       _safe(23),
+        "rahu_sign":            _safe(24),
+        "rahu_house":           _safe(25),
+        "rahu_nakshatra":       _safe(26),
+        "chiron_sign":          _safe(27),
+        "chiron_house":         _safe(28),
+        "chiron_nakshatra":     _safe(29),
+        "lilith_sign":          _safe(30),
+        "lilith_house":         _safe(31),
+        "saturn_sign":          _safe(32),
+        "saturn_house":         _safe(33),
+        "jupiter_sign":         _safe(34),
+        "jupiter_house":        _safe(35),
+        "porte_visible_sign":   _safe(36),
+        "porte_visible_house":  _safe(37),
+        "porte_visible_deg":    _safe(38),
+        "porte_invisible_sign": _safe(39),
+        "porte_invisible_house":_safe(40),
     }
 
 
@@ -155,6 +204,8 @@ def create_profile(data: dict) -> dict:
         "0",                      # syntheses_count
         _current_month_str(),     # syntheses_reset_date
         "0",                      # alerts_enabled
+        # Natal — vide à l'inscription, rempli par save_natal_to_sheet()
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
     ]
     ws.append_row(row)
     return _row_to_profile(row)
@@ -258,6 +309,65 @@ def set_alerts(pseudo: str, enabled: bool) -> bool:
         if row and row[0].strip().lower() == pseudo_lower:
             ws.update(f"S{i}", [["1" if enabled else "0"]])
             return True
+    return False
+
+
+
+def save_natal_to_sheet(pseudo: str, natal_data: dict) -> bool:
+    """
+    Stocke les positions natales calculées dans Google Sheets.
+    Appelé une fois à l'inscription (après calculate_transits).
+    Aussi utilisable pour mettre à jour un profil existant.
+
+    natal_data = dict issu de _enrich_profile_with_natal() :
+        chandra_lagna_sign, chandra_lagna_deg,
+        ketu_sign, ketu_house, ketu_nakshatra,
+        rahu_sign, rahu_house, rahu_nakshatra,
+        chiron_sign, chiron_house, chiron_nakshatra,
+        lilith_sign, lilith_house,
+        saturn_sign, saturn_house,
+        jupiter_sign, jupiter_house,
+        porte_visible_sign, porte_visible_house, porte_visible_deg,
+        porte_invisible_sign, porte_invisible_house
+
+    Retourne True si le profil a été trouvé et mis à jour.
+    """
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_lower = pseudo.strip().lower()
+
+    for i, row in enumerate(records[1:], start=2):
+        if not row or row[0].strip().lower() != pseudo_lower:
+            continue
+
+        natal_row = [
+            natal_data.get("chandra_lagna_sign",   ""),
+            natal_data.get("chandra_lagna_deg",    ""),
+            natal_data.get("ketu_sign",            ""),
+            str(natal_data.get("ketu_house",       "")),
+            natal_data.get("ketu_nakshatra",       ""),
+            natal_data.get("rahu_sign",            ""),
+            str(natal_data.get("rahu_house",       "")),
+            natal_data.get("rahu_nakshatra",       ""),
+            natal_data.get("chiron_sign",          ""),
+            str(natal_data.get("chiron_house",     "")),
+            natal_data.get("chiron_nakshatra",     ""),
+            natal_data.get("lilith_sign",          ""),
+            str(natal_data.get("lilith_house",     "")),
+            natal_data.get("saturn_sign",          ""),
+            str(natal_data.get("saturn_house",     "")),
+            natal_data.get("jupiter_sign",         ""),
+            str(natal_data.get("jupiter_house",    "")),
+            natal_data.get("porte_visible_sign",   ""),
+            str(natal_data.get("porte_visible_house", "")),
+            natal_data.get("porte_visible_deg",    ""),
+            natal_data.get("porte_invisible_sign", ""),
+            str(natal_data.get("porte_invisible_house", "")),
+        ]
+        # Colonnes T→AO = indices 20→41 → plage Sheets T{i}:AO{i}
+        ws.update(f"T{i}:AO{i}", [natal_row])
+        return True
+
     return False
 
 
