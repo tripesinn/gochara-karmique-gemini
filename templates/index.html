@@ -273,9 +273,20 @@
         </div>
     </div>
     <br>
-    <button id="calc-btn" class="btn-primary" style="max-width: 300px;" onclick="calculate()">
-        <span id="btn-text">{{ lang.calculate if lang.calculate else 'CALCULER' }}</span>
+    <!-- Étape 1 : hook transit -->
+    <button id="hook-btn" class="btn-primary" style="max-width: 300px;" onclick="requestHookTransit()">
+        <span id="hook-btn-text">◆ VOIR LE SIGNAL DU JOUR</span>
     </button>
+
+    <!-- Étape 2 : synthèse complète — visible seulement après hook transit -->
+    <div id="synthesis-cta" style="display:none; margin-top:1rem;">
+        <button id="calc-btn" class="btn-primary" style="max-width: 300px; border-color: var(--gold); color: var(--gold);" onclick="calculate()">
+            <span id="btn-text">✦ OBTENIR LA LECTURE COMPLÈTE</span>
+        </button>
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); letter-spacing:0.15em; margin-top:0.5rem;">
+            Analyse védique complète · @siderealAstro13
+        </div>
+    </div>
 
     <div id="synthesis-box" style="margin-top: 3rem; text-align: left; display: none; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 20px;">
         <div id="synthesis-content" style="line-height: 1.8; font-size: 1.1rem;"></div>
@@ -530,19 +541,33 @@ let lastSynthesis = '';
     }
 })();
 
-// Hook transit : appelé quand date + lieu sont prêts
-async function fetchHookTransit() {
+// Hook transit : déclenché par clic sur "Voir le signal du jour"
+async function requestHookTransit() {
     const date = document.getElementById('transit-date').value;
-    if (!date || !transitGeo) return;
+    const btn     = document.getElementById('hook-btn');
+    const btnText = document.getElementById('hook-btn-text');
+
+    if (!date) {
+        alert('Sélectionne une date.');
+        return;
+    }
+    if (!transitGeo) {
+        alert('Sélectionne un lieu de transit.');
+        return;
+    }
 
     const spinner = document.getElementById('hook-transit-spinner');
     const text    = document.getElementById('hook-transit-text');
     const box     = document.getElementById('hook-transit-box');
+    const cta     = document.getElementById('synthesis-cta');
 
-    // Afficher spinner, vider le texte précédent
-    if (box)     box.style.display  = 'block';
-    if (text)    text.textContent   = '';
+    // État chargement
+    btn.disabled     = true;
+    btnText.innerHTML = '<span class="spinner"></span> LECTURE EN COURS…';
+    if (box)     box.style.display     = 'block';
+    if (text)    text.textContent      = '';
     if (spinner) spinner.style.display = 'block';
+    if (cta)     cta.style.display     = 'none';
 
     try {
         const res = await fetch('/hook/transit', {
@@ -560,21 +585,40 @@ async function fetchHookTransit() {
         const data = await res.json();
         if (data.ok && data.hook) {
             if (text) text.textContent = data.hook;
+            // Révéler le bouton synthèse complète
+            if (cta) {
+                cta.style.display = 'block';
+                cta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            // Changer le bouton hook en "Relire"
+            btnText.innerHTML = '◆ RELIRE LE SIGNAL';
         }
     } catch(e) {
         console.warn('Hook transit échoué :', e);
+        btnText.innerHTML = '◆ VOIR LE SIGNAL DU JOUR';
     } finally {
+        btn.disabled = false;
         if (spinner) spinner.style.display = 'none';
     }
 }
 
-// Déclencher hook transit aussi quand la date change (si lieu déjà sélectionné)
+// Réinitialiser si date ou lieu change (masquer synthèse-cta)
+function resetHookTransit() {
+    const cta  = document.getElementById('synthesis-cta');
+    const text = document.getElementById('hook-transit-text');
+    const box  = document.getElementById('hook-transit-box');
+    const btn  = document.getElementById('hook-btn-text');
+    if (cta)  cta.style.display  = 'none';
+    if (text) text.textContent   = '';
+    if (box)  box.style.display  = 'none';
+    if (btn)  btn.innerHTML      = '◆ VOIR LE SIGNAL DU JOUR';
+    document.getElementById('hook-btn').disabled = false;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('transit-date');
     if (dateInput) {
-        dateInput.addEventListener('change', () => {
-            if (transitGeo) fetchHookTransit();
-        });
+        dateInput.addEventListener('change', resetHookTransit);
     }
 });
 
@@ -609,7 +653,7 @@ function useGeolocation() {
             icon.textContent = '✓';
             input.value = transitGeo.city;
             input.disabled = false;
-            fetchHookTransit();
+            resetHookTransit();
         },
         (err) => {
             icon.textContent = '📍';
@@ -661,7 +705,7 @@ function showSuggestions(results) {
             document.getElementById('transit-city-input').value = name;
             document.getElementById('geo-icon').textContent = '✓';
             hideSuggestions();
-            fetchHookTransit();
+            resetHookTransit();
         };
         box.appendChild(div);
     });
