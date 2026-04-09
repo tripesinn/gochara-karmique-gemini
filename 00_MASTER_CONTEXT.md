@@ -103,3 +103,5 @@ Exemples invalides :
 - "Tu peux choisir de..." (trop thérapeutique)
 - "Il serait bon de..." (trop doux)
 - "Cette période t'invite à..." (trop vague)
+
+<!-- VAULT_ACTIVE_V1 -->
