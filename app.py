@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 import pytz
-from flask import Flask, jsonify, render_template, request, session, send_from_directory, Response, stream_with_context
+from flask import Flask, jsonify, render_template, request, session, send_from_directory
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -590,7 +590,21 @@ def login():
         return jsonify({"ok": False, "error": f"Pseudo '{pseudo}' introuvable. Crée ton profil d'abord."}), 404
     session["profile"] = profile
     session["pseudo"] = pseudo
-    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
+
+    # ── Hook natal : généré au login, mis en cache 7 jours ───────────────────
+    hook_natal = ""
+    cache_key  = f"hook_natal_{pseudo}"
+    if session.get(cache_key):
+        hook_natal = session[cache_key]
+    else:
+        try:
+            from ai_interpret import get_hook_natal
+            hook_natal = get_hook_natal(profile)
+            session[cache_key] = hook_natal
+        except Exception as exc:
+            app.logger.warning("Hook natal échoué : %s", exc)
+
+    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal})
 
 
 @app.route("/register", methods=["POST"])
@@ -742,11 +756,6 @@ def calculate():
         result["synthesis"] = synthesis
         result["remaining"] = quota["remaining"]
 
-        # Sauvegarde chart_data en session pour /synthesis_stream
-        session["last_chart_data"]    = result
-        session["last_enriched_profile"] = enriched_profile
-        session.modified = True
-
         # Sauvegarde la localisation de transit dans la session (toujours)
         if transit_loc.get("city"):
             new_transit = {
@@ -772,46 +781,66 @@ def calculate():
 
 
 
-
-@app.route("/synthesis_stream")
-def synthesis_stream():
+@app.route("/hook/transit", methods=["POST"])
+def hook_transit():
     """
-    Streaming SSE de la synthèse karmique.
-    Utilise chart_data + enriched_profile stockés en session par /calculate.
+    Hook de 3 phrases basé sur les aspects du jour.
+    Appelé dès que la date et le lieu sont choisis — AVANT la synthèse complète.
+    Mis en cache 24h par pseudo+date.
 
-    Frontend JS :
-        const container = document.getElementById("synthesis-output");
-        container.innerHTML = "";
-        const evtSource = new EventSource("/synthesis_stream");
-        evtSource.onmessage = (e) => {
-            if (e.data === "[DONE]") { evtSource.close(); return; }
-            container.innerHTML += e.data.replace(/\\n/g, "\n");
-        };
-        evtSource.onerror = () => evtSource.close();
+    Body JSON : {"date": "2026-04-09", "hour": 12, "minute": 0,
+                 "transit_city": "...", "transit_lat": ..., "transit_lon": ..., "transit_tz": "..."}
+    Retourne : {"ok": true, "hook": "..."}
     """
-    from ai_interpret import get_synthesis_stream
+    from astro_calc import calculate_transits
+    from ai_interpret import get_hook_transit
+    import time as _time
 
     profile = session.get("profile")
     if not profile:
-        return Response("data: Non connecté\n\ndata: [DONE]\n\n",
-                        mimetype="text/event-stream")
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
 
-    chart_data       = session.get("last_chart_data")
-    enriched_profile = session.get("last_enriched_profile") or profile
-    lang             = session.get("lang", "fr")
+    data     = request.get_json() or {}
+    date_str = data.get("date", "")
+    if not date_str:
+        return jsonify({"ok": False, "error": "Date requise"}), 400
 
-    if not chart_data:
-        return Response("data: Lance d'abord un calcul.\n\ndata: [DONE]\n\n",
-                        mimetype="text/event-stream")
+    pseudo    = profile.get("pseudo", "")
+    cache_key = f"hook_transit_{pseudo}_{date_str}"
 
-    return Response(
-        stream_with_context(get_synthesis_stream(chart_data, enriched_profile, lang=lang)),
-        mimetype="text/event-stream",
-        headers={
-            "Cache-Control":     "no-cache",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    # Cache 24h en session
+    if session.get(cache_key):
+        return jsonify({"ok": True, "hook": session[cache_key], "cached": True})
+
+    natal = {
+        "name":   profile["name"],
+        "year":   profile["year"],   "month":  profile["month"],
+        "day":    profile["day"],    "hour":   profile["hour"],
+        "minute": profile["minute"], "lat":    profile["lat"],
+        "lon":    profile["lon"],    "tz":     profile["tz"],
+        "city":   profile["city"],
+    }
+    hour   = int(data.get("hour", 12))
+    minute = int(data.get("minute", 0))
+    transit_loc = {
+        "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
+        "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
+        "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
+        "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
+    }
+    lang = session.get("lang", "fr")
+
+    try:
+        year, month, day = map(int, date_str.split("-"))
+        chart_data       = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
+        enriched_profile = _enrich_profile_with_natal(profile, chart_data.get("natal", {}))
+        hook             = get_hook_transit(chart_data, enriched_profile)
+        session[cache_key] = hook
+        return jsonify({"ok": True, "hook": hook})
+    except Exception as exc:
+        app.logger.error("Erreur hook transit : %s", exc, exc_info=True)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
 
 @app.route("/send_synthesis", methods=["POST"])
 def send_synthesis():
