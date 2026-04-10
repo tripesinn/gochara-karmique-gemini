@@ -1,1137 +1,1461 @@
 <!DOCTYPE html>
-<html lang="{{ lang.code }}">
+<html lang="{{ lang.code if lang.code else 'fr' }}">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>✦ Karmic Gochara — @siderealAstro13</title>
-<style>
-/* ═══════════════════════════════════════════════════════════════
-   WINDOWS 3.1 THEME — Gochara Karmique · @siderealAstro13
-═══════════════════════════════════════════════════════════════ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✦ {{ lang.title if lang.title else 'Karmic Gochara' }}</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#c9a84c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gochara">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg: #0c0a08; --gold: #c9a84c; --gold-dim: #8a6f30; --text: #f5f0e8;
+            --text-dim: #8a8678; --border: #2a2820; --void: #1a1410;
+            --glyph: rgba(201,168,76,0.18); --mist: rgba(201,168,76,0.06);
+            --display: 'Cinzel', serif; --body: 'Cormorant Garamond', Georgia, serif;
+            --mono: 'DM Mono', monospace;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: var(--body); margin: 0; text-align: center; font-size: 18px; line-height: 1.7; overflow-x: hidden; }
 
-body {
-  background: #008080;
-  font-family: "MS Sans Serif", "Segoe UI", Arial, sans-serif;
-  font-size: 12px;
-  color: #000;
-  min-height: 100vh;
-  padding: 6px;
-}
+        /* Gradient + grain background */
+        body::before {
+            content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,58,42,0.07) 0%, transparent 60%);
+        }
+        body::after {
+            content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        }
 
-/* ── Window chrome ── */
-.win {
-  background: #c0c0c0;
-  border: 2px solid;
-  border-color: #fff #808080 #808080 #fff;
-  box-shadow: 1px 1px 0 #000;
-  margin-bottom: 6px;
-}
-.winbody { padding: 8px; }
+        header { padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(201,168,76,0.12); position: relative; z-index: 10; }
 
-/* ── Title bars ── */
-.titlebar {
-  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
-  color: #fff; font-weight: bold; font-size: 11px;
-  padding: 3px 5px 3px 7px;
-  display: flex; align-items: center; justify-content: space-between;
-  user-select: none; cursor: default;
-}
-.titlebar.purple { background: linear-gradient(90deg, #4b0082 0%, #800080 100%); }
-.titlebar.green  { background: linear-gradient(90deg, #005000 0%, #228B22 100%); }
-.titlebar.teal   { background: linear-gradient(90deg, #005060 0%, #008080 100%); }
-.titlebar.gold   { background: linear-gradient(90deg, #5a3000 0%, #b8860b 100%); }
-.titlebar-title  { display: flex; align-items: center; gap: 5px; }
-.titlebar-btns   { display: flex; gap: 2px; }
-.tbtn {
-  width: 16px; height: 14px; background: #c0c0c0;
-  border: 1px solid; border-color: #fff #808080 #808080 #fff;
-  font-size: 9px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
+        /* ── Hero ── */
+        .hero-sigil { width: 56px; height: 56px; margin: 0 auto 24px; opacity: 0; animation: fadeUp 1s ease 0.2s forwards; }
+        .hero-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold-dim); opacity: 0; animation: fadeUp 1s ease 0.4s forwards; }
+        .hero-title { font-family: var(--display); font-size: clamp(28px, 7vw, 52px); font-weight: 400; letter-spacing: 0.04em; line-height: 1.15; color: var(--text); margin: 14px 0 6px; opacity: 0; animation: fadeUp 1s ease 0.6s forwards; }
+        .hero-title em { font-style: italic; color: var(--gold); font-family: 'Cormorant Garamond', serif; font-size: 1.05em; font-weight: 300; }
+        .hero-subtitle-line { font-size: 15px; font-weight: 300; font-style: italic; color: rgba(245,240,232,0.55); margin-top: 10px; opacity: 0; animation: fadeUp 1s ease 0.8s forwards; font-family: var(--mono); letter-spacing: 0.05em; }
+        .gold-rule { width: 50px; height: 1px; background: var(--gold); margin: 26px auto; opacity: 0; animation: fadeUp 1s ease 1s forwards; }
 
-/* ── Sunken input / display ── */
-.sunken {
-  background: #fff;
-  border: 2px solid; border-color: #808080 #fff #fff #808080;
-  padding: 3px 5px;
-}
-input.sunken, select.sunken {
-  font-family: inherit; font-size: 12px;
-  outline: none; width: 100%;
-}
+        /* ── Hook ── */
+        .hero-hook { padding: 0 0 40px; opacity: 0; animation: fadeUp 1s ease 1.1s forwards; }
+        .hero-hook p { font-size: 19px; font-style: italic; color: rgba(245,240,232,0.78); max-width: 480px; margin: 0 auto 8px; }
+        .hero-hook strong { color: var(--gold); font-weight: 400; }
 
-/* ── Buttons ── */
-.btn {
-  background: #c0c0c0;
-  border: 2px solid; border-color: #fff #808080 #808080 #fff;
-  padding: 3px 12px; font-family: inherit; font-size: 12px;
-  cursor: pointer; white-space: nowrap;
-}
-.btn:active { border-color: #808080 #fff #fff #808080; }
-.btn.primary {
-  background: #000080; color: #fff; font-weight: bold;
-  border-color: #6666cc #000033 #000033 #6666cc;
-}
-.btn.primary:active { border-color: #000033 #6666cc #6666cc #000033; }
-.btn:disabled { color: #808080; cursor: default; }
+        /* ── Pillars ── */
+        .pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; max-width: 620px; margin: 0 auto 44px; padding: 0 20px; }
+        @media (max-width: 540px) { .pillars { grid-template-columns: 1fr; } }
+        .pillar { border: 1px solid var(--glyph); border-top: 2px solid var(--gold-dim); padding: 20px 16px; background: var(--mist); text-align: left; transition: border-color 0.3s, background 0.3s; }
+        .pillar:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+        .pillar-glyph { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 8px; display: block; }
+        .pillar h3 { font-family: var(--display); font-size: 13px; font-weight: 400; letter-spacing: 0.06em; color: var(--text); margin-bottom: 6px; }
+        .pillar p { font-size: 14px; font-style: italic; color: rgba(245,240,232,0.5); line-height: 1.4; margin: 0; }
 
-/* ── Screens ── */
-.screen { display: none; }
-.screen.visible { display: block; }
+        /* ── Login card ── */
+        .login-card { border: 1px solid var(--glyph); padding: 2.2rem 2rem; max-width: 420px; margin: 0 auto 3rem; background: rgba(201,168,76,0.04); position: relative; }
+        .login-card::before { content: ''; position: absolute; top: -1px; left: 40px; right: 40px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        
+        .login-input { width: 100%; padding: 0.85rem; margin-bottom: 1.2rem; background: rgba(12,10,8,0.6); border: 1px solid rgba(201,168,76,0.2); color: var(--text); outline: none; box-sizing: border-box; font-family: var(--body); font-size: 16px; transition: border-color 0.25s; border-radius: 0; }
+        .login-input:focus { border-color: var(--gold); background: rgba(12,10,8,0.85); }
+        .login-input::placeholder { color: rgba(245,240,232,0.25); font-style: italic; }
 
-/* ── Natal badge ── */
-.natal-badge {
-  display: inline-flex; gap: 6px; flex-wrap: wrap;
-  background: #000080; color: #fff;
-  padding: 2px 8px; font-size: 11px;
-  border: 1px solid #fff; cursor: default;
-}
-.natal-badge span { opacity: .75; }
-.natal-badge strong { opacity: 1; }
-.sep { opacity: .4 !important; }
+        .btn-primary {
+            background: transparent; border: 1px solid var(--gold); color: var(--gold);
+            padding: 0.9rem 1.5rem; cursor: pointer;
+            font-family: var(--display); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+            width: 100%; margin-bottom: 10px;
+            position: relative; overflow: hidden; transition: color 0.3s;
+        }
+        .btn-primary::before { content: ''; position: absolute; inset: 0; background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform 0.35s ease; }
+        .btn-primary:hover { color: var(--bg); }
+        .btn-primary:hover::before { transform: scaleX(1); }
+        .btn-primary span, .btn-primary #btn-text { position: relative; z-index: 1; }
+        .btn-primary:disabled { opacity: 0.7; cursor: wait; }
 
-/* ── Réglages row ── */
-.reglages-badge {
-  display: inline-flex; gap: 4px; flex-wrap: wrap;
-  background: #c0c0c0; color: #000;
-  padding: 2px 8px; font-size: 11px; border: 1px inset #808080;
-}
+        .btn-secondary { background: transparent; border: 1px solid rgba(201,168,76,0.2); color: var(--text-dim); padding: 0.85rem 1.5rem; cursor: pointer; font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; width: 100%; transition: border-color 0.25s; }
+        .btn-secondary:hover { border-color: var(--gold-dim); }
+        
+        #app-section { display: none; padding: 2rem; }
+        .date-input { background: #111110; border: 1px solid var(--border); color: #fff; padding: 0.8rem; margin-bottom: 1rem; width: 100%; max-width: 300px; font-family: var(--body); }
 
-/* ── Toolbar row ── */
-.toolbar {
-  display: flex; align-items: center; gap: 6px;
-  flex-wrap: wrap; padding: 4px 0;
-}
-.toolbar label { white-space: nowrap; }
-.toolbar input[type="date"],
-.toolbar input[type="number"] {
-  font-family: inherit; font-size: 12px;
-  background: #fff; border: 2px solid;
-  border-color: #808080 #fff #fff #808080;
-  padding: 1px 4px;
-}
-.toolbar input[type="number"] { width: 46px; }
+        /* Animation de la roue (Spinner) */
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ── Tabs ── */
-.tabs-bar {
-  display: flex; gap: 2px; padding: 4px 4px 0;
-  border-bottom: 2px solid #808080;
-}
-.tab-btn {
-  background: #c0c0c0;
-  border: 2px solid; border-color: #fff #808080 #808080 #fff;
-  border-bottom: none; padding: 3px 14px;
-  font-family: inherit; font-size: 12px; cursor: pointer;
-  position: relative; top: 2px;
-}
-.tab-btn.active {
-  background: #c0c0c0; border-bottom: 2px solid #c0c0c0;
-  font-weight: bold; top: 2px; z-index: 1;
-}
-.tab-panel { display: none; padding: 6px; }
-.tab-panel.active { display: block; }
+        .registration-area { display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(201,168,76,0.15); text-align: left; }
+        .label-small { font-size: 0.65rem; color: var(--gold-dim); font-family: var(--mono); margin-bottom: 5px; display: block; letter-spacing: 0.18em; text-transform: uppercase; }
 
-/* ── Synthesis ── */
-#synthesis {
-  min-height: 300px; max-height: 600px;
-  overflow-y: auto; padding: 10px;
-  background: #fff; border: 2px solid;
-  border-color: #808080 #fff #fff #808080;
-  line-height: 1.6;
-  font-size: 12px;
-}
-#synthesis h1,#synthesis h2 { color:#4b0082; font-size:13px; margin:8px 0 4px; }
-#synthesis h3 { color:#800080; font-size:12px; margin:6px 0 3px; }
-#synthesis strong { color:#000080; }
-#synthesis em { color:#5a3000; }
-#synthesis p { margin-bottom:6px; }
-#synthesis hr { border:none; border-top:1px solid #c0c0c0; margin:8px 0; }
-
-/* ── Loading indicator ── */
-@keyframes win-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-@keyframes win-bar   { 0%{width:0%} 100%{width:100%} }
-@keyframes spin      { to{transform:rotate(360deg)} }
-
-#loading-indicator { display:none; padding:16px 10px; text-align:center; }
-#loading-indicator.visible { display:block; }
-.load-title { color:#4b0082; font-weight:bold; font-size:12px; margin-bottom:10px; }
-.load-bar-wrap {
-  background:#808080; border:2px solid;
-  border-color:#808080 #fff #fff #808080;
-  height:16px; margin-bottom:10px; overflow:hidden;
-}
-.load-bar-inner {
-  height:100%; background:linear-gradient(90deg,#000080,#800080);
-  animation:win-bar 3s ease-in-out infinite alternate;
-}
-.load-steps { display:flex; flex-direction:column; gap:4px; }
-.load-step {
-  font-size:11px; color:#808080; opacity:.4; transition:all .3s;
-  display:flex; align-items:center; gap:6px;
-}
-.load-step.active  { color:#000080; opacity:1; font-weight:bold; }
-.load-step.done    { color:#005000; opacity:.7; }
-.load-step::before { content:"○"; font-size:10px; }
-.load-step.active::before { content:"►"; animation:win-blink .8s infinite; }
-.load-step.done::before   { content:"✓"; }
-.load-spinner {
-  display:inline-block; width:10px; height:10px;
-  border:2px solid #c0c0c0; border-top-color:#000080;
-  border-radius:50%; animation:spin .6s linear infinite; margin-left:4px;
-}
-
-/* ── Aspects table ── */
-.aspects-wrap {
-  max-height: 320px; overflow-y: auto;
-  background: #fff; border: 2px solid;
-  border-color: #808080 #fff #fff #808080;
-}
-.aspects-wrap table {
-  width: 100%; border-collapse: collapse; font-size: 11px;
-}
-.aspects-wrap th {
-  background: #000080; color: #fff;
-  padding: 3px 6px; text-align: left; position: sticky; top: 0;
-}
-.aspects-wrap td { padding: 2px 6px; border-bottom: 1px solid #e0e0e0; }
-.aspects-wrap tr:nth-child(even) td { background: #f4f4f4; }
-.asp-conj { color: #000080; font-weight: bold; }
-.asp-oppo { color: #800000; font-weight: bold; }
-.asp-trig { color: #006000; font-weight: bold; }
-.asp-carr { color: #cc0000; font-weight: bold; }
-.asp-sext { color: #005080; }
-.retro    { color: #800000; font-size: 10px; }
-
-/* ── Carte Karmique SVG ── */
-#karma-map-svg {
-  display: block; margin: 0 auto;
-  max-width: 520px; width: 100%;
-}
-.quadrant-panels {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 6px; margin-top: 8px;
-}
-.quadrant-panel {
-  border: 2px solid; border-color: #808080 #fff #fff #808080;
-  background: #f8f8f8; padding: 4px 8px;
-}
-.quadrant-panel h4 {
-  font-size: 11px; font-weight: bold; margin-bottom: 2px;
-}
-.quadrant-panel ul { list-style: none; padding: 0; margin: 0; font-size: 11px; }
-.quadrant-panel ul li { padding: 1px 0; border-bottom: 1px dotted #ccc; }
-
-/* ── Login screen ── */
-.login-wrap {
-  max-width: 360px; margin: 40px auto;
-}
-.login-logo {
-  text-align: center; padding: 12px;
-  font-size: 22px; font-weight: bold; color: #fff;
-  text-shadow: 1px 1px 0 #000;
-}
-.login-subtitle { text-align: center; color: #c0c0c0; font-size: 11px; margin-bottom: 10px; }
-.login-error {
-  background: #800000; color: #fff;
-  padding: 4px 8px; margin-bottom: 6px;
-  display: none; font-size: 11px;
-}
-
-/* ── Register screen ── */
-.reg-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 4px 10px; align-items: center;
-}
-.reg-grid label { white-space: nowrap; text-align: right; }
-.reg-error {
-  background: #800000; color: #fff;
-  padding: 4px 8px; margin-bottom: 6px;
-  display: none; font-size: 11px;
-}
-.geo-results {
-  background: #fff; border: 1px solid #808080;
-  max-height: 120px; overflow-y: auto;
-  display: none; position: absolute; z-index: 10;
-  width: calc(100% - 2px);
-}
-.geo-item {
-  padding: 3px 6px; cursor: pointer; font-size: 11px;
-}
-.geo-item:hover { background: #000080; color: #fff; }
-.geo-wrap { position: relative; }
-
-/* ── Statusbar ── */
-.statusbar {
-  display: flex; gap: 2px; padding: 2px 4px;
-  border-top: 2px solid #808080; background: #c0c0c0;
-  margin-top: 4px;
-}
-.statpanel {
-  flex: 1; background: #c0c0c0;
-  border: 1px solid; border-color: #808080 #fff #fff #808080;
-  padding: 1px 6px; font-size: 11px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.statpanel.fixed { flex: 0 0 auto; }
-
-/* ── Sélecteur de langue ── */
-.lang-select {
-  background: #c0c0c0;
-  border: 2px solid; border-color: #fff #808080 #808080 #fff;
-  font-family: inherit; font-size: 11px;
-  padding: 2px 4px; cursor: pointer;
-}
-
-/* ── Bouton flottant Buy me a coffee ── */
-#btn-coffee {
-  position: fixed; bottom: 18px; right: 18px; z-index: 999;
-  background: #d4a017; color: #000;
-  border: 2px solid; border-color: #ffe080 #806000 #806000 #ffe080;
-  padding: 6px 14px; font-family: inherit; font-size: 12px;
-  font-weight: bold; cursor: pointer;
-  box-shadow: 2px 2px 0 #000;
-  text-decoration: none; display: inline-block;
-}
-#btn-coffee:hover { background: #e8b820; }
-
-/* ── Misc ── */
-.loading { color: #808080; font-style: italic; }
-.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.hidden { display: none !important; }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        #btn-coffee {
+            position: fixed; bottom: 18px; right: 18px; z-index: 999;
+            background: var(--gold); color: #000;
+            border: none; padding: 8px 16px;
+            font-family: var(--display); font-size: 0.7rem;
+            font-weight: bold; cursor: pointer;
+            text-decoration: none; display: inline-block;
+            transition: opacity 0.2s;
+        }
+        #btn-coffee:hover { opacity: 0.85; }
+        #btn-x {
+            position: fixed; bottom: 18px; left: 18px; z-index: 999;
+            background: #000; color: #fff;
+            border: 1px solid var(--border); padding: 8px 14px;
+            font-family: var(--display); font-size: 0.7rem;
+            font-weight: bold; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+            transition: opacity 0.2s;
+        }
+        #btn-x:hover { opacity: 0.75; }
+    </style>
 </head>
 <body>
 
-<!-- ═══════════════ FENÊTRE PRINCIPALE ═══════════════ -->
-<div class="win" id="main-win">
-  <div class="titlebar">
-    <div class="titlebar-title">✦ {{ lang.title }}</div>
-    <div class="titlebar-btns" style="align-items:center;gap:6px;">
-      <select class="lang-select" id="lang-selector" onchange="setLang(this.value)">
-        {% for l in all_langs %}
-        <option value="{{ l.code }}" {% if l.code == lang.code %}selected{% endif %}>{{ l.label }}</option>
+<header>
+    <div style="color: var(--gold); font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.2em;">KARMIC GOCHARA</div>
+    <select id="lang-select" onchange="setLang(this.value)" style="background: transparent; color: var(--gold); border: 1px solid var(--border); padding: 5px;">
+        {% for code, l in langs.items() %}
+        <option value="{{ code }}" {% if code == lang.code %}selected{% endif %}>{{ l.label }}</option>
         {% endfor %}
-      </select>
-      <div class="tbtn">_</div>
-      <div class="tbtn">□</div>
-      <div class="tbtn">✕</div>
-    </div>
-  </div>
+    </select>
+</header>
 
-  <!-- ════════════ ÉCRAN LOGIN ════════════ -->
-  <div class="screen visible" id="login-screen">
-    <div class="winbody login-wrap">
-      <div class="login-logo">✦ Karmic Gochara</div>
-      <div class="login-subtitle">@siderealAstro13 · Jyotish · Chandra Lagna</div>
-      <div class="win">
-        <div class="titlebar purple">
-          <div class="titlebar-title">✦ Karmic Gochara</div>
-        </div>
-        <div class="winbody">
-          <div class="login-error" id="login-error"></div>
-          <div class="row" style="margin-bottom:6px;">
-            <label for="pseudo-input" style="white-space:nowrap;">{{ lang.pseudo }}</label>
-            <input type="text" id="pseudo-input" class="sunken" placeholder="{{ lang.pseudo_ph }}"
-                   style="flex:1;" onkeydown="if(event.key==='Enter')doLogin()">
-          </div>
-          <div class="row" style="justify-content:flex-end; gap:6px;">
-            <button class="btn" onclick="showRegister()">{{ lang.create_profile }}</button>
-            <button class="btn primary" onclick="doLogin()">{{ lang.connect }}</button>
-          </div>
-          <div id="login-status" style="font-size:11px;color:#808080;margin-top:4px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div id="hero-section" style="{% if session_user %}display:none;{% endif %}; position: relative; z-index: 1;">
 
-  <!-- ════════════ ÉCRAN INSCRIPTION ════════════ -->
-  <div class="screen" id="register-screen">
-    <div class="winbody" style="max-width:520px;margin:0 auto;">
-      <div class="win">
-        <div class="titlebar green">
-          <div class="titlebar-title">{{ lang.karmic_profile }}</div>
-        </div>
-        <div class="winbody">
-          <div class="reg-error" id="reg-error"></div>
-          <div class="reg-grid">
-            <label>{{ lang.pseudo }}</label>
-            <input type="text" id="reg-pseudo" class="sunken" placeholder="pseudo unique">
-
-            <label>{{ lang.firstname }}</label>
-            <input type="text" id="reg-name" class="sunken" placeholder="Prénom">
-
-            <label>{{ lang.email }}</label>
-            <input type="email" id="reg-email" class="sunken" placeholder="email@…">
-
-            <label>{{ lang.birthdate }}</label>
-            <div class="row">
-              <input type="number" id="reg-day"   class="sunken" placeholder="JJ" min="1" max="31" style="width:50px;">
-              <input type="number" id="reg-month" class="sunken" placeholder="MM" min="1" max="12" style="width:50px;">
-              <input type="number" id="reg-year"  class="sunken" placeholder="AAAA" min="1900" max="2099" style="width:70px;">
-            </div>
-
-            <label>{{ lang.birthtime }}</label>
-            <div class="row">
-              <input type="number" id="reg-hour"   class="sunken" placeholder="HH" min="0" max="23" style="width:50px;">
-              <span>h</span>
-              <input type="number" id="reg-minute" class="sunken" placeholder="MM" min="0" max="59" style="width:50px;">
-            </div>
-
-            <label>{{ lang.birthcity }}</label>
-            <div class="geo-wrap" style="grid-column:2;">
-              <input type="text" id="reg-city-input" class="sunken"
-                     placeholder="{{ lang.city_ph }}"
-                     oninput="geocodeField(this,'reg-geo-results','reg-natal-city','reg-natal-lat','reg-natal-lon','reg-natal-tz')">
-              <div class="geo-results" id="reg-geo-results"></div>
-              <input type="hidden" id="reg-natal-city">
-              <input type="hidden" id="reg-natal-lat">
-              <input type="hidden" id="reg-natal-lon">
-              <input type="hidden" id="reg-natal-tz">
-            </div>
-          </div>
-          <div class="row" style="justify-content:flex-end;gap:6px;margin-top:8px;">
-            <button class="btn" onclick="showLogin()">{{ lang.back }}</button>
-            <button class="btn primary" onclick="doRegister()">{{ lang.create }}</button>
-          </div>
-          <div id="reg-status" style="font-size:11px;color:#808080;margin-top:4px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════ ÉCRAN APPLICATION ════════════ -->
-  <div class="screen" id="app-screen">
-
-    <!-- Bandeau natal -->
-    <div class="winbody" style="padding-bottom:0;">
-      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-        <div class="natal-badge" id="natal-badge">
-          <strong id="pseudo-badge">—</strong>
-          <span class="sep">·</span>
-          <span id="natal-summary">—</span>
-        </div>
-        <div class="reglages-badge">
-          {{ lang.settings }}&nbsp;
-          <span>Ayanamsa : Djwhal Khul</span> ·
-          <span>Moonrise (Chandra Lagna)</span> ·
-          <span>Nodes True</span> ·
-          <span>Orbe : &lt; 3°</span>
-        </div>
-        <button class="btn" style="margin-left:auto;" onclick="doLogout()">{{ lang.logout }}</button>
-      </div>
+    <!-- Sigil -->
+    <div style="padding: 60px 0 0;">
+        <svg class="hero-sigil" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="30" stroke="#c9a84c" stroke-width="0.6" opacity="0.5"/>
+            <circle cx="32" cy="32" r="22" stroke="#c9a84c" stroke-width="0.4" opacity="0.4"/>
+            <circle cx="32" cy="32" r="3" fill="#c9a84c" opacity="0.8"/>
+            <line x1="32" y1="2" x2="32" y2="62" stroke="#c9a84c" stroke-width="0.4" opacity="0.3"/>
+            <line x1="2" y1="32" x2="62" y2="32" stroke="#c9a84c" stroke-width="0.4" opacity="0.3"/>
+            <line x1="10.5" y1="10.5" x2="53.5" y2="53.5" stroke="#c9a84c" stroke-width="0.3" opacity="0.2"/>
+            <line x1="53.5" y1="10.5" x2="10.5" y2="53.5" stroke="#c9a84c" stroke-width="0.3" opacity="0.2"/>
+            <path d="M32 10 L36 22 L32 19 L28 22 Z" fill="#c9a84c" opacity="0.7"/>
+        </svg>
+        <p class="hero-eyebrow">@siderealAstro13 · Doctrine Évolutive Synthétique</p>
+        <h1 class="hero-title">
+            {{ lang.hero_title if lang.hero_title else 'Ton' }}
+            <em>{{ lang.hero_em if lang.hero_em else 'Karma' }}</em><br>
+            {{ lang.hero_sub_a if lang.hero_sub_a else 'écrit dans les étoiles' }}
+        </h1>
+        <p class="hero-subtitle-line">{{ lang.hero_subtitle if lang.hero_subtitle else 'Astrologie Védique Sidérale · Chandra Lagna · DK Ayanamsa' }}</p>
+        <div class="gold-rule"></div>
     </div>
 
-    <!-- Barre transit -->
-    <div class="winbody" style="padding-top:4px;padding-bottom:0;">
-      <div class="win">
-        <div class="titlebar teal">
-          <div class="titlebar-title">{{ lang.transit_title }}</div>
-        </div>
-        <div class="winbody">
-          <div class="toolbar">
-            <label>{{ lang.date }}</label>
-            <input type="date" id="t-date" class="sunken">
-            <label>{{ lang.hour }}</label>
-            <input type="number" id="t-hour" class="sunken" min="0" max="23" value="{{ now_hour }}">
-            <label>h</label>
-            <input type="number" id="t-minute" class="sunken" min="0" max="59" value="{{ now_minute }}">
-            <label>{{ lang.min }}</label>
-
-            <div class="geo-wrap" style="position:relative;">
-              <input type="text" id="transit-city-display" class="sunken"
-                     placeholder="{{ lang.transit_ph }}" style="width:180px;"
-                     oninput="geocodeField(this,'transit-geo-results','transit-city-val','transit-lat-val','transit-lon-val','transit-tz-val')">
-              <div class="geo-results" id="transit-geo-results"></div>
-              <input type="hidden" id="transit-city-val">
-              <input type="hidden" id="transit-lat-val">
-              <input type="hidden" id="transit-lon-val">
-              <input type="hidden" id="transit-tz-val">
-            </div>
-
-            <button class="btn primary" id="calc-btn" onclick="calculateTransits()">{{ lang.calculate }}</button>
-          </div>
-        </div>
-      </div>
+    <!-- Hook -->
+    <div class="hero-hook">
+        <p>{{ lang.hero_hook1 | safe if lang.hero_hook1 else 'Ton <strong>Ketu</strong> révèle la prison de mémoires passées.' | safe }}</p>
+        <p>{{ lang.hero_hook2 | safe if lang.hero_hook2 else 'Ton <strong>Chiron</strong> est la clé qui ouvre la porte.' | safe }}</p>
+        <p>{{ lang.hero_hook3 | safe if lang.hero_hook3 else 'Ton <strong>Stage</strong> est la scène qui t\'attend.' | safe }}</p>
     </div>
 
-    <!-- ── ONGLETS ── -->
-    <div class="winbody" style="padding-top:4px;">
-      <div class="tabs-bar">
-        <button class="tab-btn active" id="tab-btn-gochara" onclick="switchTab('gochara')">{{ lang.tab_gochara }}</button>
-        <button class="tab-btn hidden"  id="tab-btn-carte"  onclick="switchTab('carte')">{{ lang.tab_carte }}</button>
-      </div>
-
-      <!-- ── Tab : Gochara ── -->
-      <div class="tab-panel active" id="tab-gochara">
-        <div class="win">
-          <div class="titlebar purple">
-            <div class="titlebar-title">{{ lang.synthesis_title }}</div>
-          </div>
-          <div class="winbody" style="padding:0;">
-
-            <!-- ← LOADING INDICATOR (remplace le vide pendant le calcul) -->
-            <div id="loading-indicator">
-              <div class="load-title">⚙ Calcul en cours<span class="load-spinner"></span></div>
-              <div class="load-bar-wrap"><div class="load-bar-inner"></div></div>
-              <div class="load-steps">
-                <div class="load-step" id="ls-1">Calcul des éphémérides sidérales</div>
-                <div class="load-step" id="ls-2">Analyse des aspects (orbe &lt; 3°)</div>
-                <div class="load-step" id="ls-3">Lecture des Nakshatras &amp; cycles nodaux</div>
-                <div class="load-step" id="ls-4">Synthèse karmique @siderealAstro13</div>
-              </div>
-            </div>
-
-            <div id="synthesis"><span class="loading">{{ lang.synthesis_wait }}</span></div>
-          </div>
+    <!-- Pillars -->
+    <div class="pillars">
+        <div class="pillar">
+            <span class="pillar-glyph">☋ ROM</span>
+            <h3>{{ lang.pillar1_title if lang.pillar1_title else 'Mémoire Karmique' }}</h3>
+            <p>{{ lang.hero_ketu if lang.hero_ketu else 'Nœud Sud · mémoires passées · schémas de résistance' }}</p>
         </div>
-
-        <!-- Barre actions audio + email -->
-        <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap;">
-          <button id="btnAudio" class="btn" onclick="toggleAudio()">{{ lang.listen }}</button>
-          <input type="range" id="speedSlider" min="0.6" max="1.8" step="0.1" value="1.0"
-            style="width:100px;vertical-align:middle;"
-            oninput="document.getElementById('speedVal').textContent=parseFloat(this.value).toFixed(1)+'x'"/>
-          <span id="speedVal" style="font-size:11px;">1.0x</span>
-
-          <button id="btnEmail" class="btn" onclick="sendSynthesisEmail()" style="margin-left:8px;">
-            {{ lang.send_email }}
-          </button>
-          <span id="email-status" style="font-size:11px;color:#808080;"></span>
+        <div class="pillar">
+            <span class="pillar-glyph">⚷ RAM</span>
+            <h3>{{ lang.pillar2_title if lang.pillar2_title else 'Blessure Originelle' }}</h3>
+            <p>{{ lang.hero_chiron if lang.hero_chiron else 'Chiron · blessure originelle · clé de la Porte Visible' }}</p>
         </div>
-      </div>
-
-      <!-- ── Tab : Carte Karmique ── -->
-      <div class="tab-panel" id="tab-carte">
-
-        <div class="win">
-          <div class="titlebar green">
-            <div class="titlebar-title">{{ lang.carte_title }}</div>
-          </div>
-          <div class="winbody">
-            <svg id="karma-map-svg" viewBox="0 0 560 560"
-                 xmlns="http://www.w3.org/2000/svg">
-              <circle cx="280" cy="280" r="275" fill="#f8f8f8" stroke="#808080" stroke-width="1"/>
-              <text x="280" y="286" text-anchor="middle" font-size="14" fill="#808080"
-                    font-family="MS Sans Serif, Arial">{{ lang.map_wait }}</text>
-            </svg>
-            <div class="quadrant-panels" id="quadrant-panels"></div>
-          </div>
+        <div class="pillar">
+            <span class="pillar-glyph">☉ Stage</span>
+            <h3>{{ lang.pillar3_title if lang.pillar3_title else 'Mise en Scène' }}</h3>
+            <p>{{ lang.hero_stage if lang.hero_stage else 'Dharma · lieu de libération · action incarnée' }}</p>
         </div>
-
-        <div class="win">
-          <div class="titlebar gold">
-            <div class="titlebar-title">{{ lang.aspects_title }}</div>
-          </div>
-          <div class="winbody" style="padding:0;">
-            <div class="aspects-wrap" id="aspects-wrap">
-              <div style="padding:8px;" class="loading">{{ lang.aspects_wait }}</div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /tab-carte -->
-
-    </div><!-- /winbody onglets -->
-
-    <!-- ── Status bar ── -->
-    <div class="statusbar">
-      <div class="statpanel" id="status-msg">{{ lang.ready }}</div>
-      <div class="statpanel fixed">Sidéral · Djwhal Khul · Moonrise</div>
-      <div class="statpanel fixed" id="status-count"></div>
     </div>
 
-  </div><!-- /app-screen -->
+    <!-- Login card -->
+    <div class="login-card">
+        <input id="pseudo-input" class="login-input" type="text" placeholder="{{ lang.pseudo_ph if lang.pseudo_ph else 'Ton pseudo...' }}">
 
-</div><!-- /main-win -->
+        <div id="registration-fields" class="registration-area">
+            <span class="label-small">{{ lang.birthdate if lang.birthdate else 'Date de Naissance' }}</span>
+            <input id="birth-date" class="login-input" type="date">
+
+            <span class="label-small">{{ lang.birthtime if lang.birthtime else 'Heure de Naissance' }}</span>
+            <input id="birth-time" class="login-input" type="time">
+
+            <span class="label-small">{{ lang.birthcity if lang.birthcity else 'Ville de Naissance' }}</span>
+            <input id="birth-city" class="login-input" type="text" placeholder="{{ lang.city_ph if lang.city_ph else 'Ex: Paris' }}">
+        </div>
+
+        <button id="main-action-btn" class="btn-primary" onclick="login()"><span>{{ lang.login if lang.login else 'CONNEXION' }}</span></button>
+        <button id="toggle-reg-btn" class="btn-secondary" onclick="toggleRegistration()">{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}</button>
+
+        <div id="login-error" style="color: #c97a6b; margin-top: 15px; font-size: 0.88rem; font-style: italic;"></div>
+
+        <div style="margin-top: 1.2rem; border-top: 1px solid rgba(201,168,76,0.1); padding-top: 1.2rem;">
+            <button class="btn-secondary" onclick="toggleGuestForm()" style="font-size: 0.65rem; opacity: 0.7;">
+                Continuer sans compte →
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Mode invité ────────────────────────────────────────────────────── -->
+    <div id="guest-section" style="display:none; max-width: 420px; margin: 0 auto 3rem; padding: 0 20px;">
+        <p style="font-size: 0.8rem; color: var(--text-dim); font-style: italic; margin-bottom: 1.2rem;">
+            Aucune donnée enregistrée · Lecture du transit du jour uniquement
+        </p>
+        <span class="label-small">Date de naissance</span>
+        <input id="guest-birthdate" class="login-input" type="date">
+        <span class="label-small">Heure <span style="opacity:0.5">(optionnel)</span></span>
+        <input id="guest-birthtime" class="login-input" type="time">
+        <span class="label-small">Ville de naissance <span style="opacity:0.5">(optionnel)</span></span>
+        <input id="guest-birthplace" class="login-input" type="text" placeholder="ex : Paris, France">
+
+        <button class="btn-primary" onclick="calculateGuest()" id="guest-btn">
+            <span id="guest-btn-text">Révèle mon transit</span>
+        </button>
+        <button class="btn-secondary" onclick="toggleGuestForm()" style="margin-top: 8px; font-size: 0.65rem; opacity: 0.6;">
+            ← Retour connexion
+        </button>
+
+        <!-- Résultat invité -->
+        <div id="guest-result" style="display:none; margin-top: 2rem;">
+            <div style="border: 1px solid rgba(201,168,76,0.2); border-top: 2px solid var(--gold); padding: 1.5rem; background: rgba(201,168,76,0.04); text-align: left; position: relative;">
+                <div style="font-family: var(--mono); font-size: 0.65rem; color: var(--gold-dim); letter-spacing: 0.2em; margin-bottom: 1rem;">
+                    ✦ TRANSIT DU JOUR — MODE SYMBOLIQUE
+                </div>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">Chandra Lagna : <strong id="guest-lagna" style="color: var(--gold);">—</strong></span>
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">ROM : <strong id="guest-rom" style="color: var(--text);">—</strong></span>
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">Stage : <strong id="guest-stage" style="color: var(--text);">—</strong></span>
+                </div>
+                <p id="guest-hook" style="font-size: 1.05rem; font-style: italic; line-height: 1.7; color: var(--text); margin: 0 0 1.5rem;"></p>
+                <div style="border-top: 1px solid rgba(201,168,76,0.15); padding-top: 1rem;">
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.8rem;">
+                        L'Alternative de Conscience (section #4) révèle la bascule exacte à faire aujourd'hui.
+                    </p>
+                    <button class="btn-primary" onclick="toggleGuestForm()" style="font-size: 0.72rem;">
+                        ✦ Créer un compte — Synthèse complète gratuite
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="app-section" style="{% if session_user %}display:block;{% endif %}">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
+        <span style="color: var(--gold); font-family: var(--display);">✦ {{ session_user }}</span>
+        <button onclick="logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">[ {{ lang.logout if lang.logout else 'Déconnexion' }} ]</button>
+    </div>
+
+    {% if enable_local_ai %}
+    <!-- ── Bannière IA locale (Android uniquement, dismissible) ──────────── -->
+    <div id="banner-local-ai" style="display:none; margin-bottom:1.5rem; background:linear-gradient(135deg,#0f1a0f,#0f0f1a); border:1px solid #2a4a2a; border-radius:3px; padding:14px 16px; position:relative;">
+        <div style="font-size:0.82rem; color:#6ab56a; font-family:var(--display); margin-bottom:4px;">✦ IA locale disponible</div>
+        <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.5;">
+            Télécharge le patch IA (~400 Mo) pour générer ta synthèse karmique <strong style="color:var(--text);">hors ligne, sans serveur</strong>, directement sur ton téléphone.
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+            <button onclick="openGemmaManager();dismissLocalAIBanner();" class="btn-secondary" style="width:auto;padding:0.5rem 1rem;font-size:0.78rem;border-color:#2a4a2a;color:#6ab56a;">
+                ⬇ Télécharger le patch IA
+            </button>
+            <button onclick="dismissLocalAIBanner()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.78rem;">
+                Plus tard
+            </button>
+        </div>
+        <button onclick="dismissLocalAIBanner()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">×</button>
+    </div>
+    {% endif %}
+
+    <input type="date" id="transit-date" class="date-input" value="{{ today_iso }}">
+    <br>
+    <div style="max-width: 300px; margin: 0 auto; position: relative;">
+        <div style="font-size: 0.7rem; color: var(--text-dim); font-family: var(--display); letter-spacing: 0.05em; text-align: left; margin-bottom: 4px;">LIEU DE TRANSIT</div>
+        <div style="display: flex; gap: 8px;">
+            <button id="geo-btn" class="btn-secondary" style="width: auto; padding: 0.85rem 1rem; flex-shrink: 0;" onclick="useGeolocation()" title="Utiliser ma position actuelle">
+                <span id="geo-icon">📍</span>
+            </button>
+            <div style="flex: 1; position: relative;">
+                <input id="transit-city-input" class="login-input" type="text" autocomplete="off"
+                    placeholder="{{ lang.geo_auto if lang.geo_auto else 'Position auto ou saisir une ville…' }}"
+                    style="margin-bottom: 0; font-size: 0.85rem;"
+                    oninput="onCityInput(this.value)"
+                    onfocus="onCityInput(this.value)">
+                <div id="city-suggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#111110; border:1px solid var(--border); z-index:100; max-height:180px; overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <button id="calc-btn" class="btn-primary" style="max-width: 300px;" onclick="calculate()">
+        <span id="btn-text">{{ lang.calculate if lang.calculate else 'CALCULER' }}</span>
+    </button>
+
+    <div id="synthesis-box" style="margin-top: 3rem; text-align: left; display: none; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 20px;">
+        <div id="synthesis-content" style="line-height: 1.8; font-size: 1.1rem;"></div>
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <button id="btnEmail" class="btn-secondary" onclick="sendSynthesisEmail()" style="max-width: 260px;">
+                {{ lang.send_email if lang.send_email else '📧 Recevoir par email' }}
+            </button>
+            <span id="email-status" style="display: block; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-dim);"></span>
+        </div>
+    </div>
+
+    <!-- ── Outils supplémentaires ───────────────────────────────────────────── -->
+    <div style="max-width: 800px; margin: 2.5rem auto 0; padding: 0 20px;">
+        <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;">
+
+            {% if enable_features %}
+            <!-- Calendrier mensuel — masqué -->
+            <!-- <button class="btn-secondary" onclick="toggleCalendar()" style="max-width: 220px; font-size: 0.82rem;">
+                📅 Calendrier mensuel
+            </button> -->
+
+            <!-- Rapport PDF annuel — masqué -->
+            <!-- <button class="btn-secondary" onclick="downloadAnnualReport()" id="btn-annual-report" style="max-width: 220px; font-size: 0.82rem;">
+                📄 Rapport annuel PDF
+            </button> -->
+            {% endif %}
+
+            <!-- Unlock sans pub -->
+            <button id="btn-unlock" class="btn-secondary" onclick="Monetization.purchase()"
+                style="max-width: 220px; font-size: 0.82rem; display:none;">
+                ✦ Supprimer les pubs — €2,99
+            </button>
+
+            {% if enable_local_ai %}
+            <!-- Gemma local -->
+            <button class="btn-secondary" onclick="openGemmaManager()" id="btn-gemma" style="max-width: 220px; font-size: 0.82rem;">
+                🤖 IA locale (Gemma 3)
+            </button>
+            <span id="gemma-indicator" style="font-size:0.75rem;color:var(--text-dim);"></span>
+            {% endif %}
+
+            <!-- Toggle alertes -->
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: var(--text-dim);">
+                <input type="checkbox" id="alerts-toggle"
+                    {% if session_profile and session_profile.get('alerts_enabled') %}checked{% endif %}
+                    onchange="toggleAlerts(this.checked)"
+                    style="accent-color: var(--gold); width: 16px; height: 16px;">
+                🔔 Alertes transit par email
+            </label>
+            <span id="alerts-status" style="font-size: 0.78rem; color: var(--text-dim);"></span>
+        </div>
+
+        {% if enable_local_ai %}
+        <!-- ── Panel Gemma Manager ─────────────────────────────────────────── -->
+        <div id="gemma-panel" style="display:none; margin-top:1.5rem; background:#0f0f22; border:1px solid var(--border); border-radius:3px; padding:16px;">
+            <div style="color:var(--gold);font-family:var(--display);font-size:0.85rem;margin-bottom:10px;">✦ Gemma 3 — Inférence locale</div>
+            <div id="gemma-status-text" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:12px;">Vérification…</div>
+
+
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn-secondary" onclick="gemmaDownload()" id="btn-gemma-dl" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;">
+                    ⬇ Télécharger (~400 Mo)
+                </button>
+                <button class="btn-secondary" onclick="gemmaLoad()" id="btn-gemma-load" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;display:none;">
+                    ▶ Charger en mémoire
+                </button>
+            </div>
+            <div id="gemma-dl-progress" style="margin-top:10px;display:none;">
+                <div style="background:#1a1a2a;border-radius:2px;height:6px;overflow:hidden;">
+                    <div id="gemma-progress-bar" style="height:100%;background:var(--gold);width:0%;transition:width 0.3s;"></div>
+                </div>
+                <div id="gemma-progress-text" style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;"></div>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:12px;margin-bottom:0;">
+                Une fois chargé, la synthèse karmique est générée directement sur ton appareil — sans appel serveur, sans internet requis.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- ── Panel calendrier ─────────────────────────────────────────────── -->
+        {% if enable_features %}
+        <div id="calendar-panel" style="display:none; margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button onclick="shiftMonth(-1)" class="btn-secondary" style="width:auto; padding: 0.5rem 1rem; font-size: 0.82rem;">← Préc.</button>
+                <span id="calendar-title" style="color: var(--gold); font-family: var(--display); font-size: 1rem;"></span>
+                <button onclick="shiftMonth(1)" class="btn-secondary" style="width:auto; padding: 0.5rem 1rem; font-size: 0.82rem;">Suiv. →</button>
+            </div>
+            <div id="calendar-loading" style="display:none; text-align:center; color: var(--text-dim); font-size:0.85rem;">Calcul en cours…</div>
+            <div id="calendar-content"></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
 
 <a id="btn-coffee" href="https://buymeacoffee.com/jerome6" target="_blank" rel="noopener">
-  ☕ {{ lang.support_label }}
+    ☕ {{ lang.support_label if lang.support_label else 'Soutenir le projet' }}
 </a>
 
+<a id="btn-x" href="https://x.com/siderealAstro13" target="_blank" rel="noopener">
+    <svg width="14" height="14" viewBox="0 0 1200 1227" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/></svg>
+    @siderealAstro13
+</a>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════════════════════════ -->
 <script>
-"use strict";
-
-const L = {
-  ready:          {{ lang.ready | tojson }},
-  no_calc:        {{ lang.no_calc | tojson }},
-  select_transit: {{ lang.select_transit | tojson }},
-  select_date:    {{ lang.select_date | tojson }},
-  calc_ephem:     {{ lang.calc_ephem | tojson }},
-  calc_sideral:   {{ lang.calc_sideral | tojson }},
-  calc_karmic:    {{ lang.calc_karmic | tojson }},
-  listen:         {{ lang.listen | tojson }},
-  stop:           {{ lang.stop | tojson }},
-  sending:        {{ lang.sending | tojson }},
-  sent_ok:        {{ lang.sent_ok | tojson }},
-  sent_err:       {{ lang.sent_err | tojson }},
-};
-
-let currentPseudo     = "";
-let lastChartData     = null;
-let lastSynthesisText = "";
-let lastTransitDate   = "";
-
-/* ══ UTILS ═══════════════════════════════════════════════════════ */
-function escHtml(s)  { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function pad(n)      { return String(n).padStart(2,"0"); }
-
-function setStatus(txt) {
-  const el = document.getElementById("status-msg");
-  if (el) el.textContent = txt;
-}
-function setCount(txt) {
-  const el = document.getElementById("status-count");
-  if (el) el.textContent = txt;
-}
-function setAspectsHTML(html) {
-  const el = document.getElementById("aspects-wrap");
-  if (el) el.innerHTML = html;
-}
-function setSynthesis(text) {
-  const el = document.getElementById("synthesis");
-  if (!el) return;
-  if (typeof marked !== "undefined" && text && text.trim()) {
-    el.innerHTML = marked.parse(text);
-  } else {
-    el.textContent = text || "";
-  }
+function setLang(code) {
+    fetch('/set_lang', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({lang: code})
+    }).then(() => location.reload());
 }
 
-/* ══ LOADING INDICATOR ═══════════════════════════════════════════ */
-let _loadTimers = [];
-
-function showLoading() {
-  const ind = document.getElementById("loading-indicator");
-  const syn = document.getElementById("synthesis");
-  if (!ind || !syn) return;
-  ind.classList.add("visible");
-  syn.style.display = "none";
-  [1,2,3,4].forEach(i => {
-    const el = document.getElementById("ls-"+i);
-    if (el) el.className = "load-step";
-  });
-  // étape 1 active immédiatement, les suivantes avec délai
-  const delays = [0, 1800, 5000, 9000];
-  _loadTimers = [];
-  delays.forEach((d, i) => {
-    const t = setTimeout(() => {
-      if (i > 0) {
-        const prev = document.getElementById("ls-"+i);
-        if (prev) prev.className = "load-step done";
-      }
-      const cur = document.getElementById("ls-"+(i+1));
-      if (cur) cur.className = "load-step active";
-    }, d);
-    _loadTimers.push(t);
-  });
+function toggleGuestForm() {
+    const gs = document.getElementById('guest-section');
+    const hs = document.getElementById('hero-section');
+    const visible = gs.style.display === 'block';
+    gs.style.display = visible ? 'none' : 'block';
+    // Masque le hero quand le formulaire invité est visible (évite la confusion)
+    document.querySelector('.login-card').style.display = visible ? '' : 'none';
+    document.getElementById('guest-result').style.display = 'none';
 }
 
-function hideLoading() {
-  _loadTimers.forEach(t => clearTimeout(t));
-  _loadTimers = [];
-  const ind = document.getElementById("loading-indicator");
-  const syn = document.getElementById("synthesis");
-  if (ind) ind.classList.remove("visible");
-  if (syn) syn.style.display = "";
-  [1,2,3,4].forEach(i => {
-    const el = document.getElementById("ls-"+i);
-    if (el) el.className = "load-step done";
-  });
-}
+async function calculateGuest() {
+    const birthdate  = document.getElementById('guest-birthdate').value;
+    const birthtime  = document.getElementById('guest-birthtime').value;
+    const birthplace = document.getElementById('guest-birthplace').value.trim();
 
-/* ══ LANGUE ══════════════════════════════════════════════════════ */
-async function setLang(code) {
-  try {
-    await fetch("/set_lang", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({lang: code}),
-    });
-    location.reload();
-  } catch(e) { console.error("setLang error", e); }
-}
+    if (!birthdate) {
+        document.getElementById('guest-birthdate').style.borderColor = '#c97a6b';
+        setTimeout(() => document.getElementById('guest-birthdate').style.borderColor = '', 1500);
+        return;
+    }
 
-/* ══ TABS ════════════════════════════════════════════════════════ */
-function switchTab(name) {
-  ["gochara", "carte"].forEach(t => {
-    const btn = document.getElementById("tab-btn-" + t);
-    const pan = document.getElementById("tab-" + t);
-    if (btn) btn.classList.toggle("active", t === name);
-    if (pan) pan.classList.toggle("active", t === name);
-  });
-  if (name === "carte" && lastChartData) renderKarmaMap(lastChartData);
-}
+    const btn = document.getElementById('guest-btn');
+    const btnText = document.getElementById('guest-btn-text');
+    btn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span>Calcul en cours…';
 
-/* ══ SCREENS ═════════════════════════════════════════════════════ */
-function showLogin()    { _showScreen("login-screen"); }
-function showRegister() { _showScreen("register-screen"); }
-function showApp()      { _showScreen("app-screen"); }
-function _showScreen(id) {
-  ["login-screen","register-screen","app-screen"].forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.classList.remove("visible");
-  });
-  const target = document.getElementById(id);
-  if (target) target.classList.add("visible");
-}
-
-/* ══ LOGIN ═══════════════════════════════════════════════════════ */
-async function doLogin() {
-  const pseudo = document.getElementById("pseudo-input").value.trim();
-  const errEl  = document.getElementById("login-error");
-  const statEl = document.getElementById("login-status");
-  errEl.style.display = "none";
-  if (!pseudo) { showLoginError("Saisis un pseudo pour continuer."); return; }
-  statEl.textContent = "Connexion…";
-  try {
-    const res  = await fetch("/login", {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({pseudo}),
-    });
-    const data = await res.json();
-    if (!data.ok) { showLoginError(data.error || "Connexion refusée."); statEl.textContent=""; return; }
-    currentPseudo = data.pseudo;
-    loadProfile(data.profile);
-    showApp();
-    statEl.textContent = "";
-  } catch (err) {
-    showLoginError("Erreur réseau : " + err.message);
-    statEl.textContent = "";
-  }
-}
-function showLoginError(msg) {
-  const el = document.getElementById("login-error");
-  el.textContent = msg; el.style.display = "block";
-}
-
-/* ══ LOGOUT ══════════════════════════════════════════════════════ */
-async function doLogout() {
-  try { await fetch("/logout", {method:"POST"}); } catch(_) {}
-  showLogin();
-}
-
-/* ══ REGISTER ════════════════════════════════════════════════════ */
-async function doRegister() {
-  const errEl  = document.getElementById("reg-error");
-  const statEl = document.getElementById("reg-status");
-  errEl.style.display = "none";
-
-  const payload = {
-    pseudo:  document.getElementById("reg-pseudo").value.trim(),
-    name:    document.getElementById("reg-name").value.trim(),
-    email:   document.getElementById("reg-email").value.trim(),
-    day:     parseInt(document.getElementById("reg-day").value)    || 0,
-    month:   parseInt(document.getElementById("reg-month").value)  || 0,
-    year:    parseInt(document.getElementById("reg-year").value)   || 0,
-    hour:    parseInt(document.getElementById("reg-hour").value)   || 0,
-    minute:  parseInt(document.getElementById("reg-minute").value) || 0,
-    city:    document.getElementById("reg-natal-city").value,
-    lat:     parseFloat(document.getElementById("reg-natal-lat").value) || 0,
-    lon:     parseFloat(document.getElementById("reg-natal-lon").value) || 0,
-    tz:      document.getElementById("reg-natal-tz").value || "UTC",
-  };
-
-  if (!payload.pseudo || !payload.name || !payload.year) {
-    showRegError("Pseudo, prénom et date de naissance sont obligatoires."); return;
-  }
-
-  statEl.textContent = "Création du profil…";
-  try {
-    const res  = await fetch("/register", {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!data.ok) { showRegError(data.error || "Erreur lors de la création."); statEl.textContent=""; return; }
-    currentPseudo = data.pseudo;
-    loadProfile(data.profile);
-    showApp();
-    statEl.textContent = "";
-  } catch (err) {
-    showRegError("Erreur réseau : " + err.message);
-    statEl.textContent = "";
-  }
-}
-function showRegError(msg) {
-  const el = document.getElementById("reg-error");
-  el.textContent = msg; el.style.display = "block";
-}
-
-/* ══ LOAD PROFILE UI ═════════════════════════════════════════════ */
-function loadProfile(p) {
-  document.getElementById("pseudo-badge").textContent = "👤 " + (p.pseudo || p.name || "—");
-  document.getElementById("natal-summary").textContent =
-    `${p.day}/${p.month}/${p.year} ${pad(p.hour||0)}h${pad(p.minute||0)} · ${p.city||""}`;
-
-  const now = new Date();
-  const todayIso = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-  document.getElementById("t-date").value   = todayIso;
-  document.getElementById("t-hour").value   = now.getHours();
-  document.getElementById("t-minute").value = now.getMinutes();
-
-  if (p.city) {
-    document.getElementById("transit-city-display").value = p.city;
-    document.getElementById("transit-city-val").value     = p.city;
-  }
-  if (p.lat) document.getElementById("transit-lat-val").value = p.lat;
-  if (p.lon) document.getElementById("transit-lon-val").value = p.lon;
-  if (p.tz)  document.getElementById("transit-tz-val").value  = p.tz;
-}
-
-/* ══ GÉOCODAGE ═══════════════════════════════════════════════════ */
-let _geoTimer = null;
-function geocodeField(inputEl, resultsId, cityId, latId, lonId, tzId) {
-  clearTimeout(_geoTimer);
-  const q   = inputEl.value.trim();
-  const box = document.getElementById(resultsId);
-  if (q.length < 2) { box.style.display = "none"; return; }
-
-  _geoTimer = setTimeout(async () => {
     try {
-      const res  = await fetch("/geocode?q=" + encodeURIComponent(q));
-      const data = await res.json();
-      if (!Array.isArray(data) || data.length === 0) { box.style.display = "none"; return; }
-      box.innerHTML = "";
-      data.forEach(item => {
-        const div = document.createElement("div");
-        div.className   = "geo-item";
-        div.textContent = item.display_name;
-        div.onclick = async () => {
-          inputEl.value = item.display_name;
-          document.getElementById(cityId).value = item.display_name;
-          document.getElementById(latId).value  = item.lat;
-          document.getElementById(lonId).value  = item.lon;
-          box.style.display = "none";
-          try {
-            const tz = await fetch(
-              `https://timeapi.io/api/timezone/coordinate?latitude=${item.lat}&longitude=${item.lon}`
-            );
-            const tzData = await tz.json();
-            document.getElementById(tzId).value = tzData.timeZone || "UTC";
-          } catch { document.getElementById(tzId).value = "UTC"; }
+        const r = await fetch('/calculate_guest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ birthdate, birthtime, birthplace }),
+        });
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+
+        document.getElementById('guest-lagna').textContent = data.lagna || '—';
+        document.getElementById('guest-rom').textContent   = data.rom   || '—';
+        document.getElementById('guest-stage').textContent = data.stage || '—';
+        document.getElementById('guest-hook').textContent  = data.hook  || '';
+        document.getElementById('guest-result').style.display = 'block';
+        document.getElementById('guest-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+        alert('Erreur : ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Révèle mon transit';
+    }
+}
+
+function toggleRegistration() {
+    const fields = document.getElementById('registration-fields');
+    const mainBtn = document.getElementById('main-action-btn');
+    const toggleBtn = document.getElementById('toggle-reg-btn');
+    const errDiv = document.getElementById('login-error');
+
+    if (fields.style.display === 'none' || fields.style.display === '') {
+        fields.style.display = 'block';
+        mainBtn.innerHTML = "S'INSCRIRE ET SE CONNECTER";
+        mainBtn.onclick = register;
+        toggleBtn.innerHTML = "RETOUR À LA CONNEXION";
+    } else {
+        fields.style.display = 'none';
+        mainBtn.innerHTML = "{{ lang.login if lang.login else 'CONNEXION' }}";
+        mainBtn.onclick = login;
+        toggleBtn.innerHTML = "{{ lang.create_profile if lang.create_profile else 'CRÉER UN PROFIL' }}";
+    }
+    errDiv.textContent = "";
+}
+
+function login() {
+    const pseudo = document.getElementById('pseudo-input').value.trim();
+    const errDiv = document.getElementById('login-error');
+    if (!pseudo) { errDiv.textContent = "Pseudo requis."; return; }
+
+    errDiv.style.color = "var(--gold)";
+    errDiv.textContent = "Alignement des énergies...";
+
+    fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({pseudo: pseudo})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) location.reload();
+        else { errDiv.style.color = "#c97a6b"; errDiv.textContent = data.error || "Inconnu."; }
+    });
+}
+
+function register() {
+    const pseudo = document.getElementById('pseudo-input').value.trim();
+    const birthDate = document.getElementById('birth-date').value;
+    const birthTime = document.getElementById('birth-time').value;
+    const birthCity = document.getElementById('birth-city').value.trim();
+    const errDiv = document.getElementById('login-error');
+    
+    if (!pseudo || !birthDate || !birthTime || !birthCity) {
+        errDiv.style.color = "#c97a6b";
+        errDiv.textContent = "Champs de naissance manquants.";
+        return;
+    }
+
+    fetch('/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({pseudo, birth_date: birthDate, birth_time: birthTime, birth_city: birthCity})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) location.reload();
+        else { errDiv.style.color = "#c97a6b"; errDiv.textContent = data.error; }
+    });
+}
+
+function calculate() {
+    const date = document.getElementById('transit-date').value;
+    if (!date) return;
+
+    const btn = document.getElementById('calc-btn');
+    const btnText = document.getElementById('btn-text');
+    const originalText = btnText.innerHTML;
+
+    // Activation de l'état de chargement (Roue + Texte)
+    btn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span> LECTURE DES ASTRES...';
+
+    const payload = { date, hour: 12, minute: 0 };
+    if (transitGeo) {
+        payload.transit_lat  = transitGeo.lat;
+        payload.transit_lon  = transitGeo.lon;
+        payload.transit_city = transitGeo.city;
+        payload.transit_tz   = transitGeo.tz;
+    }
+    fetch('/calculate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Retour à l'état normal
+        btn.disabled = false;
+        btnText.innerHTML = originalText;
+
+        if (data.error) {
+            alert(data.error);
+        } else {
+            lastSynthesis = data.synthesis;
+            if (data.local_ai_mode) {
+                openGemmaManager();
+            } else {
+                document.getElementById('synthesis-content').innerHTML = marked.parse(data.synthesis || '');
+                document.getElementById('synthesis-box').style.display = 'block';
+                document.getElementById('email-status').textContent = '';
+                document.getElementById('synthesis-box').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btnText.innerHTML = originalText;
+        alert("Erreur de connexion.");
+    });
+}
+
+let lastSynthesis = '';
+let transitGeo = null; // { lat, lon, city, tz }
+
+function useGeolocation() {
+    const icon = document.getElementById('geo-icon');
+    const input = document.getElementById('transit-city-input');
+    if (!navigator.geolocation) {
+        input.placeholder = "Géolocalisation non supportée — saisir une ville";
+        return;
+    }
+    icon.textContent = '⏳';
+    input.value = '';
+    input.placeholder = 'Localisation…';
+    input.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            try {
+                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language={{ lang.code if lang.code else 'fr' }}`);
+                const d = await r.json();
+                const city = d.address?.city || d.address?.town || d.address?.village || d.address?.county || 'Position GPS';
+                const country = d.address?.country || '';
+                transitGeo = { lat, lon, city: `${city}, ${country}`.trim().replace(/,$/, ''), tz };
+            } catch {
+                transitGeo = { lat, lon, city: `${lat.toFixed(3)}, ${lon.toFixed(3)}`, tz };
+            }
+            icon.textContent = '✓';
+            input.value = transitGeo.city;
+            input.disabled = false;
+        },
+        (err) => {
+            icon.textContent = '📍';
+            input.disabled = false;
+            input.value = '';
+            input.placeholder = err.code === 1
+                ? 'Permission refusée — saisir une ville'
+                : 'Erreur GPS — saisir une ville';
+        },
+        { timeout: 10000 }
+    );
+}
+
+let _cityTimer = null;
+
+function onCityInput(val) {
+    // Si l'utilisateur efface le champ, on retire la géoloc manuelle
+    if (!val.trim()) { transitGeo = null; hideSuggestions(); return; }
+    clearTimeout(_cityTimer);
+    _cityTimer = setTimeout(() => fetchCitySuggestions(val.trim()), 350);
+}
+
+async function fetchCitySuggestions(q) {
+    if (q.length < 2) return;
+    try {
+        const r = await fetch(`/geocode?q=${encodeURIComponent(q)}`);
+        const results = await r.json();
+        showSuggestions(results);
+    } catch(e) { console.error('geocode error:', e); hideSuggestions(); }
+}
+
+function showSuggestions(results) {
+    const box = document.getElementById('city-suggestions');
+    if (!results.length) { hideSuggestions(); return; }
+    box.innerHTML = '';
+    results.forEach(item => {
+        // Nominatim renvoie display_name, lat, lon
+        const name = item.display_name || item.name || '';
+        const lat  = parseFloat(item.lat);
+        const lon  = parseFloat(item.lon);
+        const tz   = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const div  = document.createElement('div');
+        div.textContent = name;
+        div.style.cssText = 'padding:8px 12px; cursor:pointer; font-size:0.82rem; border-bottom:1px solid var(--border); color:var(--text);';
+        div.onmouseenter = () => div.style.background = '#1a1a18';
+        div.onmouseleave = () => div.style.background = '';
+        div.onclick = () => {
+            transitGeo = { lat, lon, city: name, tz };
+            document.getElementById('transit-city-input').value = name;
+            document.getElementById('geo-icon').textContent = '✓';
+            hideSuggestions();
         };
         box.appendChild(div);
-      });
-      box.style.display = "block";
-    } catch { box.style.display = "none"; }
-  }, 400);
-}
-
-/* ══ CALCUL TRANSITS ═════════════════════════════════════════════ */
-async function calculateTransits() {
-  const date   = document.getElementById("t-date").value;
-  const hour   = parseInt(document.getElementById("t-hour").value)   || 0;
-  const minute = parseInt(document.getElementById("t-minute").value) || 0;
-  const lat    = parseFloat(document.getElementById("transit-lat-val").value);
-  const lon    = parseFloat(document.getElementById("transit-lon-val").value);
-  const city   = document.getElementById("transit-city-val").value;
-  const tz     = document.getElementById("transit-tz-val").value || "UTC";
-
-  if (!date)                    { setStatus(L.select_date);    return; }
-  if (isNaN(lat) || isNaN(lon)) { setStatus(L.select_transit); return; }
-
-  lastTransitDate = date;
-  setStatus(L.calc_ephem);
-  document.getElementById("calc-btn").disabled = true;
-  setAspectsHTML(`<div style="padding:8px;" class="loading">${L.calc_sideral}</div>`);
-
-  // ← NOUVEAU : loading indicator remplace le vide
-  setSynthesis("");
-  showLoading();
-  switchTab("gochara");
-  document.getElementById("email-status").textContent = "";
-
-  try {
-    const res  = await fetch("/calculate", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ date, hour, minute, transit_lat: lat, transit_lon: lon,
-                             transit_city: city, transit_tz: tz }),
     });
-    const data = await res.json();
+    box.style.display = 'block';
+}
 
-    // ── Quota dépassé ─────────────────────────────────────────────
-    if (res.status === 429) {
-      const msg = data.message || "Limite mensuelle atteinte.";
-      const url = data.upgrade_url || "";
-      hideLoading();
-      document.getElementById("synthesis").innerHTML =
-        `<div style="color:#800000;padding:12px;line-height:1.8;">
-          🔒 <strong>${escHtml(msg)}</strong><br><br>
-          Pour continuer à consulter l'oracle, passe au plan Premium.<br><br>
-          ${url ? `<a href="${escHtml(url)}" target="_blank"><button class="btn">✦ Plan Premium</button></a>` : ""}
-        </div>`;
-      setStatus("🔒 Quota mensuel atteint");
-      return;
+function hideSuggestions() {
+    document.getElementById('city-suggestions').style.display = 'none';
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#transit-city-input') && !e.target.closest('#city-suggestions')) {
+        hideSuggestions();
     }
+});
 
-    if (data.error) throw new Error(data.error);
-    lastChartData     = data;
-    lastSynthesisText = data.synthesis || "";
-    renderAspects(data.aspects);
-    hideLoading();
-    setSynthesis(lastSynthesisText);
-    const n = (data.aspects || []).length;
-    const rem = typeof data.remaining === "number"
-      ? ` — ${data.remaining} synthèse${data.remaining !== 1 ? "s" : ""} restante${data.remaining !== 1 ? "s" : ""} ce mois`
-      : "";
-    setStatus(`✓ ${n} aspect${n !== 1 ? "s" : ""}${rem}`);
-    setCount(`${n} asp.`);
-
-  } catch (err) {
-    const raw = err.message || "";
-    let friendly = raw;
-    if (raw.includes("529") || raw.toLowerCase().includes("overload")) {
-      friendly = "⏳ L'oracle est temporairement surchargé — réessaie dans quelques secondes.";
-    } else if (raw.includes("500") || raw.includes("502") || raw.includes("503")) {
-      friendly = "⚠ Le serveur est momentanément indisponible — réessaie dans un instant.";
-    } else if (raw.toLowerCase().includes("networkerror") || raw.toLowerCase().includes("failed to fetch")) {
-      friendly = "⚠ Problème de connexion réseau — vérifie ta connexion et réessaie.";
-    }
-    setStatus("⚠ " + friendly);
-    hideLoading();
-    document.getElementById("synthesis").innerHTML =
-      `<div style="color:#800000;padding:8px;line-height:1.6;">${escHtml(friendly)}<br><br>
-       <button class="btn" onclick="calculateTransits()" style="margin-top:4px;">↺ Réessayer</button></div>`;
-
-  } finally {
-    document.getElementById("calc-btn").disabled = false;
-  }
-}
-
-/* ══ ASPECTS TABLE ═══════════════════════════════════════════════ */
-function renderAspects(aspects) {
-  if (!aspects || aspects.length === 0) {
-    setAspectsHTML('<div style="padding:8px;">Aucun aspect dans l\'orbe de 3°.</div>');
-    return;
-  }
-  let html = '<table><thead><tr>'
-    + '<th>Transit</th><th>Aspect</th><th>Natal</th><th>Orbe</th>'
-    + '</tr></thead><tbody>';
-  aspects.forEach(a => {
-    const cls   = aspClass(a.aspect);
-    const retro = a.retrograde ? ' <span class="retro">℞</span>' : "";
-    html += `<tr>
-      <td>${escHtml(a.transit_planet)}${retro}<br>
-          <small style="color:#404040">${escHtml(a.transit_display||"")}</small></td>
-      <td><span class="${cls}">${escHtml(a.aspect)}</span></td>
-      <td>${escHtml(a.natal_planet)}<br>
-          <small style="color:#404040">${escHtml(a.natal_display||"")}</small></td>
-      <td style="text-align:right">${a.orb}°</td>
-    </tr>`;
-  });
-  html += "</tbody></table>";
-  setAspectsHTML(html);
-}
-function aspClass(asp) {
-  if (!asp) return "";
-  if (asp.includes("Conjonction")) return "asp-conj";
-  if (asp.includes("Opposition"))  return "asp-oppo";
-  if (asp.includes("Trigone"))     return "asp-trig";
-  if (asp.includes("Carr"))        return "asp-carr";
-  if (asp.includes("Sextile"))     return "asp-sext";
-  return "";
-}
-
-/* ══ CARTE KARMIQUE SVG ══════════════════════════════════════════ */
-function renderKarmaMap(data) {
-  const svg = document.getElementById("karma-map-svg");
-  if (!svg || !data) return;
-
-  const natal   = data.natal_positions   || {};
-  const transit = data.transit_positions || {};
-  const aspects = data.aspects           || [];
-  const CX = 280, CY = 280;
-  const R_OUTER = 260, R_INNER = 180, R_NATAL = 140, R_POINT = 8;
-
-  const quadrantColor = (lon) => {
-    const deg = ((lon % 360) + 360) % 360;
-    if (deg < 90)  return "#4b0082";
-    if (deg < 180) return "#800000";
-    if (deg < 270) return "#005000";
-    return "#005060";
-  };
-
-  const lonToAngle = (lon) => {
-    const deg = ((lon % 360) + 360) % 360;
-    return (deg - 90) * Math.PI / 180;
-  };
-
-  const polarXY = (r, angleDeg) => {
-    const a = (angleDeg - 90) * Math.PI / 180;
-    return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
-  };
-
-  let s = `<circle cx="${CX}" cy="${CY}" r="${R_OUTER}" fill="#f0f0f8" stroke="#808080" stroke-width="1"/>`;
-  s += `<circle cx="${CX}" cy="${CY}" r="${R_INNER}" fill="#f8f8ff" stroke="#c0c0c0" stroke-width="1"/>`;
-  s += `<circle cx="${CX}" cy="${CY}" r="${R_NATAL}" fill="#fff" stroke="#e0e0e0" stroke-width="1"/>`;
-
-  for (let i = 0; i < 12; i++) {
-    const [x1, y1] = polarXY(R_NATAL - 20, i * 30);
-    const [x2, y2] = polarXY(R_OUTER, i * 30);
-    s += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#d0d0d0" stroke-width="1"/>`;
-  }
-
-  const SIGNES = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
-  for (let i = 0; i < 12; i++) {
-    const [x, y] = polarXY(R_OUTER - 18, i * 30 + 15);
-    s += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"
-           font-size="13" fill="#606060" font-family="Arial">${SIGNES[i]}</text>`;
-  }
-
-  const aspColorLine = (asp) => {
-    if (!asp) return "#808080";
-    if (asp.includes("Conjonction")) return "#000080";
-    if (asp.includes("Opposition"))  return "#800000";
-    if (asp.includes("Trigone"))     return "#006000";
-    if (asp.includes("Carr"))        return "#cc0000";
-    if (asp.includes("Sextile"))     return "#005080";
-    return "#808080";
-  };
-
-  aspects.forEach(a => {
-    const tp = transit[a.transit_planet];
-    const np = natal[a.natal_planet];
-    if (!tp || !np) return;
-    const tLon = tp.lon_raw !== undefined ? tp.lon_raw : 0;
-    const nLon = np.lon_raw !== undefined ? np.lon_raw : 0;
-    const tAngle = lonToAngle(tLon) * 180 / Math.PI + 90;
-    const nAngle = lonToAngle(nLon) * 180 / Math.PI + 90;
-    const [tx, ty] = polarXY(R_INNER - 5, tAngle);
-    const [nx, ny] = polarXY(R_NATAL - 5, nAngle);
-    const col = aspColorLine(a.aspect);
-    s += `<line x1="${tx.toFixed(1)}" y1="${ty.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"
-           stroke="${col}" stroke-width="0.8" opacity="0.5"/>`;
-  });
-
-  Object.entries(transit).forEach(([planet, pos]) => {
-    if (pos.lon_raw === undefined) return;
-    const angle = lonToAngle(pos.lon_raw) * 180 / Math.PI + 90;
-    const [x, y] = polarXY((R_INNER + R_OUTER) / 2, angle);
-    const col = quadrantColor(pos.lon_raw);
-    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${R_POINT}"
-           fill="${col}" stroke="#fff" stroke-width="1" opacity="0.9"/>`;
-    s += `<text x="${x.toFixed(1)}" y="${(y+1).toFixed(1)}" text-anchor="middle"
-           dominant-baseline="middle" font-size="8" fill="#fff"
-           font-family="Arial">${escHtml(planet.substring(0,2))}</text>`;
-  });
-
-  Object.entries(natal).forEach(([planet, pos]) => {
-    if (pos.lon_raw === undefined) return;
-    const angle = lonToAngle(pos.lon_raw) * 180 / Math.PI + 90;
-    const [x, y] = polarXY((R_NATAL + R_INNER) / 2, angle);
-    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${R_POINT}"
-           fill="#c0c0c0" stroke="#404040" stroke-width="1"/>`;
-    s += `<text x="${x.toFixed(1)}" y="${(y+1).toFixed(1)}" text-anchor="middle"
-           dominant-baseline="middle" font-size="8" fill="#000"
-           font-family="Arial">${escHtml(planet.substring(0,2))}</text>`;
-  });
-
-  s += `<text x="${CX}" y="${CY-8}" text-anchor="middle" font-size="9" fill="#808080">Natal</text>`;
-  s += `<text x="${CX}" y="${CY+8}" text-anchor="middle" font-size="9" fill="#808080">Transit</text>`;
-
-  svg.innerHTML = s;
-  renderQuadrantLists(aspects);
-}
-
-function renderQuadrantLists(aspects) {
-  const panel = document.getElementById("quadrant-panels");
-  if (!panel) return;
-  const quad = {ROM:[], RAM:[], Stage:[], Lilith:[]};
-  (aspects||[]).forEach(a => {
-    const planet = a.transit_planet || "";
-    if (["Nœud Sud","Ketu"].some(n => planet.includes(n))) quad.ROM.push(a);
-    else if (planet.includes("Chiron")) quad.RAM.push(a);
-    else if (planet.includes("Lilith")) quad.Lilith.push(a);
-    else quad.Stage.push(a);
-  });
-  const colors = {ROM:"#4b0082",RAM:"#005000",Stage:"#005060",Lilith:"#800000"};
-  panel.innerHTML = Object.entries(quad).map(([name, list]) => `
-    <div class="quadrant-panel">
-      <h4 style="color:${colors[name]}">◆ ${name} (${list.length})</h4>
-      <ul>${list.length === 0
-        ? '<li style="color:#808080">—</li>'
-        : list.map(a => `<li>${escHtml(a.transit_planet)} ${escHtml(a.aspect)} ${escHtml(a.natal_planet)}</li>`).join("")
-      }</ul>
-    </div>`).join("");
-}
-
-/* ══ AUDIO TTS ═══════════════════════════════════════════════════ */
-let _synth = window.speechSynthesis;
-let _chunks = [], _ci = 0, _playing = false;
-
-function toggleAudio() {
-  const btn = document.getElementById("btnAudio");
-  if (_playing) {
-    _synth.cancel(); _playing = false;
-    btn.textContent = L.listen; return;
-  }
-  let raw = document.getElementById("synthesis").innerText || "";
-  if (!raw.trim()) { alert(L.no_calc); return; }
-  raw = raw.replace(/#{1,3}\s*/g,"").replace(/\*\*/g,"").replace(/---/g,"").trim();
-  _chunks = raw.match(/[^.!?]+[.!?]+/g) || [raw];
-  _ci = 0; _playing = true;
-  btn.textContent = L.stop;
-  _speakNext();
-}
-function _speakNext() {
-  if (_ci >= _chunks.length || !_playing) {
-    _playing = false;
-    document.getElementById("btnAudio").textContent = L.listen; return;
-  }
-  const u = new SpeechSynthesisUtterance(_chunks[_ci]);
-  const langCode = document.documentElement.lang || "fr";
-  u.lang = langCode + "-" + langCode.toUpperCase();
-  u.rate = parseFloat(document.getElementById("speedSlider").value);
-  const voices = _synth.getVoices().filter(v => v.lang.startsWith(langCode));
-  if (voices.length) u.voice = voices[0];
-  u.onend = () => { _ci++; _speakNext(); };
-  _synth.speak(u);
-}
-
-/* ══ EMAIL SYNTHÈSE ══════════════════════════════════════════════ */
 async function sendSynthesisEmail() {
-  if (!lastSynthesisText) { alert(L.no_calc); return; }
-  const btn    = document.getElementById("btnEmail");
-  const status = document.getElementById("email-status");
-  btn.disabled = true;
-  status.textContent = L.sending;
-  try {
-    const res  = await fetch("/send_synthesis", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ synthesis: lastSynthesisText, date: lastTransitDate }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      status.textContent = L.sent_ok;
-      status.style.color = "#006000";
-    } else {
-      status.textContent = L.sent_err + " — " + (data.error || "");
-      status.style.color = "#800000";
+    if (!lastSynthesis) { alert('Lance d\'abord un calcul pour obtenir ta synthèse.'); return; }
+    const btn = document.getElementById('btnEmail');
+    const status = document.getElementById('email-status');
+    btn.disabled = true;
+    status.style.color = 'var(--text-dim)';
+    status.textContent = 'Envoi en cours…';
+    try {
+        const res = await fetch('/send_synthesis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ synthesis: lastSynthesis }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            status.textContent = '✓ Synthèse envoyée par email.';
+            status.style.color = '#6a9f6a';
+        } else {
+            status.textContent = '✗ Erreur : ' + (data.error || 'inconnu');
+            status.style.color = '#c06060';
+        }
+    } catch (err) {
+        status.textContent = '✗ Erreur réseau.';
+        status.style.color = '#c06060';
+    } finally {
+        btn.disabled = false;
     }
-  } catch (err) {
-    status.textContent = L.sent_err;
-    status.style.color = "#800000";
-  } finally {
-    btn.disabled = false;
-  }
 }
 
-/* ══ INIT ════════════════════════════════════════════════════════ */
-(function init() {
-  const dateEl = document.getElementById("t-date");
-  if (dateEl && !dateEl.value) {
-    const now = new Date();
-    dateEl.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-  }
-})();
+function logout() {
+    fetch('/logout', { method: 'POST' }).then(() => location.reload());
+}
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+}
+
+// ══ Gemma 4 — Inférence locale (MediaPipe Tasks GenAI) ═══════════════════════
+// Deux backends : APK natif (Java plugin) ou navigateur web (WebAssembly + OPFS)
+
+// ── Backend WEB : MediaPipe Tasks GenAI JS + stockage OPFS ───────────────────
+const GEMMA_WASM_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.26/wasm';
+const GEMMA_SDK_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.26/genai_bundle.mjs';
+
+// Polyfill Chrome 131+ : requestAdapterInfo() supprimée → adapter.info (synchrone)
+if (typeof navigator !== 'undefined' && navigator.gpu) {
+    const _origRequestAdapter = navigator.gpu.requestAdapter.bind(navigator.gpu);
+    navigator.gpu.requestAdapter = async (...args) => {
+        const adapter = await _origRequestAdapter(...args);
+        if (adapter && typeof adapter.requestAdapterInfo !== 'function') {
+            adapter.requestAdapterInfo = async () => adapter.info ?? {};
+        }
+        return adapter;
+    };
+}
+const GEMMA_MODEL_URLS = {
+    // Servi depuis Cloudflare R2 — pas de token requis
+    e2b: 'https://models.karmicgochara.app/gemma3-1b-it-int4-web.task',
+    e4b: 'https://models.karmicgochara.app/gemma3-1b-it-int4-web.task',
+};
+const GEMMA_FILENAMES = { e2b: 'gemma_e2b.task', e4b: 'gemma_e4b.task' };
+
+// Supprime les répétitions de Gemma3-1B : coupe dès qu'une phrase réapparaît
+function _dedupeGemma(text) {
+    const sentences = text.split(/(?<=[.!?»])\s+/);
+    const seen = new Set();
+    const out  = [];
+    for (const s of sentences) {
+        const key = s.trim().slice(0, 60).toLowerCase();
+        if (key.length > 10 && seen.has(key)) break;
+        seen.add(key);
+        out.push(s);
+    }
+    // Coupe aussi après la section ACTION si elle est présente
+    const full = out.join(' ');
+    const actionIdx = full.search(/##\s*4\./);
+    if (actionIdx !== -1) {
+        const afterAction = full.slice(actionIdx);
+        const nextSection = afterAction.slice(10).search(/##\s*[1-9]\./);
+        if (nextSection !== -1) return full.slice(0, actionIdx + 10 + nextSection).trim();
+    }
+    return full.trim();
+}
+
+const GemmaWeb = {
+    _llm:     { e2b: null, e4b: null },
+    _genai:   null,
+    _sdk:     null,   // { FilesetResolver, LlmInference }
+
+    // Charge le SDK MediaPipe dynamiquement (une seule fois)
+    async _loadSDK() {
+        if (this._sdk) return this._sdk;
+        this._sdk = await import(GEMMA_SDK_URL);
+        return this._sdk;
+    },
+
+    async _getGenai() {
+        if (this._genai) return this._genai;
+        const { FilesetResolver } = await this._loadSDK();
+        this._genai = await FilesetResolver.forGenAiTasks(GEMMA_WASM_CDN);
+        return this._genai;
+    },
+
+    // Vérifie ce qui est stocké dans l'OPFS (Origin Private File System)
+    async checkModels() {
+        const out = { e2b_exists: false, e2b_loaded: !!this._llm.e2b,
+                      e4b_exists: false, e4b_loaded: !!this._llm.e4b,
+                      e2b_sizeMb: 0,     e4b_sizeMb: 0 };
+        try {
+            const root = await navigator.storage.getDirectory();
+            for (const type of ['e2b', 'e4b']) {
+                try {
+                    const fh   = await root.getFileHandle(GEMMA_FILENAMES[type]);
+                    const file = await fh.getFile();
+                    if (file.size > 1_000_000) {
+                        out[`${type}_exists`]  = true;
+                        out[`${type}_sizeMb`]  = Math.round(file.size / 1024 / 1024);
+                    }
+                } catch {}
+            }
+        } catch {}
+        return out;
+    },
+
+    // Télécharge un modèle dans l'OPFS avec callback de progression
+    async downloadModel(type = 'e2b', onProgress) {
+        const url      = GEMMA_MODEL_URLS[type];
+        const filename = GEMMA_FILENAMES[type];
+        const root     = await navigator.storage.getDirectory();
+
+        // Déjà présent ?
+        try {
+            const fh   = await root.getFileHandle(filename);
+            const file = await fh.getFile();
+            if (file.size > 1_000_000) {
+                if (onProgress) onProgress({ status: 'success', progress: 100, dlMb: Math.round(file.size/1024/1024), totalMb: Math.round(file.size/1024/1024) });
+                return { ok: true, already: true };
+            }
+        } catch {}
+
+        // Téléchargement depuis R2 — pas d'authentification requise
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status} — vérifier la connexion`);
+
+        const total  = parseInt(res.headers.get('content-length') || '0');
+        let   loaded = 0;
+        const fh     = await root.getFileHandle(filename, { create: true });
+        const wr     = await fh.createWritable();
+        const reader = res.body.getReader();
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            await wr.write(value);
+            loaded += value.length;
+            if (onProgress) onProgress({
+                status: 'running',
+                progress: total > 0 ? Math.round(loaded * 100 / total) : 0,
+                dlMb:    Math.round(loaded / 1024 / 1024),
+                totalMb: Math.round(total  / 1024 / 1024),
+            });
+        }
+        await wr.close();
+        if (onProgress) onProgress({ status: 'success', progress: 100 });
+        return { ok: true, already: false };
+    },
+
+    // Charge un modèle depuis l'OPFS en mémoire
+    async loadModel(type = 'e2b') {
+        const { LlmInference } = await this._loadSDK();
+        const genai  = await this._getGenai();
+        const root   = await navigator.storage.getDirectory();
+        const fh     = await root.getFileHandle(GEMMA_FILENAMES[type]);
+        const file   = await fh.getFile();
+        const buffer = await file.arrayBuffer();
+
+        if (this._llm[type]) { try { this._llm[type].close(); } catch {} }
+        this._llm[type] = await LlmInference.createFromOptions(genai, {
+            baseOptions: { modelAssetBuffer: new Uint8Array(buffer) },
+            maxTokens:   8192,  // Gemma3-1B supporte 8192 tokens (input + output)
+            topK:        40,
+            temperature: 0.7,
+        });
+        return { ok: true, type };
+    },
+
+    // Inférence avec format prompt Gemma Instruct
+    async generate(system, user, type = 'e2b') {
+        let llm = this._llm[type];
+        if (!llm && type === 'e4b' && this._llm.e2b) llm = this._llm.e2b;
+        if (!llm) throw new Error('Modèle non chargé — lance loadModel() d\'abord');
+        const primer   = "## 1.";
+        const prompt   = `<start_of_turn>user\n${system ? system + '\n\n' : ''}${user}<end_of_turn>\n<start_of_turn>model\n${primer}`;
+        const raw      = await llm.generateResponse(prompt);
+        const synthesis = _dedupeGemma((primer + raw).trim());
+        return { ok: true, synthesis, local: true, model: type };
+    },
+};
+
+// ── Routeur principal : natif (APK) ou web (Chrome) ──────────────────────────
+const Gemma = {
+    _dlIds: { e2b: null, e4b: null },
+
+    plugin() { return window.Capacitor?.Plugins?.GemmaSynthesis ?? null; },
+    isWeb()  { return !this.plugin(); },
+
+    async checkModels() {
+        if (this.isWeb()) return GemmaWeb.checkModels();
+        try { return await this.plugin().checkModels(); }
+        catch { return { e2b_exists: false, e2b_loaded: false, e4b_exists: false, e4b_loaded: false }; }
+    },
+
+    async isAvailable() {
+        try { const r = await this.checkModels(); return r.e2b_loaded || r.e4b_loaded; }
+        catch { return false; }
+    },
+
+    // type = "e2b" | "e4b"
+    // onProgress(cb) uniquement utilisé en mode web (streaming)
+    async downloadModel(type = 'e2b', onProgress) {
+        if (this.isWeb()) return GemmaWeb.downloadModel(type, onProgress);
+        const r = await this.plugin().downloadModel({ type });
+        this._dlIds[type] = r.downloadId ?? null;
+        return r;
+    },
+
+    // En mode natif, poll le DownloadManager Android
+    async pollDownload(type = 'e2b', onProgress) {
+        if (this.isWeb()) return; // web: progression déjà inline dans downloadModel()
+        const dlId = this._dlIds[type];
+        if (!dlId) return;
+        const p = this.plugin();
+        const interval = setInterval(async () => {
+            try {
+                const r = await p.checkDownloadProgress({ downloadId: dlId });
+                onProgress(r);
+                if (r.status === 'success' || r.status === 'failed') clearInterval(interval);
+            } catch { clearInterval(interval); }
+        }, 2000);
+    },
+
+    async loadModel(type = 'e2b') {
+        if (this.isWeb()) return GemmaWeb.loadModel(type);
+        return await this.plugin().loadModel({ type });
+    },
+
+    async generate(systemPrompt, userPrompt, type = 'e2b') {
+        if (this.isWeb()) return GemmaWeb.generate(systemPrompt, userPrompt, type);
+        return await this.plugin().generate({ system: systemPrompt, user: userPrompt, type });
+    },
+};
+
+// ── Calcul avec routage local / serveur ───────────────────────────────────────
+// Remplace la fonction calculate() existante par une version Gemma-aware.
+// Si Gemma est disponible et chargé → prompt côté serveur + inférence locale.
+// Sinon → flux Claude existant.
+
+async function calculateWithRouting() {
+    const date = document.getElementById('transit-date').value;
+    if (!date) return;
+
+    const btn      = document.getElementById('calc-btn');
+    const btnText  = document.getElementById('btn-text');
+    const origText = btnText.innerHTML;
+    btn.disabled   = true;
+
+    const payload = { date, hour: 12, minute: 0 };
+    if (transitGeo) {
+        payload.transit_lat  = transitGeo.lat;
+        payload.transit_lon  = transitGeo.lon;
+        payload.transit_city = transitGeo.city;
+        payload.transit_tz   = transitGeo.tz;
+    }
+
+    const gemmaReady = await Gemma.isAvailable();
+
+    try {
+        if (gemmaReady) {
+            // ── Voie locale : prompt serveur + inférence Gemma E2B ─────────
+            btnText.innerHTML = '<span class="spinner"></span> CALCUL ASTRAL…';
+            const pr = await fetch('/synthesis/prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const pd = await pr.json();
+            if (pd.error) throw new Error(pd.error);
+
+            btnText.innerHTML = '<span class="spinner"></span> GEMMA LOCAL…';
+            const gr = await Gemma.generate(pd.system, pd.user, 'e2b');
+
+            showSynthesis(gr.synthesis, null);
+            showLocalBadge(true, gr.model ?? 'e2b');
+
+        } else {
+            // ── Voie serveur : Claude (comportement existant) ───────────────
+            btnText.innerHTML = '<span class="spinner"></span> LECTURE DES ASTRES…';
+            const r = await fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await r.json();
+            if (data.error) { alert(data.error); return; }
+            showSynthesis(data.synthesis, data.remaining);
+            showLocalBadge(false);
+        }
+    } catch (err) {
+        alert('Erreur : ' + err.message);
+    } finally {
+        btn.disabled      = false;
+        btnText.innerHTML = origText;
+    }
+}
+
+function showSynthesis(text, remaining) {
+    lastSynthesis = text;
+    document.getElementById('synthesis-content').innerHTML = marked.parse(text || '');
+    document.getElementById('synthesis-box').style.display = 'block';
+    document.getElementById('email-status').textContent = '';
+    document.getElementById('synthesis-box').scrollIntoView({ behavior: 'smooth' });
+}
+
+function showLocalBadge(isLocal, modelType) {
+    let badge = document.getElementById('local-badge');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'local-badge';
+        badge.style.cssText = 'font-size:0.72rem;padding:2px 8px;border-radius:2px;margin-left:8px;';
+        document.getElementById('synthesis-box').querySelector('div').prepend(badge);
+    }
+    if (isLocal) {
+        const label = modelType === 'e4b' ? 'Gemma E4B local' : 'Gemma E2B local';
+        badge.textContent = '✦ ' + label;
+        badge.style.cssText += 'background:#1a2a1a;color:#6ab56a;border:1px solid #2a4a2a;';
+    } else {
+        badge.textContent = '☁ Claude';
+        badge.style.cssText += 'background:#1a1a2a;color:#9090b0;border:1px solid #2a2a4a;';
+    }
+}
+
+// Surcharge le bouton Calculer pour utiliser le routage Gemma
+document.addEventListener('DOMContentLoaded', () => {
+    const calcBtn = document.getElementById('calc-btn');
+    if (calcBtn) calcBtn.onclick = calculateWithRouting;
+
+    // Affiche l'indicateur Gemma si disponible
+    Gemma.checkModels().then(status => {
+        if (status.e2b_exists || status.e4b_exists) updateGemmaIndicator(status);
+    });
+
+    // Bannière IA locale — Android natif uniquement, une seule fois
+    initLocalAIBanner();
+});
+
+async function initLocalAIBanner() {
+    const isNative  = window.Capacitor?.isNativePlatform?.() ?? false;
+    const isChrome  = /Chrome\//.test(navigator.userAgent) && /Android/.test(navigator.userAgent);
+    const dismissed = localStorage.getItem('localAIBannerDismissed');
+    const banner    = document.getElementById('banner-local-ai');
+    if (!banner) return;
+
+    // Montrer la bannière en APK natif ET dans Chrome Android
+    if (!isNative && !isChrome) return;
+
+    // Vérification RAM
+    let can_e2b = true;
+    let can_e4b = false;
+    let ramGb   = null;
+
+    // Natif : demander au plugin Java
+    if (isNative && Gemma.plugin()) {
+        try {
+            const mem = await Gemma.plugin().getDeviceMemory();
+            can_e2b = mem.can_e2b ?? mem.sufficient ?? false;
+            can_e4b = mem.can_e4b ?? false;
+            ramGb   = mem.totalRamGb;
+        } catch {}
+    }
+    // Web / fallback : navigator.deviceMemory (Chrome expose cette info)
+    if (ramGb === null && navigator.deviceMemory) {
+        ramGb   = navigator.deviceMemory;
+        can_e2b = ramGb >= 4;
+        can_e4b = ramGb >= 6;
+    }
+
+    if (!can_e2b) {
+        showLowRamBanner(ramGb);
+        return;
+    }
+
+    if (!dismissed) {
+        const status = await Gemma.checkModels();
+        if (!status.e2b_exists) banner.style.display = 'block';
+    }
+}
+
+function showLowRamBanner(ramGb) {
+    // Remplace la bannière verte par un message informatif neutre
+    const banner = document.getElementById('banner-local-ai');
+    if (!banner) return;
+    const ram = ramGb ? ` (${ramGb} Go détectés)` : '';
+    banner.style.borderColor   = '#2a2a3a';
+    banner.style.background    = 'linear-gradient(135deg,#0f0f18,#0f0f1a)';
+    banner.innerHTML = `
+        <div style="font-size:0.82rem;color:var(--text-dim);font-family:var(--display);margin-bottom:4px;">☁ Mode Cloud actif</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;">
+            Votre appareil est trop léger pour l'IA locale${ram}.<br>
+            Nous utiliserons la version <strong style="color:var(--text);">Cloud (Haiku)</strong> pour vous — rapide et précis.
+        </div>
+        <button onclick="this.parentElement.style.display='none'" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">×</button>`;
+    banner.style.display = 'block';
+}
+
+function dismissLocalAIBanner() {
+    const banner = document.getElementById('banner-local-ai');
+    if (banner) banner.style.display = 'none';
+    localStorage.setItem('localAIBannerDismissed', '1');
+}
+
+function updateGemmaIndicator(status) {
+    let ind = document.getElementById('gemma-indicator');
+    if (!ind) return;
+    if (status.e4b_loaded) {
+        ind.textContent = '✦ Gemma E4B local actif';
+        ind.style.color = '#6ab56a';
+    } else if (status.e2b_loaded) {
+        ind.textContent = '✦ Gemma E2B local actif';
+        ind.style.color = '#6ab56a';
+    } else if (status.e4b_exists) {
+        ind.textContent = '◆ Gemma E4B disponible (non chargé)';
+        ind.style.color = '#c9a84c';
+    } else if (status.e2b_exists) {
+        ind.textContent = '◆ Gemma E2B disponible (non chargé)';
+        ind.style.color = '#c9a84c';
+    }
+}
+
+// ══ Monétisation — AdMob + Unlock ════════════════════════════════════════════
+
+// IDs de test Google (à remplacer par tes vrais IDs AdMob en production)
+const AD_UNIT_BANNER      = 'ca-app-pub-3940256099942544/6300978111'; // test
+const AD_UNIT_INTERSTITIAL = 'ca-app-pub-3940256099942544/1033173712'; // test
+
+const Monetization = {
+    _unlocked: null,
+
+    async isUnlocked() {
+        if (this._unlocked !== null) return this._unlocked;
+        const p = window.Capacitor?.Plugins?.Unlock;
+        if (!p) { this._unlocked = false; return false; }
+        try {
+            const r = await p.isUnlocked();
+            this._unlocked = r.unlocked;
+            return r.unlocked;
+        } catch { this._unlocked = false; return false; }
+    },
+
+    async purchase() {
+        const p = window.Capacitor?.Plugins?.Unlock;
+        if (!p) return false;
+        try {
+            const r = await p.purchase();
+            if (r.unlocked) {
+                this._unlocked = true;
+                hideBannerAd();
+                showUnlockSuccess();
+            }
+            return r.unlocked;
+        } catch (e) {
+            if (e.message !== 'USER_CANCELED') alert('Erreur achat : ' + e.message);
+            return false;
+        }
+    },
+
+    async restore() {
+        const p = window.Capacitor?.Plugins?.Unlock;
+        if (!p) return false;
+        try {
+            const r = await p.restore();
+            if (r.unlocked) { this._unlocked = true; hideBannerAd(); }
+            return r.unlocked;
+        } catch { return false; }
+    },
+};
+
+// ── Bannière AdMob ────────────────────────────────────────────────────────────
+async function initAdMob() {
+    const { AdMob } = window.Capacitor?.Plugins ?? {};
+    if (!AdMob) return;
+    const unlocked = await Monetization.isUnlocked();
+    if (unlocked) return;
+
+    try {
+        await AdMob.initialize({ testingDevices: [], initializeForTesting: true });
+        await AdMob.showBanner({
+            adId:     AD_UNIT_BANNER,
+            adSize:   'BANNER',
+            position: 'BOTTOM_CENTER',
+            margin:   0,
+        });
+    } catch (e) { console.warn('AdMob banner:', e); }
+}
+
+function hideBannerAd() {
+    const { AdMob } = window.Capacitor?.Plugins ?? {};
+    if (AdMob) AdMob.hideBanner().catch(() => {});
+}
+
+function showUnlockSuccess() {
+    const btn = document.getElementById('btn-unlock');
+    if (btn) {
+        btn.textContent = '✓ App débloquée';
+        btn.style.color = '#6ab56a';
+        btn.disabled    = true;
+    }
+}
+
+// Init au chargement (Android natif uniquement)
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.Capacitor?.isNativePlatform?.()) {
+        initAdMob();
+        Monetization.isUnlocked().then(u => {
+            const btn = document.getElementById('btn-unlock');
+            if (btn) btn.style.display = u ? 'none' : 'block';
+            if (u) showUnlockSuccess();
+        });
+    }
+});
+
+// ── Alertes transit ───────────────────────────────────────────────────────────
+async function toggleAlerts(enabled) {
+    const status = document.getElementById('alerts-status');
+    status.textContent = 'Mise à jour…';
+    try {
+        const res  = await fetch('/toggle_alerts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            status.textContent = enabled
+                ? '✓ Alertes activées — tu recevras un email à chaque transit important.'
+                : '✓ Alertes désactivées.';
+            status.style.color = '#6a9f6a';
+        } else {
+            status.textContent = '✗ ' + (data.error || 'Erreur');
+            status.style.color = '#c06060';
+            document.getElementById('alerts-toggle').checked = !enabled;
+        }
+    } catch {
+        status.textContent = '✗ Erreur réseau.';
+        status.style.color = '#c06060';
+        document.getElementById('alerts-toggle').checked = !enabled;
+    }
+}
+
+// ── Calendrier mensuel ────────────────────────────────────────────────────────
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth() + 1;
+let calOpen  = false;
+
+const MONTH_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+function toggleCalendar() {
+    const panel = document.getElementById('calendar-panel');
+    calOpen = !calOpen;
+    panel.style.display = calOpen ? 'block' : 'none';
+    if (calOpen) loadCalendar();
+}
+
+function shiftMonth(delta) {
+    calMonth += delta;
+    if (calMonth > 12) { calMonth = 1;  calYear++; }
+    if (calMonth < 1)  { calMonth = 12; calYear--; }
+    loadCalendar();
+}
+
+async function loadCalendar() {
+    const title   = document.getElementById('calendar-title');
+    const loading = document.getElementById('calendar-loading');
+    const content = document.getElementById('calendar-content');
+
+    title.textContent   = `${MONTH_FR[calMonth]} ${calYear}`;
+    loading.style.display = 'block';
+    content.innerHTML   = '';
+
+    try {
+        const res  = await fetch(`/calendar?year=${calYear}&month=${calMonth}`);
+        const data = await res.json();
+        loading.style.display = 'none';
+
+        if (data.error) { content.innerHTML = `<p style="color:#c06060;">${data.error}</p>`; return; }
+
+        const days = data.days || {};
+        if (!Object.keys(days).length) {
+            content.innerHTML = '<p style="color:var(--text-dim);text-align:center;font-size:0.85rem;">Aucun transit majeur ce mois-ci.</p>';
+            return;
+        }
+
+        let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+        for (const [dateKey, events] of Object.entries(days).sort()) {
+            const day = dateKey.split('-')[2];
+            html += `<div style="background:#0f0f22;border:1px solid var(--border);border-radius:3px;padding:10px 14px;">`;
+            html += `<div style="color:var(--gold);font-size:0.78rem;font-family:var(--display);margin-bottom:6px;">${day} ${MONTH_FR[calMonth]} ${calYear}</div>`;
+            for (const e of events) {
+                const retro = e.retrograde ? ' <span style="color:#c06060;">℞</span>' : '';
+                html += `<div style="display:flex;gap:8px;align-items:baseline;margin-top:4px;">
+                    <span style="color:${e.transit_color};font-size:0.85rem;font-weight:bold;">${e.transit_label}${retro}</span>
+                    <span style="color:var(--text-dim);font-size:0.75rem;">⊕</span>
+                    <span style="color:${e.natal_color};font-size:0.82rem;">${e.natal_label}</span>
+                    <span style="color:var(--text-dim);font-size:0.72rem;margin-left:auto;">${e.orb}°</span>
+                </div>`;
+            }
+            html += '</div>';
+        }
+        html += '</div>';
+        content.innerHTML = html;
+    } catch {
+        loading.style.display = 'none';
+        content.innerHTML = '<p style="color:#c06060;">Erreur de connexion.</p>';
+    }
+}
+
+// ── Gemma Manager UI ─────────────────────────────────────────────────────────
+async function openGemmaManager() {
+    const panel = document.getElementById('gemma-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    if (panel.style.display === 'block') await refreshGemmaStatus();
+}
+
+function saveHfToken() {
+    const val = document.getElementById('hf-token-input').value.trim();
+    if (!val) return;
+    localStorage.setItem('hf_token', val);
+    document.getElementById('hf-token-input').value = '';
+    document.getElementById('hf-token-input').placeholder = '✓ Token sauvegardé';
+    setTimeout(() => { document.getElementById('hf-token-input').placeholder = 'hf_xxxxxxxxxxxxxxxxxxxx'; }, 2000);
+}
+
+async function refreshGemmaStatus() {
+    const statusEl  = document.getElementById('gemma-status-text');
+    const btnDl     = document.getElementById('btn-gemma-dl');
+    const btnLoad   = document.getElementById('btn-gemma-load');
+    const indicator = document.getElementById('gemma-indicator');
+    if (!statusEl) return;
+
+    const isWeb = Gemma.isWeb();
+    if (isWeb) {
+        const hasOPFS = typeof navigator.storage?.getDirectory === 'function';
+        if (!hasOPFS) {
+            statusEl.textContent  = '⚠ Navigateur non compatible — utilise Chrome 110+ sur Android.';
+            btnDl.style.display   = 'none';
+            btnLoad.style.display = 'none';
+            return;
+        }
+    }
+
+    const status = await Gemma.checkModels();
+
+    if (status.e2b_loaded) {
+        statusEl.textContent  = `✦ Gemma E2B actif (${status.e2b_sizeMb} Mo)${isWeb ? ' — mode navigateur' : ''} — inférence locale prête.`;
+        statusEl.style.color  = '#6ab56a';
+        btnDl.style.display   = 'none';
+        btnLoad.style.display = 'none';
+        if (indicator) { indicator.textContent = '✦ Gemma local actif'; indicator.style.color = '#6ab56a'; }
+    } else if (status.e2b_exists) {
+        statusEl.textContent  = `◆ Modèle présent (${status.e2b_sizeMb} Mo) — non chargé en mémoire.`;
+        statusEl.style.color  = '#c9a84c';
+        btnDl.style.display   = 'none';
+        btnLoad.style.display = 'block';
+        if (indicator) { indicator.textContent = '◆ Gemma disponible'; indicator.style.color = '#c9a84c'; }
+    } else {
+        const info = isWeb
+            ? 'Stockage dans le navigateur (~400 Mo). Wi-Fi recommandé.'
+            : 'Téléchargement Android (~400 Mo). Wi-Fi recommandé.';
+        statusEl.textContent  = info;
+        statusEl.style.color  = 'var(--text-dim)';
+        btnDl.style.display   = 'block';
+        btnLoad.style.display = 'none';
+        if (indicator) indicator.textContent = '';
+    }
+}
+
+function _updateGemmaProgress(p) {
+    const bar      = document.getElementById('gemma-progress-bar');
+    const txt      = document.getElementById('gemma-progress-text');
+    const progress = document.getElementById('gemma-dl-progress');
+    if (!bar) return;
+    progress.style.display = 'block';
+    bar.style.width        = p.progress + '%';
+    txt.textContent        = `${p.dlMb} Mo / ${p.totalMb > 0 ? p.totalMb + ' Mo' : '?'} — ${p.progress}%`;
+    if (p.status === 'success') {
+        setTimeout(() => { progress.style.display = 'none'; refreshGemmaStatus(); }, 600);
+    }
+    if (p.status === 'failed') {
+        const btnDl = document.getElementById('btn-gemma-dl');
+        document.getElementById('gemma-status-text').textContent = '✗ Échec du téléchargement.';
+        document.getElementById('gemma-status-text').style.color = '#c06060';
+        btnDl.disabled = false; btnDl.textContent = '⬇ Réessayer';
+    }
+}
+
+async function gemmaDownload() {
+    const btnDl = document.getElementById('btn-gemma-dl');
+    btnDl.disabled    = true;
+    btnDl.textContent = Gemma.isWeb() ? 'Téléchargement en cours…' : 'Lancement du téléchargement…';
+    try {
+        if (Gemma.isWeb()) {
+            // Web : progression inline via streaming fetch
+            const r = await Gemma.downloadModel('e2b', _updateGemmaProgress);
+            if (r.already) await refreshGemmaStatus();
+        } else {
+            // Natif : DownloadManager Android, puis polling
+            const r = await Gemma.downloadModel('e2b');
+            if (r.already) { await refreshGemmaStatus(); return; }
+            Gemma.pollDownload('e2b', _updateGemmaProgress);
+        }
+    } catch (e) {
+        btnDl.disabled    = false;
+        btnDl.textContent = '⬇ Réessayer';
+        document.getElementById('gemma-status-text').textContent = '✗ Erreur : ' + e.message;
+        document.getElementById('gemma-status-text').style.color = '#c06060';
+    }
+}
+
+async function gemmaLoad() {
+    const btnLoad  = document.getElementById('btn-gemma-load');
+    const statusEl = document.getElementById('gemma-status-text');
+    btnLoad.disabled     = true;
+    btnLoad.textContent  = 'Chargement en mémoire…';
+    statusEl.textContent = Gemma.isWeb()
+        ? 'Chargement du modèle depuis le navigateur… (30-60 sec selon RAM)'
+        : 'Chargement du modèle… (peut prendre 15-30 sec)';
+    try {
+        await Gemma.loadModel('e2b');
+        await refreshGemmaStatus();
+    } catch (e) {
+        statusEl.textContent = '✗ Erreur : ' + e.message;
+        statusEl.style.color = '#c06060';
+        btnLoad.disabled     = false;
+        btnLoad.textContent  = '▶ Charger en mémoire';
+    }
+}
+
+// ── Rapport PDF annuel ────────────────────────────────────────────────────────
+async function downloadAnnualReport() {
+    const btn = document.getElementById('btn-annual-report');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération en cours… (1-2 min)';
+    try {
+        const res = await fetch('/report/annual');
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            alert('Erreur : ' + (data.error || res.statusText));
+            return;
+        }
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `karmic_gochara_${new Date().getFullYear()}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch {
+        alert('Erreur réseau lors de la génération du PDF.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
+}
 </script>
 </body>
 </html>

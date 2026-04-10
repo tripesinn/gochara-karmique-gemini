@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — Karmic Gochara</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;500&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a08; --gold: #c9a84c; --text: #e8e4d8; --text-dim: #8a8678;
+            --border: #2a2820; --display: 'Cinzel', serif; --body: 'EB Garamond', serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg); color: var(--text); font-family: var(--body);
+            font-size: 1.05rem; line-height: 1.8;
+        }
+        header {
+            padding: 1.5rem 2rem; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { color: var(--gold); font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.2em; text-decoration: none; }
+        main { max-width: 780px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+        h1 {
+            font-family: var(--display); font-size: clamp(1.4rem, 4vw, 2rem);
+            color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+        .subtitle { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2.5rem; font-style: italic; }
+        h2 {
+            font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.15em;
+            text-transform: uppercase; color: var(--gold); margin: 2.5rem 0 0.8rem;
+            padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+        }
+        p { margin-bottom: 1rem; color: var(--text); }
+        ul { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin-bottom: 0.4rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.95rem; }
+        th { font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+        td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(42,40,32,0.5); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        .badge {
+            display: inline-block; font-family: var(--display); font-size: 0.65rem;
+            letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px;
+            border: 1px solid var(--gold); color: var(--gold); margin-right: 4px;
+        }
+        .badge-no { border-color: var(--text-dim); color: var(--text-dim); }
+        .highlight {
+            background: rgba(201,168,76,0.08); border-left: 3px solid var(--gold);
+            padding: 0.8rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+        }
+        a { color: var(--gold); }
+        .lang-switcher { font-family: var(--display); font-size: 0.75rem; }
+        .lang-switcher button {
+            background: none; border: none; color: var(--text-dim); cursor: pointer;
+            font-family: var(--display); font-size: 0.75rem; padding: 4px 8px;
+            letter-spacing: 0.1em;
+        }
+        .lang-switcher button.active { color: var(--gold); border-bottom: 1px solid var(--gold); }
+        .section { display: none; }
+        .section.active { display: block; }
+        footer {
+            text-align: center; color: var(--text-dim); font-size: 0.8rem;
+            padding: 2rem; border-top: 1px solid var(--border); font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="/" class="logo">✦ KARMIC GOCHARA</a>
+    <div class="lang-switcher">
+        <button class="active" onclick="showLang('fr', this)">FR</button>
+        <button onclick="showLang('en', this)">EN</button>
+    </div>
+</header>
+
+<main>
+
+<!-- ══════════════════ FRANÇAIS ══════════════════ -->
+<div id="lang-fr" class="section active">
+
+    <h1>Politique de confidentialité</h1>
+    <p class="subtitle">Dernière mise à jour : avril 2026 &nbsp;·&nbsp; Application : Karmic Gochara (Android &amp; Web)</p>
+
+    <h2>1. Qui sommes-nous ?</h2>
+    <p>
+        Karmic Gochara est une application d'astrologie védique sidérale proposant des interprétations karmiques
+        personnalisées basées sur vos données de naissance et les positions planétaires du jour (Gochara).
+        L'application est disponible sur Android (Google Play) et en version web.
+    </p>
+    <p>
+        Responsable du traitement : <strong>Jérôme</strong><br>
+        Contact : <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a> &nbsp;·&nbsp;
+        <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a>
+    </p>
+
+    <h2>2. Données collectées</h2>
+    <table>
+        <thead>
+            <tr><th>Donnée</th><th>Finalité</th><th>Obligatoire ?</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Pseudo</strong></td>
+                <td>Identification du compte</td>
+                <td><span class="badge">Oui</span></td>
+            </tr>
+            <tr>
+                <td><strong>Prénom</strong></td>
+                <td>Personnalisation de la synthèse karmique</td>
+                <td><span class="badge">Oui</span></td>
+            </tr>
+            <tr>
+                <td><strong>Adresse email</strong></td>
+                <td>Envoi de la synthèse par email, alertes de transit (fonctionnalités optionnelles)</td>
+                <td><span class="badge badge-no">Non</span></td>
+            </tr>
+            <tr>
+                <td><strong>Date, heure et lieu de naissance</strong></td>
+                <td>Calcul du thème natal sidéral (positions planétaires à la naissance)</td>
+                <td><span class="badge">Oui</span></td>
+            </tr>
+            <tr>
+                <td><strong>Lieu de transit / position GPS</strong></td>
+                <td>Calcul des transits planétaires depuis votre lieu actuel</td>
+                <td><span class="badge badge-no">Non</span></td>
+            </tr>
+            <tr>
+                <td><strong>Préférence d'alertes</strong></td>
+                <td>Activation/désactivation des notifications de transit par email</td>
+                <td><span class="badge badge-no">Non</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>
+        Nous ne collectons pas de données de paiement, de numéro de téléphone, ni d'identifiants
+        de réseaux sociaux.
+    </p>
+
+    <h2>3. Où sont stockées vos données ?</h2>
+    <p>
+        Vos données de profil sont stockées dans un <strong>Google Sheets</strong> privé,
+        accessible uniquement par le responsable de l'application via l'API Google
+        (compte de service sécurisé). Aucune base de données publique ou cloud tiers
+        n'est utilisée pour le stockage principal.
+    </p>
+    <p>
+        Aucune donnée n'est vendue, partagée avec des annonceurs ou utilisée à des fins commerciales.
+    </p>
+
+    <h2>4. Fonctionnalités et traitement des données</h2>
+    <ul>
+        <li>
+            <strong>Synthèse karmique</strong> — vos données de naissance et positions planétaires
+            sont transmises à l'API Anthropic (Claude) pour générer l'interprétation. Ces données
+            ne sont pas conservées par Anthropic au-delà du traitement de la requête.
+        </li>
+        <li>
+            <strong>Envoi par email</strong> — votre adresse email est transmise à Resend
+            uniquement lorsque vous cliquez sur "Recevoir par email".
+        </li>
+        <li>
+            <strong>Alertes transit</strong> — si vous activez cette option, un email automatique
+            vous est envoyé chaque matin lorsqu'un transit karmique important commence ou se termine.
+            Vous pouvez désactiver cette option à tout moment dans l'application.
+        </li>
+        <li>
+            <strong>Calendrier mensuel &amp; Rapport PDF annuel</strong> — ces fonctionnalités
+            utilisent uniquement vos données de profil déjà stockées. Aucune donnée supplémentaire
+            n'est collectée.
+        </li>
+        <li>
+            <strong>Géolocalisation</strong> — entièrement optionnelle, activée uniquement si vous
+            cliquez sur le bouton 📍. Les coordonnées GPS ne sont pas stockées de façon permanente.
+        </li>
+    </ul>
+
+    <h2>5. Services tiers utilisés</h2>
+    <ul>
+        <li>
+            <strong>Google Sheets / Google APIs</strong> — stockage des profils.
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Politique Google</a>
+        </li>
+        <li>
+            <strong>Anthropic / Claude</strong> — génération IA des synthèses karmiques.
+            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Politique Anthropic</a>
+        </li>
+        <li>
+            <strong>Resend</strong> — envoi d'emails transactionnels.
+            <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Politique Resend</a>
+        </li>
+        <li>
+            <strong>Nominatim / OpenStreetMap</strong> — géocodage (ville ↔ coordonnées GPS),
+            uniquement si géolocalisation activée.
+            <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">Politique OSM</a>
+        </li>
+        <li>
+            <strong>Render.com</strong> — hébergement du serveur applicatif.
+            <a href="https://render.com/privacy" target="_blank" rel="noopener">Politique Render</a>
+        </li>
+    </ul>
+
+    <h2>6. Durée de conservation</h2>
+    <p>
+        Vos données sont conservées tant que votre compte existe.
+        En l'absence d'activité pendant 24 mois, le profil peut être supprimé.
+    </p>
+
+    <h2>7. Suppression de compte et des données</h2>
+    <div class="highlight">
+        Vous pouvez demander la suppression complète de votre compte et de toutes vos données
+        personnelles à tout moment, sans justification.
+    </div>
+    <p><strong>Pour supprimer votre compte :</strong></p>
+    <ul>
+        <li>Envoyez un email à <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a>
+            avec pour objet : <em>Suppression compte Karmic Gochara — [votre pseudo]</em></li>
+        <li>Ou contactez <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a></li>
+    </ul>
+    <p>
+        La suppression sera effectuée dans un délai maximum de <strong>7 jours ouvrés</strong>.
+        Toutes vos données (pseudo, email, données de naissance, lieu) seront définitivement
+        effacées du Google Sheets.
+    </p>
+
+    <h2>8. Vos droits (RGPD)</h2>
+    <p>Conformément au RGPD, vous disposez des droits suivants :</p>
+    <ul>
+        <li><strong>Accès</strong> : obtenir une copie de vos données personnelles</li>
+        <li><strong>Rectification</strong> : corriger des données inexactes</li>
+        <li><strong>Suppression</strong> : demander l'effacement complet de votre profil</li>
+        <li><strong>Portabilité</strong> : recevoir vos données dans un format structuré (CSV)</li>
+        <li><strong>Opposition</strong> : s'opposer à un traitement spécifique</li>
+    </ul>
+    <p>Pour exercer ces droits : <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a></p>
+
+    <h2>9. Sécurité</h2>
+    <p>
+        L'accès au Google Sheets est protégé par un compte de service Google avec permissions
+        restreintes (lecture/écriture uniquement sur la feuille de profils).
+        Toutes les communications sont chiffrées via HTTPS/TLS.
+        Les clés d'API (Anthropic, Resend, Google) sont stockées comme variables d'environnement
+        sécurisées sur Render.com, jamais dans le code source.
+    </p>
+
+    <h2>10. Enfants</h2>
+    <p>
+        Cette application n'est pas destinée aux personnes de moins de 13 ans.
+        Nous ne collectons pas sciemment de données personnelles d'enfants de moins de 13 ans.
+        Si vous pensez qu'un mineur a créé un compte, contactez-nous pour le supprimer immédiatement.
+    </p>
+
+    <h2>11. Modifications</h2>
+    <p>
+        Cette politique peut être mise à jour. La date de dernière mise à jour est indiquée en haut
+        de cette page. Les modifications significatives seront communiquées via
+        <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a>
+        ou par email si vous avez activé les alertes.
+    </p>
+
+</div>
+
+<!-- ══════════════════ ENGLISH ══════════════════ -->
+<div id="lang-en" class="section">
+
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">Last updated: April 2026 &nbsp;·&nbsp; App: Karmic Gochara (Android &amp; Web)</p>
+
+    <h2>1. Who we are</h2>
+    <p>
+        Karmic Gochara is a sidereal Vedic astrology application offering personalized karmic interpretations
+        based on your birth data and current planetary positions (Gochara).
+        The app is available on Android (Google Play) and as a web application.
+    </p>
+    <p>
+        Data controller: <strong>Jérôme</strong><br>
+        Contact: <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a> &nbsp;·&nbsp;
+        <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a>
+    </p>
+
+    <h2>2. Data we collect</h2>
+    <table>
+        <thead>
+            <tr><th>Data</th><th>Purpose</th><th>Required?</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Username (pseudo)</strong></td>
+                <td>Account identification</td>
+                <td><span class="badge">Yes</span></td>
+            </tr>
+            <tr>
+                <td><strong>First name</strong></td>
+                <td>Personalization of the karmic synthesis</td>
+                <td><span class="badge">Yes</span></td>
+            </tr>
+            <tr>
+                <td><strong>Email address</strong></td>
+                <td>Sending synthesis by email, transit alerts (optional features)</td>
+                <td><span class="badge badge-no">No</span></td>
+            </tr>
+            <tr>
+                <td><strong>Date, time and place of birth</strong></td>
+                <td>Calculation of the sidereal natal chart</td>
+                <td><span class="badge">Yes</span></td>
+            </tr>
+            <tr>
+                <td><strong>Transit location / GPS position</strong></td>
+                <td>Calculation of planetary transits from your current location</td>
+                <td><span class="badge badge-no">No</span></td>
+            </tr>
+            <tr>
+                <td><strong>Alert preference</strong></td>
+                <td>Enable/disable transit email notifications</td>
+                <td><span class="badge badge-no">No</span></td>
+            </tr>
+        </tbody>
+    </table>
+    <p>
+        We do not collect payment data, phone numbers, or social media identifiers.
+    </p>
+
+    <h2>3. Where your data is stored</h2>
+    <p>
+        Your profile data is stored in a private <strong>Google Sheet</strong>,
+        accessible only by the app administrator via the Google API
+        (secured service account). No public database or third-party cloud
+        storage is used for primary data.
+    </p>
+    <p>
+        No data is sold, shared with advertisers, or used for commercial purposes.
+    </p>
+
+    <h2>4. Features and data processing</h2>
+    <ul>
+        <li>
+            <strong>Karmic synthesis</strong> — your birth data and planetary positions are sent
+            to the Anthropic API (Claude) to generate the interpretation. Anthropic does not
+            retain this data beyond processing the request.
+        </li>
+        <li>
+            <strong>Email delivery</strong> — your email address is transmitted to Resend
+            only when you click "Receive by email".
+        </li>
+        <li>
+            <strong>Transit alerts</strong> — if enabled, an automated email is sent each morning
+            when an important karmic transit begins or ends. You can disable this at any time
+            in the app.
+        </li>
+        <li>
+            <strong>Monthly calendar &amp; Annual PDF report</strong> — these features use only
+            your already-stored profile data. No additional data is collected.
+        </li>
+        <li>
+            <strong>Geolocation</strong> — entirely optional, activated only when you tap the 📍
+            button. GPS coordinates are not permanently stored.
+        </li>
+    </ul>
+
+    <h2>5. Third-party services</h2>
+    <ul>
+        <li>
+            <strong>Google Sheets / Google APIs</strong> — profile storage.
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>
+        </li>
+        <li>
+            <strong>Anthropic / Claude</strong> — AI karmic synthesis generation.
+            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic Privacy Policy</a>
+        </li>
+        <li>
+            <strong>Resend</strong> — transactional email delivery.
+            <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend Privacy Policy</a>
+        </li>
+        <li>
+            <strong>Nominatim / OpenStreetMap</strong> — geocoding (city ↔ GPS),
+            only when geolocation is enabled.
+            <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">OSM Privacy Policy</a>
+        </li>
+        <li>
+            <strong>Render.com</strong> — application server hosting.
+            <a href="https://render.com/privacy" target="_blank" rel="noopener">Render Privacy Policy</a>
+        </li>
+    </ul>
+
+    <h2>6. Data retention</h2>
+    <p>
+        Your data is retained as long as your account exists.
+        Profiles with no activity for 24 months may be deleted.
+    </p>
+
+    <h2>7. Account and data deletion</h2>
+    <div class="highlight">
+        You may request complete deletion of your account and all personal data
+        at any time, without providing a reason.
+    </div>
+    <p><strong>To delete your account:</strong></p>
+    <ul>
+        <li>Send an email to <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a>
+            with subject: <em>Delete Karmic Gochara account — [your username]</em></li>
+        <li>Or contact <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a></li>
+    </ul>
+    <p>
+        Deletion will be completed within <strong>7 business days</strong>.
+        All your data (username, email, birth data, location) will be permanently
+        removed from the Google Sheet.
+    </p>
+
+    <h2>8. Your rights (GDPR)</h2>
+    <p>Under GDPR and applicable laws, you have the following rights:</p>
+    <ul>
+        <li><strong>Access</strong>: obtain a copy of your personal data</li>
+        <li><strong>Rectification</strong>: correct inaccurate data</li>
+        <li><strong>Erasure</strong>: request complete deletion of your profile</li>
+        <li><strong>Portability</strong>: receive your data in a structured format (CSV)</li>
+        <li><strong>Objection</strong>: object to a specific processing activity</li>
+    </ul>
+    <p>To exercise these rights: <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a></p>
+
+    <h2>9. Security</h2>
+    <p>
+        Access to Google Sheets is protected by a Google service account with restricted
+        permissions (read/write only on the profiles sheet).
+        All communications are encrypted via HTTPS/TLS.
+        API keys (Anthropic, Resend, Google) are stored as secured environment variables
+        on Render.com, never in the source code.
+    </p>
+
+    <h2>10. Children</h2>
+    <p>
+        This application is not intended for persons under the age of 13.
+        We do not knowingly collect personal data from children under 13.
+        If you believe a minor has created an account, contact us for immediate deletion.
+    </p>
+
+    <h2>11. Changes</h2>
+    <p>
+        This policy may be updated. The last updated date is shown at the top of this page.
+        Significant changes will be communicated via
+        <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a>
+        or by email if you have enabled alerts.
+    </p>
+
+</div>
+
+</main>
+
+<footer>
+    ✦ Karmic Gochara &nbsp;·&nbsp;
+    <a href="/">karmic-gochara.netlify.app</a> &nbsp;·&nbsp;
+    <a href="mailto:astro@jeromemalige.fr">astro@jeromemalige.fr</a> &nbsp;·&nbsp;
+    <a href="https://x.com/siderealAstro13" target="_blank" rel="noopener">@siderealAstro13</a>
+</footer>
+
+<script>
+function showLang(lang, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.lang-switcher button').forEach(b => b.classList.remove('active'));
+    document.getElementById('lang-' + lang).classList.add('active');
+    btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>

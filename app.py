@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 import pytz
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, session, send_from_directory
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,6 +22,64 @@ TRANSIT_LOC_DEFAULT = {
     "lon":  2.3522,
     "tz":   "Europe/Paris",
 }
+
+_SIGNS_FR = [
+    "Bélier", "Taureau", "Gémeaux", "Cancer",
+    "Lion", "Vierge", "Balance", "Scorpion",
+    "Sagittaire", "Capricorne", "Verseau", "Poissons",
+]
+
+def _enrich_profile_with_natal(profile: dict, natal: dict) -> dict:
+    """
+    Enrichit le profil session avec les données du thème natal calculé,
+    pour que get_synthesis() dispose de chandra_lagna_sign, ketu_sign, etc.
+    natal = result["natal"] de calculate_transits().
+    """
+    def _sign(display: str) -> str:
+        parts = (display or "").strip().split()
+        return parts[1] if len(parts) >= 2 else ""
+
+    def _deg(display: str) -> str:
+        parts = (display or "").strip().split()
+        return parts[2] if len(parts) >= 3 else ""
+
+    def _house(planet_key: str, asc_sign: str) -> str:
+        if not asc_sign or asc_sign not in _SIGNS_FR:
+            return ""
+        p = natal.get(planet_key) or {}
+        p_sign = _sign(p.get("display", ""))
+        if not p_sign or p_sign not in _SIGNS_FR:
+            return ""
+        return str((_SIGNS_FR.index(p_sign) - _SIGNS_FR.index(asc_sign)) % 12 + 1)
+
+    enriched = dict(profile)
+
+    asc = natal.get("ASC ↑") or {}
+    asc_sign = _sign(asc.get("display", ""))
+    enriched["chandra_lagna_sign"] = asc_sign
+    enriched["chandra_lagna_deg"]  = _deg(asc.get("display", ""))
+
+    for key, s_field, h_field, nak_field in [
+        ("Nœud Sud ☋",      "ketu_sign",            "ketu_house",            "ketu_nakshatra"),
+        ("Nœud Nord ☊",     "rahu_sign",            "rahu_house",            "rahu_nakshatra"),
+        ("Chiron ⚷",        "chiron_sign",          "chiron_house",          "chiron_nakshatra"),
+        ("Lilith ⚸",        "lilith_sign",          "lilith_house",          "lilith_nakshatra"),
+        ("Saturne ♄",       "saturn_sign",          "saturn_house",          None),
+        ("Jupiter ♃",       "jupiter_sign",         "jupiter_house",         None),
+        ("Porte Visible ⊙", "porte_visible_sign",   "porte_visible_house",   None),
+        ("Porte Invisible ⊗","porte_invisible_sign", "porte_invisible_house", None),
+    ]:
+        p = natal.get(key) or {}
+        enriched[s_field] = _sign(p.get("display", ""))
+        enriched[h_field] = _house(key, asc_sign)
+        if nak_field:
+            enriched[nak_field] = p.get("nakshatra", "")
+
+    enriched["porte_visible_deg"]   = _deg((natal.get("Porte Visible ⊙")  or {}).get("display", ""))
+    enriched["porte_invisible_deg"] = _deg((natal.get("Porte Invisible ⊗") or {}).get("display", ""))
+    enriched["natal_positions"]     = natal
+
+    return enriched
 
 # ── Labels multilingues ───────────────────────────────────────────────────────
 LANGS = {
@@ -73,6 +131,19 @@ LANGS = {
         "transit_title": "⏱ Transits — Date de consultation",
         "support_title": "☕ Soutenir le projet",
         "support_label": "Buy me a coffee",
+        "hero_title": "Ton", "hero_em": "Karma", "hero_sub_a": "écrit dans les étoiles",
+        "hero_subtitle": "Astrologie Védique Sidérale · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "Nœud Sud · mémoires passées · schémas de résistance",
+        "hero_chiron": "Chiron · blessure originelle · clé de la Porte Visible",
+        "hero_stage": "Dharma · lieu de libération · action incarnée",
+        "hero_hook1": "Ton <strong>Ketu</strong> révèle la prison de mémoires passées.",
+        "hero_hook2": "Ton <strong>Chiron</strong> est la clé qui ouvre la porte.",
+        "hero_hook3": "Ton <strong>Stage</strong> est la scène qui t'attend.",
+        "hero_cta": "Accéder à ta synthèse",
+        "geo_auto": "Position auto ou saisir une ville…",
+        "pillar1_title": "Mémoire Karmique",
+        "pillar2_title": "Blessure Originelle",
+        "pillar3_title": "Mise en Scène",
     },
     "en": {
         "code": "en", "label": "🇬🇧 EN",
@@ -122,6 +193,19 @@ LANGS = {
         "transit_title": "⏱ Transits — Consultation date",
         "support_title": "☕ Support the project",
         "support_label": "Buy me a coffee",
+        "hero_title": "Your", "hero_em": "Karma", "hero_sub_a": "written in the stars",
+        "hero_subtitle": "Sidereal Vedic Astrology · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "South Node · past memories · resistance patterns",
+        "hero_chiron": "Chiron · original wound · key to the Visible Door",
+        "hero_stage": "Dharma · place of liberation · embodied action",
+        "hero_hook1": "Your <strong>Ketu</strong> reveals the prison of past memories.",
+        "hero_hook2": "Your <strong>Chiron</strong> is the key that opens the door.",
+        "hero_hook3": "Your <strong>Stage</strong> is the scene waiting for you.",
+        "hero_cta": "Access your synthesis",
+        "geo_auto": "Auto position or type a city…",
+        "pillar1_title": "Karmic Memory",
+        "pillar2_title": "Core Wound",
+        "pillar3_title": "The Stage",
     },
     "es": {
         "code": "es", "label": "🇪🇸 ES",
@@ -171,6 +255,19 @@ LANGS = {
         "transit_title": "⏱ Tránsitos — Fecha de consulta",
         "support_title": "☕ Apoyar el proyecto",
         "support_label": "Invítame a un café",
+        "hero_title": "Tu", "hero_em": "Karma", "hero_sub_a": "escrito en las estrellas",
+        "hero_subtitle": "Astrología Védica Sideral · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "Nodo Sur · memorias pasadas · patrones de resistencia",
+        "hero_chiron": "Chiron · herida original · llave de la Puerta Visible",
+        "hero_stage": "Dharma · lugar de liberación · acción encarnada",
+        "hero_hook1": "Tu <strong>Ketu</strong> revela la prisión de memorias pasadas.",
+        "hero_hook2": "Tu <strong>Chiron</strong> es la llave que abre la puerta.",
+        "hero_hook3": "Tu <strong>Stage</strong> es el escenario que te espera.",
+        "hero_cta": "Acceder a tu síntesis",
+        "geo_auto": "Posición auto o escribe una ciudad…",
+        "pillar1_title": "Memoria Kármica",
+        "pillar2_title": "Herida Original",
+        "pillar3_title": "La Escena",
     },
     "pt": {
         "code": "pt", "label": "🇧🇷 PT",
@@ -220,6 +317,19 @@ LANGS = {
         "transit_title": "⏱ Trânsitos — Data de consulta",
         "support_title": "☕ Apoiar o projeto",
         "support_label": "Me pague um café",
+        "hero_title": "Seu", "hero_em": "Karma", "hero_sub_a": "escrito nas estrelas",
+        "hero_subtitle": "Astrologia Védica Sideral · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "Nodo Sul · memórias passadas · padrões de resistência",
+        "hero_chiron": "Chiron · ferida original · chave da Porta Visível",
+        "hero_stage": "Dharma · lugar de libertação · ação encarnada",
+        "hero_hook1": "Seu <strong>Ketu</strong> revela a prisão de memórias passadas.",
+        "hero_hook2": "Seu <strong>Chiron</strong> é a chave que abre a porta.",
+        "hero_hook3": "Seu <strong>Stage</strong> é o palco que te espera.",
+        "hero_cta": "Acessar sua síntese",
+        "geo_auto": "Posição auto ou digitar uma cidade…",
+        "pillar1_title": "Memória Kármica",
+        "pillar2_title": "Ferida Original",
+        "pillar3_title": "O Palco",
     },
     "de": {
         "code": "de", "label": "🇩🇪 DE",
@@ -269,6 +379,19 @@ LANGS = {
         "transit_title": "⏱ Transite — Beratungsdatum",
         "support_title": "☕ Projekt unterstützen",
         "support_label": "Kauf mir einen Kaffee",
+        "hero_title": "Dein", "hero_em": "Karma", "hero_sub_a": "in den Sternen geschrieben",
+        "hero_subtitle": "Siderische Vedische Astrologie · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "Südknoten · vergangene Erinnerungen · Widerstandsmuster",
+        "hero_chiron": "Chiron · ursprüngliche Wunde · Schlüssel zur Sichtbaren Tür",
+        "hero_stage": "Dharma · Ort der Befreiung · verkörperte Handlung",
+        "hero_hook1": "Dein <strong>Ketu</strong> enthüllt das Gefängnis vergangener Erinnerungen.",
+        "hero_hook2": "Dein <strong>Chiron</strong> ist der Schlüssel, der die Tür öffnet.",
+        "hero_hook3": "Deine <strong>Stage</strong> ist die Bühne, die auf dich wartet.",
+        "hero_cta": "Zugang zu deiner Synthese",
+        "geo_auto": "Automatische Position oder Stadt eingeben…",
+        "pillar1_title": "Karmisches Gedächtnis",
+        "pillar2_title": "Urwunde",
+        "pillar3_title": "Die Bühne",
     },
     "nl": {
         "code": "nl", "label": "🇳🇱 NL",
@@ -318,6 +441,19 @@ LANGS = {
         "transit_title": "⏱ Transieten — Consultatiedatum",
         "support_title": "☕ Project steunen",
         "support_label": "Koop me een koffie",
+        "hero_title": "Jouw", "hero_em": "Karma", "hero_sub_a": "geschreven in de sterren",
+        "hero_subtitle": "Siderische Vedische Astrologie · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "Zuidknoop · herinneringen uit het verleden · weerstandspatronen",
+        "hero_chiron": "Chiron · oorspronkelijke wond · sleutel tot de Zichtbare Deur",
+        "hero_stage": "Dharma · plek van bevrijding · belichaamde actie",
+        "hero_hook1": "Jouw <strong>Ketu</strong> onthult de gevangenis van herinneringen.",
+        "hero_hook2": "Jouw <strong>Chiron</strong> is de sleutel die de deur opent.",
+        "hero_hook3": "Jouw <strong>Stage</strong> is het podium dat op je wacht.",
+        "hero_cta": "Toegang tot je synthese",
+        "geo_auto": "Auto positie of typ een stad…",
+        "pillar1_title": "Karmisch Geheugen",
+        "pillar2_title": "Oerwond",
+        "pillar3_title": "Het Podium",
     },
     "it": {
         "code": "it", "label": "🇮🇹 IT",
@@ -367,6 +503,19 @@ LANGS = {
         "transit_title": "⏱ Transiti — Data di consultazione",
         "support_title": "☕ Supporta il progetto",
         "support_label": "Offrimi un caffè",
+        "hero_title": "Il tuo", "hero_em": "Karma", "hero_sub_a": "scritto nelle stelle",
+        "hero_subtitle": "Astrologia Vedica Siderale · Chandra Lagna · DK Ayanamsa",
+        "hero_ketu": "Nodo Sud · memorie passate · schemi di resistenza",
+        "hero_chiron": "Chiron · ferita originale · chiave della Porta Visibile",
+        "hero_stage": "Dharma · luogo di liberazione · azione incarnata",
+        "hero_hook1": "Il tuo <strong>Ketu</strong> rivela la prigione delle memorie passate.",
+        "hero_hook2": "Il tuo <strong>Chiron</strong> è la chiave che apre la porta.",
+        "hero_hook3": "Il tuo <strong>Stage</strong> è la scena che ti aspetta.",
+        "hero_cta": "Accedi alla tua sintesi",
+        "geo_auto": "Posizione auto o digita una città…",
+        "pillar1_title": "Memoria Karmica",
+        "pillar2_title": "Ferita Originale",
+        "pillar3_title": "La Scena",
     },
 }
 
@@ -420,6 +569,16 @@ def geocode_location(query: str) -> dict:
 
 
 # ── Routes publiques ──────────────────────────────────────────────────────────
+@app.route("/sw.js")
+def service_worker():
+    return send_from_directory("static", "sw.js", mimetype="application/javascript")
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy-policy.html")
+
+
 @app.route("/")
 def index():
     tz = pytz.timezone("Europe/Paris")
@@ -433,9 +592,13 @@ def index():
         now_hour=now.hour,
         now_minute=now.minute,
         lang=lang,
-        all_langs=list(LANGS.values()),
+        ui=lang,  # On utilise 'lang' pour remplir 'ui'
+        langs=LANGS,  # On envoie le dictionnaire complet pour la boucle for
+        session_user=session.get('pseudo', ''),
+        session_profile=session.get('profile', {}),
+        enable_local_ai=os.environ.get('ENABLE_LOCAL_AI', '').lower() in ('1', 'true'),
+        enable_features=os.environ.get('ENABLE_FEATURES', '').lower() in ('1', 'true'),
     )
-
 
 @app.route("/set_lang", methods=["POST"])
 def set_lang():
@@ -461,6 +624,7 @@ def login():
     if not profile:
         return jsonify({"ok": False, "error": f"Pseudo '{pseudo}' introuvable. Crée ton profil d'abord."}), 404
     session["profile"] = profile
+    session["pseudo"] = pseudo
     return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
 
 
@@ -482,6 +646,7 @@ def register():
         app.logger.error("Erreur Sheets register : %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
     session["profile"] = profile
+    session["pseudo"] = pseudo
     return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
 
 
@@ -506,7 +671,6 @@ def geocode():
             headers={"User-Agent": "Karmic.Gochara/1.0"},
             timeout=5,
         )
-        time.sleep(1)
         return jsonify(r.json())
     except Exception:
         try:
@@ -543,7 +707,11 @@ def calculate():
 
     # ── Vérification quota mensuel ────────────────────────────────────────────
     pseudo = profile.get("pseudo", "")
-    quota = check_and_increment_synthesis(pseudo)
+    UNLIMITED_PSEUDOS = {"jero"}
+    if pseudo.lower() in UNLIMITED_PSEUDOS:
+        quota = {"allowed": True, "remaining": 999}
+    else:
+        quota = check_and_increment_synthesis(pseudo)
     if not quota["allowed"]:
         return jsonify({
             "error": "quota_exceeded",
@@ -584,12 +752,15 @@ def calculate():
         year, month, day = map(int, date_str.split("-"))
         result = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
 
+        # Enrichit le profil avec les positions natales calculées
+        enriched_profile = _enrich_profile_with_natal(profile, result.get("natal", {}))
+
         # Retry 3x sur surcharge Anthropic (529 / overloaded_error)
         synthesis = None
         last_exc  = None
         for attempt in range(3):
             try:
-                synthesis = get_synthesis(result, profile, lang=lang)
+                synthesis = get_synthesis(result, enriched_profile, lang=lang)
                 break
             except Exception as exc:
                 last_exc = exc
@@ -605,6 +776,25 @@ def calculate():
 
         result["synthesis"] = synthesis
         result["remaining"] = quota["remaining"]
+
+        # Sauvegarde la localisation de transit dans la session (toujours)
+        if transit_loc.get("city"):
+            new_transit = {
+                "transit_city": transit_loc["city"],
+                "transit_lat":  transit_loc["lat"],
+                "transit_lon":  transit_loc["lon"],
+                "transit_tz":   transit_loc["tz"],
+            }
+            session["profile"] = {**profile, **new_transit}
+            session.modified = True
+            # Persist dans Google Sheets si la ville a changé
+            if transit_loc["city"] != profile.get("transit_city"):
+                try:
+                    from profiles import update_profile
+                    update_profile(profile["email"], {**profile, **new_transit})
+                except Exception:
+                    pass  # Non bloquant
+
         return jsonify(result)
     except Exception as exc:
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)

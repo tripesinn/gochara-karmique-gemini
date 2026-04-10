@@ -1,0 +1,37 @@
+# Swiss Ephemeris (Windows local uniquement)
+*.dll
+*.h
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# Propriété intellectuelle — doctrine karmique (hébergée via Render Secret Files)
+doctrine.py
+
+# Secrets & credentials — NE JAMAIS COMMITTER
+credentials.json
+*.json.key
+service_account*.json
+
+# Node / Capacitor
+node_modules/
+www/
+
+# Android (généré — committer uniquement les sources)
+android/.gradle/
+android/app/build/
+android/.idea/
+
+# Cloudflare Wrangler (état local, cache R2, DB miniflare)
+.wrangler/
+
+# Claude Code (settings locaux)
+.claude/settings.local.json
+
+# IDE
+.vscode/settings.json

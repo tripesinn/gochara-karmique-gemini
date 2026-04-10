@@ -1,0 +1,31 @@
+{
+  "name": "karmic.gochara",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "cap:add:ios": "npx cap add ios"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tripesinn/karmic.gochara.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tripesinn/karmic.gochara/issues"
+  },
+  "homepage": "https://github.com/tripesinn/karmic.gochara#readme",
+  "dependencies": {
+    "@capacitor-community/admob": "^8.0.0",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0"
+  }
+}

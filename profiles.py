@@ -34,6 +34,7 @@ COLS = [
     "transit_tz",           # P
     "syntheses_count",      # Q
     "syntheses_reset_date", # R
+    "alerts_enabled",       # S
 ]
 
 SYNTHESIS_QUOTA = 3  # max synthèses par mois (plan free)
@@ -105,6 +106,7 @@ def _row_to_profile(row: list) -> dict:
         # Quota — fallback 0 / mois courant pour anciens profils
         "syntheses_count":      _safe(16, int, 0),
         "syntheses_reset_date": _safe(17) or _current_month_str(),
+        "alerts_enabled":       _safe(18, int, 0),
     }
 
 
@@ -158,6 +160,7 @@ def create_profile(data: dict) -> dict:
         data.get("transit_tz", "Europe/Paris"),
         "0",                      # syntheses_count
         _current_month_str(),     # syntheses_reset_date
+        "0",                      # alerts_enabled
     ]
     ws.append_row(row)
     return _row_to_profile(row)
@@ -174,6 +177,8 @@ def update_profile(email: str, data: dict) -> dict | None:
             # Préserve les colonnes quota existantes
             existing_count      = row[16] if len(row) > 16 else "0"
             existing_reset_date = row[17] if len(row) > 17 else _current_month_str()
+
+            existing_alerts = row[18] if len(row) > 18 else "0"
 
             new_row = [
                 data.get("pseudo",       row[0]  if len(row) > 0  else ""),
@@ -194,8 +199,9 @@ def update_profile(email: str, data: dict) -> dict | None:
                 data.get("transit_tz",   row[15] if len(row) > 15 else "Europe/Paris"),
                 existing_count,       # préservé
                 existing_reset_date,  # préservé
+                existing_alerts,      # préservé
             ]
-            ws.update(f"A{i}:R{i}", [new_row])
+            ws.update(f"A{i}:S{i}", [new_row])
             return _row_to_profile(new_row)
     return None
 
