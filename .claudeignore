@@ -15,3 +15,6 @@ __pycache__/
 venv/
 .env
 .git/
+
+# vault
+karmic_vault/
