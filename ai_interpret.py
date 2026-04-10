@@ -47,9 +47,9 @@ def _load_vault(include_keywords: bool = True) -> str | None:
             kw_path = os.path.join(_VAULT_DIR, "02_planet_keywords.md")
             if os.path.exists(kw_path):
                 vault += "\n\n---\n\n" + open(kw_path, encoding="utf-8").read()
-              import logging
-logging.getLogger(__name__).info("VAULT chargé — %d tokens estimés", len(vault.split()))
-return vault
+        import logging
+        logging.getLogger(__name__).info("VAULT chargé — %d tokens estimés", len(vault.split()))
+        
         return vault
     except FileNotFoundError:
         return None
