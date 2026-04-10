@@ -587,7 +587,7 @@ Minimum 300 words. Do not truncate. Language: {lang_name}."""
     msg = _get_client().messages.create(
         model=synthesis_model,
         max_tokens=4000,
-        system=_build_system_prompt(user, use_vault=False),
+        system=_build_system_prompt(user, use_vault=True),
         messages=[{"role": "user", "content": prompt}],
     )
     return msg.content[0].text
