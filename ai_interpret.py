@@ -443,61 +443,277 @@ LANGUAGE RULE: every single sentence must be in {lang_name}. No French or Englis
     return msg.content[0].text
 
 
-def build_prompt_only(chart_data: dict, user: dict = None, lang: str = "fr") -> dict:
-    """
-    Construit le prompt compact SANS appeler Claude.
-    Optimisé pour Gemma3-1B (< 1500 tokens) : system vide, user ultra-direct.
-    Retourne {"system": "...", "user": "..."} prêt à injecter dans n'importe quel LLM.
-    """
-    user = user or {}
-    lang = user.get("lang", lang)
+# ══════════════════════════════════════════════════════════════════════════════
+# HOOK EXTENSION CHROME — 4 phrases, Alternative de Conscience du jour
+# ══════════════════════════════════════════════════════════════════════════════
 
-    aspects_text = _aspects_to_text(chart_data.get("aspects", []), max_aspects=4)
-    date         = chart_data.get("transit_date", "")
-    name         = user.get("name", "l'utilisateur")
+def get_hook(natal_pos: dict, transit_pos: dict, profile: dict, lang: str = "fr") -> str:
+    """
+    Génère un hook karmic de 4 phrases max.
+    natal_pos / transit_pos : dicts issus de _calc_positions()
+    Clés attendues : "Nœud Sud ☋", "Chiron ⚷", "Porte Visible ⊙",
+                     "Nœud Nord ☊", "Lune ☽", "Saturne ♄", "Uranus ♅", etc.
+    """
+    from astro_calc import SIGNS
 
-    # Contexte natal minimal (signes clés seulement)
-    cl   = user.get("chandra_lagna_sign", "")
-    ketu = user.get("ketu_sign", "")
-    rahu = user.get("rahu_sign", "")
-    chi  = user.get("chiron_sign", "")
-    lil  = user.get("lilith_sign", "")
-    natal_mini = f"Chandra Lagna {cl}, Ketu {ketu}, Rahu {rahu}, Chiron {chi}, Lilith {lil}." if cl else ""
+    def sign_of(pos_dict, key):
+        p = pos_dict.get(key)
+        if p and p.get("lon") is not None:
+            return SIGNS[int(p["lon"] / 30) % 12]
+        return "inconnu"
+
+    def house_of(pos_dict, key, moon_lon):
+        p = pos_dict.get(key)
+        if p and p.get("lon") is not None and moon_lon is not None:
+            lagna_sign = int(moon_lon / 30) % 12
+            planet_sign = int(p["lon"] / 30) % 12
+            return ((planet_sign - lagna_sign) % 12) + 1
+        return "?"
+
+    moon = natal_pos.get("Lune ☽")
+    moon_lon = moon["lon"] if moon else None
+
+    rom_sign   = sign_of(natal_pos, "Nœud Sud ☋")
+    rom_house  = house_of(natal_pos, "Nœud Sud ☋", moon_lon)
+    ram_sign   = sign_of(natal_pos, "Chiron ⚷")
+    ram_house  = house_of(natal_pos, "Chiron ⚷", moon_lon)
+    pv_sign    = sign_of(natal_pos, "Porte Visible ⊙")
+    pv_house   = house_of(natal_pos, "Porte Visible ⊙", moon_lon)
+    rahu_sign  = sign_of(natal_pos, "Nœud Nord ☊")
+    rahu_house = house_of(natal_pos, "Nœud Nord ☊", moon_lon)
+    lagna      = sign_of(natal_pos, "Lune ☽")
+
+    active = []
+    slow_planets = [
+        "Saturne ♄", "Jupiter ♃", "Uranus ♅",
+        "Neptune ♆", "Pluton ♇", "Rahu ☊", "Ketu ☋",
+        "Chiron ⚷", "Mars ♂"
+    ]
+    natal_points = {
+        "ROM (Ketu natal)":       natal_pos.get("Nœud Sud ☋"),
+        "RAM (Chiron natal)":     natal_pos.get("Chiron ⚷"),
+        "Porte Visible natale":   natal_pos.get("Porte Visible ⊙"),
+        "Dharma (Rahu natal)":    natal_pos.get("Nœud Nord ☊"),
+        "Lune natale":            natal_pos.get("Lune ☽"),
+    }
+
+    ASPECTS = {"conjonction": 0, "opposition": 180, "carré": 90, "trigone": 120, "sextile": 60}
+    ORB = 3.0
+
+    for t_name in slow_planets:
+        t_planet = transit_pos.get(t_name)
+        if not t_planet or t_planet.get("lon") is None:
+            continue
+        t_lon = t_planet["lon"]
+        t_sign = SIGNS[int(t_lon / 30) % 12]
+        for n_label, n_planet in natal_points.items():
+            if not n_planet or n_planet.get("lon") is None:
+                continue
+            n_lon = n_planet["lon"]
+            diff = abs(t_lon - n_lon) % 360
+            if diff > 180:
+                diff = 360 - diff
+            for asp_name, asp_angle in ASPECTS.items():
+                if abs(diff - asp_angle) <= ORB:
+                    orb_val = round(abs(diff - asp_angle), 1)
+                    active.append(
+                        f"{t_name.split()[0]} transit en {t_sign} : {asp_name} avec {n_label} (orbe {orb_val}°)"
+                    )
+
+    transit_str = "\n".join(active[:5]) if active else "Aucun transit majeur actif aujourd'hui — période de latence karmique."
+
+    prompt = f"""Tu es l'intelligence siderealAstro13. Génère un hook karmic de 4 phrases MAXIMUM.
+
+THÈME NATAL (Jyotish sidéral DK, Chandra Lagna) :
+- Chandra Lagna : {lagna}
+- ROM (Ketu) : {rom_sign} H{rom_house} — mémoire karmique figée
+- RAM (Chiron) : {ram_sign} H{ram_house} — blessure active, clé de la Porte Visible
+- Stage / Porte Visible : {pv_sign} H{pv_house} — lieu de manifestation du Dharma
+- Dharma (Rahu) : {rahu_sign} H{rahu_house} — direction d'expansion
+
+TRANSITS ACTIFS AUJOURD'HUI :
+{transit_str}
+
+RÈGLES ABSOLUES :
+- 4 phrases MAXIMUM, pas une de plus
+- Phrase 1 : nomme le transit le plus puissant et son activation sur ROM ou RAM
+- Phrases 2-3 : tension entre l'automatisme (ROM) et l'appel au Stage
+- Phrase 4 : "L'Alternative de Conscience : [insight transformateur concret, actionnable aujourd'hui]"
+- Zéro degrés, zéro symboles techniques dans l'output
+- Tutoiement, style direct et transformateur
+- Langue : {"français" if lang == "fr" else "english"}
+- Zéro preamble, commence directement"""
+
+    for attempt in range(3):
+        try:
+            msg = _get_client().messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=400,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return msg.content[0].text.strip()
+        except Exception as e:
+            if attempt == 2:
+                raise e
+            import time
+            time.sleep(2 ** attempt)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HOOK INVITÉ — 1 phrase teaser (résume #1 #2 #3, ouvre le désir du #4)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_guest_section(natal_pos: dict, transit_pos: dict, section: int = 1, lang: str = "fr") -> str:
+    """
+    Génère la section karmique demandée (1 à 4) pour le mode invité.
+    Section 1 : ROM — Mémoire Karmique
+    Section 2 : RAM — Blessure en traitement
+    Section 3 : Épreuve Karmique (Lilith)
+    Section 4 : Alternative de Conscience (actionnable)
+    150 tokens max, style oracle direct.
+    """
+    from astro_calc import SIGNS
+
+    def sign_of(d, k):
+        p = d.get(k)
+        return SIGNS[int(p["lon"] / 30) % 12] if p and p.get("lon") is not None else "?"
+
+    def house_of(d, k, moon_lon):
+        p = d.get(k)
+        if p and p.get("lon") is not None and moon_lon is not None:
+            return ((int(p["lon"] / 30) % 12) - (int(moon_lon / 30) % 12)) % 12 + 1
+        return "?"
+
+    moon     = natal_pos.get("Lune ☽")
+    moon_lon = moon["lon"] if moon else None
+    lagna    = sign_of(natal_pos, "Lune ☽")
+    rom      = f"Ketu {sign_of(natal_pos, 'Nœud Sud ☋')} H{house_of(natal_pos, 'Nœud Sud ☋', moon_lon)}"
+    ram      = f"Chiron {sign_of(natal_pos, 'Chiron ⚷')} H{house_of(natal_pos, 'Chiron ⚷', moon_lon)}"
+    stage    = f"{sign_of(natal_pos, 'Porte Visible ⊙')} H{house_of(natal_pos, 'Porte Visible ⊙', moon_lon)}"
+    lilith   = f"Lilith {sign_of(natal_pos, 'Lilith ⚸')} H{house_of(natal_pos, 'Lilith ⚸', moon_lon)}"
+
+    slow = ["Saturne ♄", "Jupiter ♃", "Uranus ♅", "Rahu ☊", "Ketu ☋", "Chiron ⚷", "Mars ♂"]
+    actifs = []
+    for t_name in slow:
+        tp = transit_pos.get(t_name)
+        if tp and tp.get("lon") is not None:
+            actifs.append(f"{t_name.split()[0]} en {SIGNS[int(tp['lon']/30)%12]}")
+    transit_str = ", ".join(actifs[:3]) if actifs else "transits du jour"
+
+    section = max(1, min(4, section))
+
+    PROMPTS_FR = {
+        1: f"""Tu es siderealAstro13. Écris UNIQUEMENT la section #1 — Mémoire Karmique (ROM).
+Contexte : Chandra Lagna={lagna}, ROM={rom}. Transits : {transit_str}.
+2 phrases max. Nomme le schéma automatique que l'âme rejoue aujourd'hui. Langage narratif, tutoiement, zéro mécanique.
+Zéro préambule.""",
+        2: f"""Tu es siderealAstro13. Écris UNIQUEMENT la section #2 — Blessure en Traitement (RAM).
+Contexte : RAM={ram}, ROM={rom}, Lagna={lagna}. Transits : {transit_str}.
+2 phrases max. Nomme ce que les transits rouvrent dans Chiron. Ce qui est sous pression. Zéro mécanique.
+Zéro préambule.""",
+        3: f"""Tu es siderealAstro13. Écris UNIQUEMENT la section #3 — Épreuve Karmique.
+Contexte : {lilith}, Stage={stage}, Lagna={lagna}. Transits : {transit_str}.
+2 phrases max. Ce que l'épreuve rend insupportable. Vers quoi elle propulse malgré tout. Zéro mécanique.
+Zéro préambule.""",
+        4: f"""Tu es siderealAstro13. Écris UNIQUEMENT la section #4 — Alternative de Conscience.
+Contexte : ROM={rom}, Stage={stage}, RAM={ram}. Transits : {transit_str}.
+2 phrases max. Ce que l'âme doit CESSER (ROM). Ce qu'elle doit ACTIVER (Stage). Termine par UNE phrase directe actionnable aujourd'hui.
+Zéro préambule.""",
+    }
+
+    PROMPTS_EN = {
+        1: f"""You are siderealAstro13. Write ONLY section #1 — Karmic Memory (ROM).
+Context: Chandra Lagna={lagna}, ROM={rom}. Transits: {transit_str}.
+2 sentences max. Name the automatic pattern the soul is replaying today. Narrative language, second person, no mechanics.
+No preamble.""",
+        2: f"""You are siderealAstro13. Write ONLY section #2 — The Wound in Processing (RAM).
+Context: RAM={ram}, ROM={rom}, Lagna={lagna}. Transits: {transit_str}.
+2 sentences max. Name what the transits are reopening in Chiron. What is under pressure. No mechanics.
+No preamble.""",
+        3: f"""You are siderealAstro13. Write ONLY section #3 — Karmic Trial.
+Context: {lilith}, Stage={stage}, Lagna={lagna}. Transits: {transit_str}.
+2 sentences max. What the trial makes unbearable. Where it propels despite everything. No mechanics.
+No preamble.""",
+        4: f"""You are siderealAstro13. Write ONLY section #4 — Alternative of Consciousness.
+Context: ROM={rom}, Stage={stage}, RAM={ram}. Transits: {transit_str}.
+2 sentences max. What the soul must STOP (ROM). What it must ACTIVATE (Stage). End with ONE direct, concrete, actionable sentence for today.
+No preamble.""",
+    }
+
+    prompts = PROMPTS_EN if lang == "en" else PROMPTS_FR
+    prompt  = prompts[section]
+
+    msg = _get_client().messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=150,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return msg.content[0].text.strip()
+
+
+# Alias conservé pour compatibilité extension v2
+def get_guest_hook(natal_pos: dict, transit_pos: dict, lang: str = "fr") -> str:
+    """
+    Génère UNE SEULE phrase teaser pour le mode invité.
+    Résume la tension karmique active (#1 ROM + #2 RAM + #3 Épreuve)
+    et crée le désir de découvrir l'Alternative de Conscience (#4).
+    """
+    from astro_calc import SIGNS
+
+    def sign_of(d, k):
+        p = d.get(k)
+        return SIGNS[int(p["lon"] / 30) % 12] if p and p.get("lon") is not None else "?"
+
+    def house_of(d, k, moon_lon):
+        p = d.get(k)
+        if p and p.get("lon") is not None and moon_lon is not None:
+            return ((int(p["lon"] / 30) % 12) - (int(moon_lon / 30) % 12)) % 12 + 1
+        return "?"
+
+    moon     = natal_pos.get("Lune ☽")
+    moon_lon = moon["lon"] if moon else None
+    lagna    = sign_of(natal_pos, "Lune ☽")
+    rom      = f"Ketu {sign_of(natal_pos, 'Nœud Sud ☋')} H{house_of(natal_pos, 'Nœud Sud ☋', moon_lon)}"
+    ram      = f"Chiron {sign_of(natal_pos, 'Chiron ⚷')} H{house_of(natal_pos, 'Chiron ⚷', moon_lon)}"
+    stage    = f"{sign_of(natal_pos, 'Porte Visible ⊙')} H{house_of(natal_pos, 'Porte Visible ⊙', moon_lon)}"
+
+    # Transits actifs significatifs
+    slow = ["Saturne ♄", "Jupiter ♃", "Uranus ♅", "Rahu ☊", "Ketu ☋", "Chiron ⚷", "Mars ♂"]
+    actifs = []
+    for t_name in slow:
+        tp = transit_pos.get(t_name)
+        if tp and tp.get("lon") is not None:
+            actifs.append(f"{t_name.split()[0]} en {SIGNS[int(tp['lon']/30)%12]}")
+    transit_str = ", ".join(actifs[:4]) if actifs else "transits actifs"
 
     if lang == "en":
-        user_prompt = f"""Karmic transit analysis for {name} — {date}.
-Natal: {natal_mini}
-Active aspects:
-{aspects_text}
+        prompt = f"""You are siderealAstro13. Write ONE SINGLE sentence (30-50 words max).
 
-Write 4 sections directly. No questions. No preamble. Address {name} as "you".
+This sentence must:
+- Name the karmic tension active today from: ROM={rom}, RAM={ram}, Stage={stage}, Chandra Lagna={lagna}
+- Reference today's key transits: {transit_str}
+- Create an irresistible desire to discover the Alternative of Consciousness (section #4)
+- No solution, only tension and suspense
+- Direct oracle style, second person
+- End with "…" or a question that opens the desire for more
 
-MEMORY (ROM): What karmic trap replays?
-WOUND (RAM): What core wound activates?
-TRIAL (Lilith): What is unbearable right now?
-ACTION: One clear shift — what to stop, what to activate."""
+Write the sentence only, no preamble."""
     else:
-        user_prompt = f"""Analyse karmique de transit pour {name} — {date}.
-Natal : {natal_mini}
-Aspects actifs (À UTILISER IMPÉRATIVEMENT) :
-{aspects_text}
+        prompt = f"""Tu es siderealAstro13. Écris UNE SEULE phrase (30-50 mots max).
 
-MISSION : Explique comment ces aspects activent spécifiquement la ROM ou la RAM.
-Écris 4 sections : MÉMOIRE, BLESSURE, ÉPREUVE, ACTION.
-Interdiction de répéter 'votre volonté'. Sois concret.
-INSTRUCTION CRUCIALE : Nomme au moins une planète des 'Aspects actifs' dans chaque section pour justifier ton analyse.
-CONSIGNE TECHNIQUE : Tu dois obligatoirement citer au moins un nom de planète issu de la liste 'Aspects actifs' dans chaque section. Explique concrètement comment cette planète influence la ROM ou la RAM de {name}."""
+Cette phrase doit :
+- Nommer la tension karmique active aujourd'hui depuis : ROM={rom}, RAM={ram}, Stage={stage}, Chandra Lagna={lagna}
+- Référencer les transits clés du jour : {transit_str}
+- Créer un désir irrésistible de découvrir l'Alternative de Conscience (section #4)
+- Pas de solution — seulement la tension et la suspension
+- Style oracle direct, tutoiement
+- Terminer par "…" ou une question qui ouvre l'envie d'aller plus loin
 
-    system = (
-        "Tu es @siderealAstro13. Utilise cette légende pour l'analyse : "
-        "ROM (Ketu)=Mémoires passées/automatisme. "
-        "RAM (Chiron)=Traitement actif de la blessure. "
-        "LILITH=Point de rupture/épreuve. "
-        "ACTION=Dharma/Bascule. "
-        "Tutoie l'utilisateur. Sois direct, pas de blabla. 200 mots max."
+Écris uniquement la phrase, sans préambule."""
+
+    msg = _get_client().messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=150,
+        messages=[{"role": "user", "content": prompt}],
     )
-
-    return {
-        "system": system,
-        "user":   user_prompt,
-    }
+    return msg.content[0].text.strip()

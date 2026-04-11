@@ -37,5 +37,10 @@ android/.idea/
 # IDE
 .vscode/settings.json
 
-# Backup
-*_backup_*/
+# Vault
+vault/
+
+# Android Signing Key
+karmic-key
+*.jks
+*.keystore
