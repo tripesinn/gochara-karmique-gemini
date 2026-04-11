@@ -35,3 +35,6 @@ android/.idea/
 
 # IDE
 .vscode/settings.json
+
+# Backup
+*_backup_*/
