@@ -750,6 +750,7 @@ def geocode():
 def calculate():
     from astro_calc import calculate_transits
     from ai_interpret import get_synthesis
+    from build_task_webapp import build_webapp_synthesis, extract_natal_for_task, extract_dominant_transit
     from profiles import check_and_increment_synthesis  # ← AJOUT
 
     profile = session.get("profile")
@@ -806,7 +807,16 @@ def calculate():
         # Enrichit le profil avec les positions natales calculées
         enriched_profile = _enrich_profile_with_natal(profile, result.get("natal", {}))
 
-        # Retry 3x sur surcharge Anthropic (529 / overloaded_error)
+        # Hook court via Claude Haiku (build_task_webapp)
+        natal_data_task   = extract_natal_for_task(result)
+        transit_data_task = extract_dominant_transit(result)
+        hook_haiku = ""
+        try:
+            hook_haiku = build_webapp_synthesis(enriched_profile, natal_data_task, transit_data_task)
+        except Exception as exc:
+            app.logger.warning("Hook Haiku échoué (non bloquant) : %s", exc)
+
+        # Retry 3x sur surcharge Anthropic (529 / overloaded_error) — synthèse complète Sonnet
         synthesis = None
         last_exc  = None
         for attempt in range(3):
@@ -826,6 +836,7 @@ def calculate():
             raise Exception("L'oracle est temporairement surchargé — réessaie dans quelques secondes.")
 
         result["synthesis"] = synthesis
+        result["hook_haiku"] = hook_haiku
         result["remaining"] = quota["remaining"]
 
         # Sauvegarde la localisation de transit dans la session (toujours)
@@ -851,6 +862,58 @@ def calculate():
         app.logger.error("Erreur calcul : %s", exc, exc_info=True)
         return jsonify({"error": str(exc)}), 500
 
+
+
+@app.route("/generate_hook", methods=["POST"])
+def generate_hook():
+    """
+    Hook court [BLOCAGE]/[ALTERNATIVE] via Claude Haiku (build_task_webapp).
+    Utilisé pour tester le vault Gemma adapté sans appeler Sonnet.
+
+    Body JSON : {"date": "2026-04-13", "hour": 12, "minute": 0,
+                 "transit_city": "...", "transit_lat": ..., "transit_lon": ..., "transit_tz": "..."}
+    Retourne : {"ok": true, "hook": "..."}
+    """
+    from astro_calc import calculate_transits
+    from build_task_webapp import build_webapp_synthesis, extract_natal_for_task, extract_dominant_transit
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
+
+    data     = request.get_json() or {}
+    date_str = data.get("date", "")
+    if not date_str:
+        return jsonify({"ok": False, "error": "Date requise"}), 400
+
+    natal = {
+        "name":   profile["name"],
+        "year":   profile["year"],   "month":  profile["month"],
+        "day":    profile["day"],    "hour":   profile["hour"],
+        "minute": profile["minute"], "lat":    profile["lat"],
+        "lon":    profile["lon"],    "tz":     profile["tz"],
+        "city":   profile["city"],
+    }
+    hour        = int(data.get("hour", 12))
+    minute      = int(data.get("minute", 0))
+    transit_loc = {
+        "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
+        "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
+        "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
+        "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
+    }
+
+    try:
+        year, month, day  = map(int, date_str.split("-"))
+        result            = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
+        enriched_profile  = _enrich_profile_with_natal(profile, result.get("natal", {}))
+        natal_data_task   = extract_natal_for_task(result)
+        transit_data_task = extract_dominant_transit(result)
+        hook              = build_webapp_synthesis(enriched_profile, natal_data_task, transit_data_task)
+        return jsonify({"ok": True, "hook": hook})
+    except Exception as exc:
+        app.logger.error("Erreur generate_hook : %s", exc, exc_info=True)
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 
 @app.route("/hook/transit", methods=["POST"])
