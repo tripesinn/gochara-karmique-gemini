@@ -521,51 +521,16 @@ LANGS = {
 
 
 def get_lang():
-    code = session.get("lang", "fr")
-    return LANGS.get(code, LANGS["fr"])
-
-
-# ── Helper géolocalisation ───────────────────────────────────────────────────
-def geocode_location(query: str) -> dict:
-    """Géolocalise une ville — retourne {lat, lon, tz}. Fallback Photon si Nominatim échoue."""
-    import time, requests as req
-    from timezonefinder import TimezoneFinder
-    _tf = TimezoneFinder()
-
-    def _tz_from_coords(lat: float, lon: float) -> str:
-        tz = _tf.timezone_at(lat=lat, lng=lon)
-        return tz or "Europe/Paris"
-
-    try:
-        r = req.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={"q": query, "format": "json", "limit": 1},
-            headers={"User-Agent": "Karmic.Gochara/1.0"},
-            timeout=5,
-        )
-        time.sleep(1)
-        results = r.json()
-        if results:
-            lat = float(results[0]["lat"])
-            lon = float(results[0]["lon"])
-            return {"lat": lat, "lon": lon, "tz": _tz_from_coords(lat, lon)}
-    except Exception:
-        pass
-    try:
-        r2 = req.get(
-            "https://photon.komoot.io/api/",
-            params={"q": query, "limit": 1},
-            headers={"User-Agent": "Karmic.Gochara/1.0"},
-            timeout=5,
-        )
-        features = r2.json().get("features", [])
-        if features:
-            g = features[0].get("geometry", {}).get("coordinates", [None, None])
-            lat, lon = float(g[1]), float(g[0])
-            return {"lat": lat, "lon": lon, "tz": _tz_from_coords(lat, lon)}
-    except Exception:
-        pass
-    return {"lat": 48.8566, "lon": 2.3522, "tz": "Europe/Paris"}
+    if "lang" not in session:
+        accept = request.headers.get("Accept-Language", "fr")
+        for part in accept.replace(" ", "").split(","):
+            prefix = part.split(";")[0].split("-")[0].lower()
+            if prefix in LANGS:
+                session["lang"] = prefix
+                break
+        else:
+            session["lang"] = "fr"
+    return LANGS.get(session["lang"], LANGS["fr"])
 
 
 # ── Routes publiques ──────────────────────────────────────────────────────────
@@ -625,7 +590,54 @@ def login():
         return jsonify({"ok": False, "error": f"Pseudo '{pseudo}' introuvable. Crée ton profil d'abord."}), 404
     session["profile"] = profile
     session["pseudo"] = pseudo
-    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
+
+    # ── Hook natal : généré au login depuis données Sheets ───────────────────
+    # Le profil contient chandra_lagna_sign si natal déjà calculé à l'inscription
+    hook_natal = ""
+    cache_key  = f"hook_natal_{pseudo}"
+    if session.get(cache_key):
+        hook_natal = session[cache_key]
+    elif profile.get("chandra_lagna_sign"):
+        # Natal disponible dans Sheets → hook immédiat
+        try:
+            from ai_interpret import get_hook_natal
+            hook_natal = get_hook_natal(profile)
+            session[cache_key] = hook_natal
+        except Exception as exc:
+            app.logger.warning("Hook natal login échoué : %s", exc)
+    else:
+        # Ancien profil sans natal stocké → calcul à la volée (non bloquant)
+        try:
+            from astro_calc import calculate_transits
+            from profiles import save_natal_to_sheet
+            from ai_interpret import get_hook_natal
+            from datetime import date as _date
+
+            natal_input = {
+                "name":   profile["name"],
+                "year":   profile["year"],   "month":  profile["month"],
+                "day":    profile["day"],    "hour":   profile["hour"],
+                "minute": profile["minute"], "lat":    profile["lat"],
+                "lon":    profile["lon"],    "tz":     profile["tz"],
+                "city":   profile["city"],
+            }
+            today = _date.today()
+            transit_loc = {
+                "city": profile["city"], "lat": profile["lat"],
+                "lon":  profile["lon"],  "tz":  profile["tz"],
+            }
+            natal_result     = calculate_transits(natal_input, transit_loc,
+                                                  today.year, today.month, today.day, 12, 0)
+            enriched         = _enrich_profile_with_natal(profile, natal_result.get("natal", {}))
+            save_natal_to_sheet(pseudo, enriched)  # stocké pour la prochaine fois
+            session["profile"] = enriched
+            profile = enriched
+            hook_natal = get_hook_natal(profile)
+            session[cache_key] = hook_natal
+        except Exception as exc:
+            app.logger.warning("Hook natal login (calcul volée) échoué : %s", exc)
+
+    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal})
 
 
 @app.route("/register", methods=["POST"])
@@ -645,9 +657,48 @@ def register():
     except Exception as exc:
         app.logger.error("Erreur Sheets register : %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+    # ── Calcul natal immédiat + stockage Sheets ───────────────────────────────
+    try:
+        from astro_calc import calculate_transits
+        from profiles import save_natal_to_sheet
+        from datetime import date as _date
+
+        natal_input = {
+            "name":   profile["name"],
+            "year":   profile["year"],   "month":  profile["month"],
+            "day":    profile["day"],    "hour":   profile["hour"],
+            "minute": profile["minute"], "lat":    profile["lat"],
+            "lon":    profile["lon"],    "tz":     profile["tz"],
+            "city":   profile["city"],
+        }
+        today = _date.today()
+        # Transit = même lieu que natal, date du jour (on veut juste le natal)
+        transit_loc = {
+            "city": profile["city"], "lat": profile["lat"],
+            "lon":  profile["lon"],  "tz":  profile["tz"],
+        }
+        natal_result     = calculate_transits(natal_input, transit_loc,
+                                              today.year, today.month, today.day, 12, 0)
+        enriched_profile = _enrich_profile_with_natal(profile, natal_result.get("natal", {}))
+        save_natal_to_sheet(pseudo, enriched_profile)
+        profile = enriched_profile  # profil enrichi en session
+    except Exception as exc:
+        app.logger.warning("Calcul natal register échoué (non bloquant) : %s", exc)
+        # Non bloquant — l'inscription réussit quand même
+
     session["profile"] = profile
     session["pseudo"] = pseudo
-    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile})
+
+    # ── Hook natal dès l'inscription ─────────────────────────────────────────
+    hook_natal = ""
+    try:
+        from ai_interpret import get_hook_natal
+        hook_natal = get_hook_natal(profile)
+    except Exception as exc:
+        app.logger.warning("Hook natal register échoué : %s", exc)
+
+    return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal})
 
 
 @app.route("/logout", methods=["POST"])
@@ -801,6 +852,160 @@ def calculate():
         return jsonify({"error": str(exc)}), 500
 
 
+
+@app.route("/hook/transit", methods=["POST"])
+def hook_transit():
+    """
+    Hook de 3 phrases basé sur les aspects du jour — streaming SSE.
+    Le calcul astro se fait d'abord, puis le texte est streamé mot à mot.
+    Cache 24h par pseudo+date (si déjà en cache → replay rapide streamé).
+
+    Body JSON : {"date": "2026-04-09", "hour": 12, "minute": 0,
+                 "transit_city": "...", "transit_lat": ..., "transit_lon": ..., "transit_tz": "..."}
+    Retourne : text/event-stream SSE
+      data: <chunk>\n\n   — tokens au fil de l'eau
+      data: [DONE]\n\n   — fin du stream
+      data: [ERROR] message\n\n — erreur
+    """
+    from astro_calc import calculate_transits
+    from ai_interpret import _build_system_prompt, _aspects_to_text, _build_natal_context
+    from flask import Response, stream_with_context
+    import anthropic as _anthropic
+    import json as _json
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
+
+    data     = request.get_json() or {}
+    date_str = data.get("date", "")
+    if not date_str:
+        return jsonify({"ok": False, "error": "Date requise"}), 400
+
+    pseudo    = profile.get("pseudo", "")
+    cache_key = f"hook_transit_{pseudo}_{date_str}"
+    lang      = session.get("lang", "fr")
+
+    # ── Cache hit → replay streamé token par token ────────────────────────────
+    cached = session.get(cache_key)
+    if cached:
+        def replay():
+            for word in cached.split(" "):
+                yield f"data: {_json.dumps(word + ' ')}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(replay()),
+                        mimetype="text/event-stream",
+                        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+
+    # ── Calcul astro (bloquant, avant le stream) ──────────────────────────────
+    natal = {
+        "name":   profile["name"],
+        "year":   profile["year"],   "month":  profile["month"],
+        "day":    profile["day"],    "hour":   profile["hour"],
+        "minute": profile["minute"], "lat":    profile["lat"],
+        "lon":    profile["lon"],    "tz":     profile["tz"],
+        "city":   profile["city"],
+    }
+    hour        = int(data.get("hour", 12))
+    minute      = int(data.get("minute", 0))
+    transit_loc = {
+        "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
+        "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
+        "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
+        "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
+    }
+
+    try:
+        year, month, day  = map(int, date_str.split("-"))
+        chart_data        = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
+        enriched_profile  = _enrich_profile_with_natal(profile, chart_data.get("natal", {}))
+    except Exception as exc:
+        app.logger.error("Erreur calcul hook transit : %s", exc, exc_info=True)
+        def err_stream():
+            yield f"data: [ERROR] {str(exc)}\n\n"
+        return Response(stream_with_context(err_stream()), mimetype="text/event-stream")
+
+    # ── Prompt ────────────────────────────────────────────────────────────────
+    aspects_text = _aspects_to_text(chart_data.get("aspects", []), max_aspects=3)
+    natal_mini   = _build_natal_context(enriched_profile)
+    name         = enriched_profile.get("name", "")
+    date_label   = chart_data.get("transit_date", date_str)
+
+    if lang == "fr":
+        system = (
+            "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
+            "Style : oraculaire, direct, pas de liste mécanique. "
+            "Zéro degrés, zéro orbes dans le texte. Tutoiement. "
+            "INTERDIT ABSOLU : noms de signes zodiacaux "
+            "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
+            "Sagittaire, Capricorne, Verseau, Poissons). "
+            "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
+        )
+        prompt = (
+            f"Thème natal de {name} :\n{natal_mini}\n\n"
+            f"Aspects actifs ce jour ({date_label}) — ne pas citer tels quels :\n{aspects_text}\n\n"
+            f"Écris un hook de 3 phrases. Pas de titre. Pas d'introduction.\n"
+            f"Phrase 1 : ce qui se réactive dans la mémoire karmique de {name} aujourd'hui.\n"
+            f"Phrase 2 : ce que ça touche dans sa blessure profonde.\n"
+            f"Phrase 3 : l'amorce de l'Alternative de Conscience — ce qui change si {name} choisit autrement.\n"
+            f"Donne envie d'obtenir la lecture complète. Ton dense et précis."
+        )
+    else:
+        system = (
+            "You are @siderealAstro13. Vedic karmic soul reader. "
+            "Style: oracular, direct, no mechanical list. "
+            "No degrees, no orbs in the text. Address as 'you'. "
+            "ABSOLUTE PROHIBITION: zodiac sign names "
+            "(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, "
+            "Sagittarius, Capricorn, Aquarius, Pisces). "
+            "Use only house numbers (H1, H3…) and planet names."
+        )
+        prompt = (
+            f"Natal chart of {name}:\n{natal_mini}\n\n"
+            f"Active aspects ({date_label}) — do not quote as-is:\n{aspects_text}\n\n"
+            f"Write a hook of 3 sentences. No title. No introduction.\n"
+            f"Sentence 1: what reactivates in {name}'s karmic memory today.\n"
+            f"Sentence 2: what this touches in their core wound.\n"
+            f"Sentence 3: the seed of the Alternative of Consciousness.\n"
+            f"Make them want the full reading. Dense and precise."
+        )
+
+    hook_model = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
+
+    # ── Stream SSE ────────────────────────────────────────────────────────────
+    # On capture le profil enrichi dans une var locale pour le cache post-stream
+    _enriched = enriched_profile
+    _cache_key = cache_key
+
+    def generate():
+        full_text = []
+        client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        try:
+            with client.messages.stream(
+                model=hook_model,
+                max_tokens=250,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            ) as stream:
+                for chunk in stream.text_stream:
+                    full_text.append(chunk)
+                    yield f"data: {_json.dumps(chunk)}\n\n"
+            # Mise en cache après stream complet
+            complete = "".join(full_text)
+            with app.app_context():
+                pass  # session non accessible ici — cache géré côté client
+            yield f"data: [DONE]\n\n"
+        except Exception as exc:
+            app.logger.error("Erreur stream hook transit : %s", exc)
+            yield f"data: [ERROR] {str(exc)}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
+    )
+
+
 @app.route("/send_synthesis", methods=["POST"])
 def send_synthesis():
     """Envoie la synthèse karmique par email via Resend."""
@@ -895,352 +1100,149 @@ def send_synthesis():
         return jsonify({"ok": False, "error": str(exc)}), 500
 
 
-# ── Suppression de compte ─────────────────────────────────────────────────────
-@app.route("/delete-account", methods=["GET"])
-def delete_account_page():
-    return render_template("delete-account.html")
+# ── Inférence locale : retourne le prompt sans appeler Claude ─────────────────
+@app.route("/synthesis/prompt", methods=["POST"])
+def synthesis_prompt():
+    """
+    Construit et retourne le prompt (system + user) sans appeler Claude.
+    Utilisé par le plugin Gemma 3 / AI Core sur Android pour l'inférence locale.
+    Désactivé sur prod (ENABLE_LOCAL_AI non défini).
+    """
+    if not os.environ.get('ENABLE_LOCAL_AI', '').lower() in ('1', 'true'):
+        return jsonify({"error": "Non disponible"}), 404
+    from astro_calc import calculate_transits
+    from ai_interpret import build_prompt_only
 
-
-@app.route("/delete-account", methods=["POST"])
-def delete_account():
-    from profiles import get_profile_by_pseudo, delete_profile
-    data   = request.get_json(force=True) or {}
-    pseudo = (data.get("pseudo") or "").strip()
-    if not pseudo:
-        return jsonify({"ok": False, "error": "Pseudo requis"}), 400
-
-    profile = get_profile_by_pseudo(pseudo)
+    profile = session.get("profile")
     if not profile:
-        return jsonify({"ok": False, "error": "Pseudo introuvable"}), 404
+        return jsonify({"error": "Non connecté"}), 401
+
+    natal = {
+        "name":   profile["name"],
+        "year":   profile["year"],  "month":  profile["month"],
+        "day":    profile["day"],   "hour":   profile["hour"],
+        "minute": profile["minute"],"lat":    profile["lat"],
+        "lon":    profile["lon"],   "tz":     profile["tz"],
+        "city":   profile["city"],
+    }
+
+    data      = request.get_json() or {}
+    date_str  = data.get("date", "")
+    hour      = int(data.get("hour", 12))
+    minute    = int(data.get("minute", 0))
+    transit_loc = {
+        "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
+        "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
+        "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
+        "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
+    }
+    lang = session.get("lang", "fr")
 
     try:
-        delete_profile(pseudo)
-    except Exception as exc:
-        app.logger.error("Erreur suppression compte %s : %s", pseudo, exc)
-        return jsonify({"ok": False, "error": str(exc)}), 500
-
-    # Déconnexion si c'est le compte actif
-    if session.get("profile", {}).get("pseudo", "").lower() == pseudo.lower():
-        session.clear()
-
-    return jsonify({"ok": True})
-
-
-# ── /calculate_guest ─────────────────────────────────────────────────────────
-@app.route("/calculate_guest", methods=["POST"])
-def calculate_guest():
-    """
-    Transit invité — aucune donnée stockée, aucun compte requis.
-    Retourne 1 phrase teaser (résumé #1/#2/#3 + désir du #4).
-    """
-    data       = request.get_json(force=True) or {}
-    birthdate  = (data.get("birthdate") or "").strip()
-    birthtime  = (data.get("birthtime") or "12:00").strip() or "12:00"
-    birthplace = (data.get("birthplace") or "").strip()
-    lang       = (data.get("lang") or session.get("lang", "fr"))
-
-    if not birthdate:
-        return jsonify({"error": "Date de naissance requise"}), 400
-
-    try:
-        from astro_calc import get_julian_day, _calc_positions, calc_portes, SIGNS
-        from ai_interpret import get_guest_section
-        from datetime import datetime, timezone
-
-        year, month, day = [int(x) for x in birthdate.split("-")]
-        hour, minute = [int(x) for x in birthtime.split(":")]
-
-        if birthplace:
-            loc = geocode_location(birthplace)
-            lat, lon_geo, tz_str = loc["lat"], loc["lon"], loc.get("tz", "Europe/Paris")
-        else:
-            lat, lon_geo, tz_str = 48.8566, 2.3522, "Europe/Paris"
-
-        jd_natal  = get_julian_day(year, month, day, hour, minute, tz_str)
-        natal_pos = _calc_positions(jd_natal, lat, lon_geo)
-
-        sat_n = natal_pos.get("Saturne ♄")
-        ura_n = natal_pos.get("Uranus ♅")
-        if sat_n and ura_n:
-            portes = calc_portes(sat_n["lon"], ura_n["lon"])
-            natal_pos["Porte Visible ⊙"]   = {**portes["porte_visible"],   "speed": 0, "retrograde": False}
-            natal_pos["Porte Invisible ⊗"] = {**portes["porte_invisible"], "speed": 0, "retrograde": False}
-
-        now    = datetime.now(timezone.utc)
-        jd_now = get_julian_day(now.year, now.month, now.day, now.hour, now.minute, "UTC")
-        transit_pos = _calc_positions(jd_now, lat, lon_geo)
-
-        def sign_name(lon_val):
-            return SIGNS[int(lon_val / 30) % 12]
-
-        def house(p_lon, m_lon):
-            return ((int(p_lon / 30) % 12) - (int(m_lon / 30) % 12)) % 12 + 1
-
-        moon   = natal_pos.get("Lune ☽")
-        ketu   = natal_pos.get("Nœud Sud ☋")
-        chiron = natal_pos.get("Chiron ⚷")
-        pv     = natal_pos.get("Porte Visible ⊙")
-        m_lon  = moon["lon"] if moon else None
-
-        hook = get_guest_hook(natal_pos, transit_pos, lang=lang)
-
+        year, month, day = map(int, date_str.split("-"))
+        chart_data       = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
+        enriched_profile = _enrich_profile_with_natal(profile, chart_data.get("natal", {}))
+        prompts          = build_prompt_only(chart_data, enriched_profile, lang=lang)
         return jsonify({
-            "hook":  hook,
-            "lagna": sign_name(moon["lon"])   if moon   else "—",
-            "rom":   f"Ketu {sign_name(ketu['lon'])} H{house(ketu['lon'], m_lon)}"     if ketu  and m_lon else "—",
-            "ram":   f"Chiron {sign_name(chiron['lon'])} H{house(chiron['lon'], m_lon)}" if chiron and m_lon else "—",
-            "stage": f"{sign_name(pv['lon'])} H{house(pv['lon'], m_lon)}"              if pv    and m_lon else "—",
+            "ok":          True,
+            "system":      prompts["system"],
+            "user":        prompts["user"],
+            "aspects":     chart_data.get("aspects", []),
+            "transit_date": chart_data.get("transit_date", ""),
         })
-
     except Exception as exc:
-        app.logger.error("Erreur calculate_guest : %s", exc, exc_info=True)
+        app.logger.error("Erreur synthesis/prompt : %s", exc, exc_info=True)
         return jsonify({"error": str(exc)}), 500
 
 
-# ── /api/extension/guest ─────────────────────────────────────────────────────
-@app.route("/api/extension/guest", methods=["POST"])
-def extension_guest():
-    """
-    Reçoit : { birthdate, birthtime, birthplace }
-    Retourne : { lagna, rom, stage, hook, mode:"live" } — sans compte requis
-    """
-    data       = request.get_json(force=True) or {}
-    birthdate  = (data.get("birthdate") or "").strip()
-    birthtime  = (data.get("birthtime") or "12:00").strip() or "12:00"
-    birthplace = (data.get("birthplace") or "").strip()
-
-    if not birthdate:
-        return jsonify({"error": "Date de naissance requise"}), 400
-
-    try:
-        from astro_calc import get_julian_day, _calc_positions, calc_portes, SIGNS
-        from ai_interpret import get_hook
-        from datetime import datetime, timezone
-
-        year, month, day = [int(x) for x in birthdate.split("-")]
-        hour, minute = [int(x) for x in birthtime.split(":")]
-
-        if birthplace:
-            loc = geocode_location(birthplace)
-            lat, lon_geo, tz_str = loc["lat"], loc["lon"], loc.get("tz", "Europe/Paris")
-        else:
-            lat, lon_geo, tz_str = 48.8566, 2.3522, "Europe/Paris"
-
-        jd_natal = get_julian_day(year, month, day, hour, minute, tz_str)
-        natal_pos = _calc_positions(jd_natal, lat, lon_geo)
-
-        # Portes natales
-        sat_n = natal_pos.get("Saturne ♄")
-        ura_n = natal_pos.get("Uranus ♅")
-        if sat_n and ura_n:
-            portes_n = calc_portes(sat_n["lon"], ura_n["lon"])
-            natal_pos["Porte Visible ⊙"]   = {**portes_n["porte_visible"],   "speed": 0, "retrograde": False}
-            natal_pos["Porte Invisible ⊗"] = {**portes_n["porte_invisible"], "speed": 0, "retrograde": False}
-
-        # Transits du jour
-        now = datetime.now(timezone.utc)
-        jd_now = get_julian_day(now.year, now.month, now.day, now.hour, now.minute, "UTC")
-        transit_pos = _calc_positions(jd_now, lat, lon_geo)
-
-        def sign_name(lon_val):
-            return SIGNS[int(lon_val / 30) % 12]
-
-        moon   = natal_pos.get("Lune ☽")
-        ketu   = natal_pos.get("Nœud Sud ☋")
-        chiron = natal_pos.get("Chiron ⚷")
-        pv     = natal_pos.get("Porte Visible ⊙")
-
-        lagna      = sign_name(moon["lon"])   if moon   else "—"
-        ketu_sign  = sign_name(ketu["lon"])   if ketu   else "—"
-        ketu_house = _house_from_lagna(ketu["lon"], moon["lon"])   if ketu and moon   else "—"
-        chir_sign  = sign_name(chiron["lon"]) if chiron else "—"
-        chir_house = _house_from_lagna(chiron["lon"], moon["lon"]) if chiron and moon else "—"
-        pv_sign    = sign_name(pv["lon"])     if pv     else "—"
-        pv_house   = _house_from_lagna(pv["lon"], moon["lon"])     if pv and moon     else "—"
-
-        profile = {"name": "invité", "lang": "fr"}
-        hook = get_hook(natal_pos, transit_pos, profile, lang="fr")
-
-        return jsonify({
-            "mode":   "live",
-            "lagna":  lagna,
-            "rom":    f"Ketu {ketu_sign} H{ketu_house}",
-            "ram":    f"Chiron {chir_sign} H{chir_house}",
-            "stage":  f"{pv_sign} H{pv_house}",
-            "hook":   hook,
-        })
-
-    except Exception as e:
-        app.logger.error(f"extension_guest error: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-# ── Helper : numéro de maison depuis Chandra Lagna ───────────────────────────
-def _house_from_lagna(planet_lon: float, moon_lon: float) -> int:
-    """Retourne le numéro de maison (1-12) en système Chandra Lagna."""
-    lagna_sign = int(moon_lon / 30) % 12
-    planet_sign = int(planet_lon / 30) % 12
-    return ((planet_sign - lagna_sign) % 12) + 1
-
-
-# ── /api/extension/login ──────────────────────────────────────────────────────
-@app.route("/api/extension/login", methods=["POST"])
-def extension_login():
-    """
-    Reçoit : { pseudo }
-    Retourne : profil natal structuré pour l'extension Chrome
-    """
-    from profiles import get_profile_by_pseudo
-    data = request.get_json(force=True) or {}
-    pseudo = (data.get("pseudo") or "").strip()
-    if not pseudo:
-        return jsonify({"error": "Pseudo manquant"}), 400
-
-    profile = get_profile_by_pseudo(pseudo)
+# ── Alertes transit : toggle utilisateur ──────────────────────────────────────
+@app.route("/toggle_alerts", methods=["POST"])
+def toggle_alerts():
+    from profiles import set_alerts
+    profile = session.get("profile")
     if not profile:
-        return jsonify({"error": "Pseudo introuvable"}), 404
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
 
-    try:
-        from astro_calc import (
-            get_julian_day, _calc_positions, calc_portes,
-            SIGNS, lon_to_nakshatra
-        )
+    data    = request.get_json() or {}
+    enabled = bool(data.get("enabled", False))
+    pseudo  = profile.get("pseudo", "")
 
-        year   = profile.get("year", 1990)
-        month  = profile.get("month", 1)
-        day    = profile.get("day", 1)
-        hour   = profile.get("hour", 12)
-        minute = profile.get("minute", 0)
-        lat    = profile.get("lat", 48.8566)
-        lon_geo = profile.get("lon", 2.3522)
-        tz_str  = profile.get("tz", "Europe/Paris")
+    email = (profile.get("email") or "").strip()
+    if enabled and not email:
+        return jsonify({"ok": False, "error": "Un email est requis pour activer les alertes."}), 400
 
-        jd = get_julian_day(year, month, day, hour, minute, tz_str)
-        positions = _calc_positions(jd, lat, lon_geo)
-
-        def sign_name(lon_val):
-            return SIGNS[int(lon_val / 30) % 12]
-
-        moon = positions.get("Lune ☽")
-        lagna = sign_name(moon["lon"]) if moon else "—"
-
-        ketu = positions.get("Nœud Sud ☋")
-        ketu_sign = sign_name(ketu["lon"]) if ketu else "—"
-        ketu_house = _house_from_lagna(ketu["lon"], moon["lon"]) if ketu and moon else "—"
-
-        chiron = positions.get("Chiron ⚷")
-        chiron_sign = sign_name(chiron["lon"]) if chiron else "—"
-        chiron_house = _house_from_lagna(chiron["lon"], moon["lon"]) if chiron and moon else "—"
-
-        sat = positions.get("Saturne ♄")
-        ura = positions.get("Uranus ♅")
-        if sat and ura:
-            portes = calc_portes(sat["lon"], ura["lon"])
-            pv_sign = sign_name(portes["porte_visible"]["lon"])
-            pi_sign = sign_name(portes["porte_invisible"]["lon"])
-            pv_house = _house_from_lagna(portes["porte_visible"]["lon"], moon["lon"]) if moon else "—"
-        else:
-            pv_sign = pi_sign = pv_house = "—"
-
-        stage_sign = pv_sign
-        stage_house = pv_house
-
-        rahu = positions.get("Nœud Nord ☊")
-        rahu_sign = sign_name(rahu["lon"]) if rahu else "—"
-
-    except Exception as e:
-        app.logger.warning(f"extension_login calc error: {e}")
-        lagna = ketu_sign = ketu_house = chiron_sign = chiron_house = "—"
-        pv_sign = pi_sign = stage_sign = rahu_sign = "—"
-        ketu_house = chiron_house = stage_house = pv_house = "—"
-
-    return jsonify({
-        "pseudo":     pseudo,
-        "birthdate":  f"{profile.get('year','')}-{profile.get('month',''):02d}-{profile.get('day',''):02d}" if profile.get("year") else "",
-        "birthplace": profile.get("city", ""),
-        "lagna":      lagna,
-        "rom":        f"Ketu {ketu_sign} H{ketu_house}",
-        "ram":        f"Chiron {chiron_sign} H{chiron_house}",
-        "stage":      f"{stage_sign} H{stage_house}",
-        "pv":         f"{pv_sign} H{pv_house}",
-        "pi":         pi_sign,
-        "rahu_sign":  rahu_sign,
-    })
+    ok = set_alerts(pseudo, enabled)
+    if ok:
+        profile["alerts_enabled"] = int(enabled)
+        session["profile"] = profile
+    return jsonify({"ok": ok, "alerts_enabled": int(enabled)})
 
 
-# ── /api/extension/transit ────────────────────────────────────────────────────
-@app.route("/api/extension/transit", methods=["POST"])
-def extension_transit():
-    """
-    Reçoit : { pseudo }
-    Retourne : { rom, stage, hook, mode:"live" }
-    Hook = 4 phrases — Alternative de Conscience du jour
-    """
-    from profiles import get_profile_by_pseudo
-    data = request.get_json(force=True) or {}
-    pseudo = (data.get("pseudo") or "").strip()
-    if not pseudo:
-        return jsonify({"error": "Pseudo manquant"}), 400
+# ── Calendrier mensuel des transits ───────────────────────────────────────────
+@app.route("/calendar")
+def calendar_route():
+    from calendar_calc import get_monthly_transits
+    from datetime import date as _date
 
-    profile = get_profile_by_pseudo(pseudo)
+    profile = session.get("profile")
     if not profile:
-        return jsonify({"error": "Pseudo introuvable"}), 404
+        return jsonify({"error": "Non connecté"}), 401
+
+    today = _date.today()
+    year  = int(request.args.get("year",  today.year))
+    month = int(request.args.get("month", today.month))
 
     try:
-        from astro_calc import (
-            get_julian_day, _calc_positions, calc_portes,
-            calculate_transits, SIGNS
+        data = get_monthly_transits(profile, year, month)
+        return jsonify({"ok": True, "year": year, "month": month, "days": data})
+    except Exception as exc:
+        app.logger.error("Erreur calendrier : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Rapport PDF annuel ────────────────────────────────────────────────────────
+@app.route("/report/annual")
+def annual_report():
+    from annual_report import generate_annual_pdf
+    from flask import Response
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "Non connecté"}), 401
+
+    lang = session.get("lang", "fr")
+    try:
+        pdf_bytes = generate_annual_pdf(profile, lang=lang)
+        from datetime import date as _date
+        filename  = f"karmic_gochara_{profile.get('pseudo', 'rapport')}_{_date.today().year}.pdf"
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
-        from ai_interpret import get_hook
-        from datetime import datetime, timezone
+    except Exception as exc:
+        app.logger.error("Erreur rapport PDF : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
 
-        year   = profile.get("year", 1990)
-        month  = profile.get("month", 1)
-        day    = profile.get("day", 1)
-        hour   = profile.get("hour", 12)
-        minute = profile.get("minute", 0)
-        lat    = profile.get("lat", 48.8566)
-        lon_geo = profile.get("lon", 2.3522)
-        tz_str  = profile.get("tz", "Europe/Paris")
 
-        jd_natal = get_julian_day(year, month, day, hour, minute, tz_str)
-        natal_pos = _calc_positions(jd_natal, lat, lon_geo)
+# ── Cron quotidien : alertes transit ──────────────────────────────────────────
+@app.route("/cron/daily", methods=["POST"])
+def cron_daily():
+    from transit_alerts import run_daily_alerts
 
-        sat_n = natal_pos.get("Saturne ♄")
-        ura_n = natal_pos.get("Uranus ♅")
-        if sat_n and ura_n:
-            portes_n = calc_portes(sat_n["lon"], ura_n["lon"])
-            natal_pos["Porte Visible ⊙"]   = {**portes_n["porte_visible"],   "speed": 0, "retrograde": False}
-            natal_pos["Porte Invisible ⊗"] = {**portes_n["porte_invisible"], "speed": 0, "retrograde": False}
+    secret = os.environ.get("CRON_SECRET", "")
+    if secret:
+        auth = request.headers.get("Authorization", "")
+        if auth != f"Bearer {secret}":
+            return jsonify({"error": "Non autorisé"}), 401
 
-        now = datetime.now(timezone.utc)
-        jd_now = get_julian_day(now.year, now.month, now.day, now.hour, now.minute, "UTC")
-        transit_pos = _calc_positions(jd_now, lat, lon_geo)
-
-        hook = get_hook(natal_pos, transit_pos, profile, lang="fr")
-
-        def sign_name(lon_val):
-            return SIGNS[int(lon_val / 30) % 12]
-
-        moon = natal_pos.get("Lune ☽")
-        ketu = natal_pos.get("Nœud Sud ☋")
-        pv   = natal_pos.get("Porte Visible ⊙")
-
-        ketu_sign = sign_name(ketu["lon"]) if ketu else "—"
-        ketu_house = _house_from_lagna(ketu["lon"], moon["lon"]) if ketu and moon else "—"
-        pv_sign  = sign_name(pv["lon"]) if pv else "—"
-        pv_house = _house_from_lagna(pv["lon"], moon["lon"]) if pv and moon else "—"
-
-        return jsonify({
-            "mode":  "live",
-            "rom":   f"Ketu {ketu_sign} H{ketu_house}",
-            "stage": f"{pv_sign} H{pv_house}",
-            "hook":  hook,
-        })
-
-    except Exception as e:
-        app.logger.error(f"extension_transit error: {e}")
-        return jsonify({"error": str(e)}), 500
+    try:
+        results = run_daily_alerts()
+        app.logger.info("Cron alertes : %s", results)
+        return jsonify({"ok": True, **results})
+    except Exception as exc:
+        app.logger.error("Erreur cron daily : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
 
 
 # ── Lancement ─────────────────────────────────────────────────────────────────
