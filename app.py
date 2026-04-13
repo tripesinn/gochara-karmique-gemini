@@ -983,7 +983,7 @@ def hook_transit():
         try:
             with client.messages.stream(
                 model=hook_model,
-                max_tokens=250,
+                max_tokens=350,
                 system=system,
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
