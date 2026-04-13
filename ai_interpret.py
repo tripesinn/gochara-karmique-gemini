@@ -172,7 +172,26 @@ def _build_system_prompt(user: dict, use_vault: bool = True) -> str:
     else:
         base_prompt = get_system_prompt(user)
 
-    return base_prompt + natal_bloc + friction_bloc
+    NO_SIGNS_RULE = """
+\n═══════════════════════════════════════════════════════════════
+RÈGLE ABSOLUE — VIOLATION = RÉPONSE INVALIDE
+═══════════════════════════════════════════════════════════════
+INTERDIT dans TOUT le texte de sortie (hooks, signal, synthèse) :
+- Noms de signes zodiacaux : Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge,
+  Balance, Scorpion, Sagittaire, Capricorne, Verseau, Poissons
+  (idem EN : Aries, Taurus, Gemini, Cancer, Leo, Virgo,
+  Libra, Scorpio, Sagittarius, Capricorn, Aquarius, Pisces)
+- Degrés et orbes dans le texte rendu (ex : "19°", "orbe 2°")
+- Citations brutes des aspects (ex : "T.Saturne conjoint N.Chiron orbe 2°")
+
+AUTORISÉ : noms de planètes (Saturne, Chiron, Lilith, Rahu, Ketu, Jupiter…),
+numéros de maisons (H3, H5, H10…), phénomènes psychologiques concrets.
+
+Les positions natales (signes, degrés) sont données comme RÉFÉRENCE INTERNE
+pour calculer les dynamiques — elles ne doivent JAMAIS apparaître dans le texte rendu.
+═══════════════════════════════════════════════════════════════\n"""
+
+    return base_prompt + natal_bloc + friction_bloc + NO_SIGNS_RULE
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -380,7 +399,11 @@ def get_hook_natal(user: dict) -> str:
             "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
             "Ton style : oraculaire, direct, sans hedging. "
             "Zéro degrés, zéro orbes, zéro labels techniques visibles. "
-            "Tutoiement direct."
+            "Tutoiement direct. "
+            "INTERDIT ABSOLU dans le texte rendu : noms de signes zodiacaux "
+            "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
+            "Sagittaire, Capricorne, Verseau, Poissons). "
+            "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
         )
         prompt = f"""Thème natal de {name} :
 {natal_mini}
@@ -395,7 +418,11 @@ Ton : dense, précis, comme si tu lisais directement l'âme. Donne envie d'en sa
             "You are @siderealAstro13. Vedic karmic soul reader. "
             "Style: oracular, direct, no hedging. "
             "No degrees, no orbs, no visible technical labels. "
-            "Address user directly as 'you'."
+            "Address user directly as 'you'. "
+            "ABSOLUTE PROHIBITION in rendered text: zodiac sign names "
+            "(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, "
+            "Sagittarius, Capricorn, Aquarius, Pisces). "
+            "Use only house numbers (H1, H3…) and planet names."
         )
         prompt = f"""Natal chart of {name}:
 {natal_mini}
@@ -447,7 +474,11 @@ def get_hook_transit(chart_data: dict, user: dict = None) -> str:
         system = (
             "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
             "Style : oraculaire, direct, pas de liste mécanique. "
-            "Zéro degrés, zéro orbes dans le texte. Tutoiement."
+            "Zéro degrés, zéro orbes dans le texte. Tutoiement. "
+            "INTERDIT ABSOLU dans le texte rendu : noms de signes zodiacaux "
+            "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
+            "Sagittaire, Capricorne, Verseau, Poissons). "
+            "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
         )
         prompt = f"""Thème natal de {name} :
 {natal_mini}
@@ -464,7 +495,11 @@ Donne envie d'obtenir la lecture complète. Ton dense et précis."""
         system = (
             "You are @siderealAstro13. Vedic karmic soul reader. "
             "Style: oracular, direct, no mechanical list. "
-            "No degrees, no orbs in the text. Address as 'you'."
+            "No degrees, no orbs in the text. Address as 'you'. "
+            "ABSOLUTE PROHIBITION in rendered text: zodiac sign names "
+            "(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, "
+            "Sagittarius, Capricorn, Aquarius, Pisces). "
+            "Use only house numbers (H1, H3…) and planet names."
         )
         prompt = f"""Natal chart of {name}:
 {natal_mini}
