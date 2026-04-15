@@ -756,19 +756,34 @@ def calculate():
     if not profile:
         return jsonify({"error": "Non connecté"}), 401
 
-    # ── Vérification quota mensuel ────────────────────────────────────────────
+    # ── Gate paiement ─────────────────────────────────────────────────────────
     pseudo = profile.get("pseudo", "")
     UNLIMITED_PSEUDOS = {"jero"}
+
     if pseudo.lower() in UNLIMITED_PSEUDOS:
         quota = {"allowed": True, "remaining": 999}
     else:
-        quota = check_and_increment_synthesis(pseudo)
-    if not quota["allowed"]:
-        return jsonify({
-            "error": "quota_exceeded",
-            "message": "Tu as atteint ta limite de 3 synthèses ce mois-ci.",
-            "upgrade_url": "https://siderealastro13.com/upgrade"  # adapte l'URL
-        }), 429
+        plan = profile.get("plan", "free")
+        if plan in ("sub", "essential", "complete"):
+            # Utilisateur payant — consomme une synthèse plan
+            from profiles import consume_plan_synthesis
+            allowed = consume_plan_synthesis(pseudo)
+            quota = {"allowed": allowed, "remaining": 0 if not allowed else 1}
+            if not allowed:
+                return jsonify({
+                    "error": "quota_exceeded",
+                    "message": "Tu n'as plus de synthèses disponibles sur ton plan.",
+                    "upgrade_url": "/",
+                }), 429
+        else:
+            # Plan free — quota mensuel 3
+            quota = check_and_increment_synthesis(pseudo)
+            if not quota["allowed"]:
+                return jsonify({
+                    "error": "quota_exceeded",
+                    "message": "Tu as atteint ta limite gratuite. Obtiens une synthèse complète.",
+                    "upgrade_url": "/",
+                }), 429
     # ─────────────────────────────────────────────────────────────────────────
 
     natal = {
@@ -1243,6 +1258,136 @@ def cron_daily():
     except Exception as exc:
         app.logger.error("Erreur cron daily : %s", exc, exc_info=True)
         return jsonify({"error": str(exc)}), 500
+
+
+# ── Stripe : création session paiement ────────────────────────────────────────
+@app.route("/stripe/checkout", methods=["POST"])
+def stripe_checkout():
+    """
+    Crée une session Stripe Checkout.
+    Body JSON : {"plan": "sub"|"essential"|"complete"}
+    Retourne  : {"url": "https://checkout.stripe.com/..."}
+    """
+    from stripe_payments import create_checkout_session
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "Non connecté"}), 401
+
+    data    = request.get_json() or {}
+    plan    = data.get("plan", "")
+    if plan not in ("sub", "essential", "complete"):
+        return jsonify({"error": "Plan invalide"}), 400
+
+    email  = profile.get("email", "")
+    pseudo = profile.get("pseudo", "")
+    if not email:
+        return jsonify({"error": "Email requis pour le paiement"}), 400
+
+    base_url = request.host_url.rstrip("/")
+    try:
+        url = create_checkout_session(plan, email, pseudo, base_url)
+        return jsonify({"url": url})
+    except Exception as exc:
+        app.logger.error("Stripe checkout error : %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Stripe : webhook paiement confirmé ────────────────────────────────────────
+@app.route("/stripe/webhook", methods=["POST"])
+def stripe_webhook():
+    """
+    Reçoit les événements Stripe et met à jour le plan utilisateur.
+    Événements gérés :
+      - checkout.session.completed → upgrade plan + crédite synthèses
+      - customer.subscription.deleted → retour plan free
+    """
+    from stripe_payments import verify_webhook, get_plan_from_price
+    from profiles import upgrade_plan, downgrade_plan
+
+    payload    = request.get_data()
+    sig_header = request.headers.get("Stripe-Signature", "")
+
+    try:
+        event = verify_webhook(payload, sig_header)
+    except Exception as exc:
+        app.logger.warning("Webhook Stripe invalide : %s", exc)
+        return jsonify({"error": "Signature invalide"}), 400
+
+    if event["type"] == "checkout.session.completed":
+        obj    = event["data"]["object"]
+        pseudo = obj.get("metadata", {}).get("pseudo", "")
+        plan   = obj.get("metadata", {}).get("plan", "")
+
+        # Récupère le price_id pour les one-shots
+        if not plan:
+            line_items = obj.get("line_items", {}).get("data", [])
+            if line_items:
+                plan = get_plan_from_price(line_items[0].get("price", {}).get("id", ""))
+
+        if pseudo and plan:
+            try:
+                upgrade_plan(pseudo, plan)
+                app.logger.info("Plan upgradé : %s → %s", pseudo, plan)
+            except Exception as exc:
+                app.logger.error("Erreur upgrade plan : %s", exc)
+
+    elif event["type"] == "customer.subscription.deleted":
+        obj    = event["data"]["object"]
+        # Retrouve le pseudo via customer email
+        email  = obj.get("customer_email", "")
+        if email:
+            try:
+                from profiles import get_profile_by_email, downgrade_plan
+                profile_data = get_profile_by_email(email)
+                if profile_data:
+                    downgrade_plan(profile_data["pseudo"])
+                    app.logger.info("Abonnement annulé : %s", profile_data["pseudo"])
+            except Exception as exc:
+                app.logger.error("Erreur downgrade plan : %s", exc)
+
+    return jsonify({"ok": True})
+
+
+# ── Stripe : succès paiement ───────────────────────────────────────────────────
+@app.route("/stripe/success")
+def stripe_success():
+    """
+    Redirect après paiement réussi.
+    Stripe redirige ici avec ?session_id=...&plan=...&pseudo=...
+    """
+    plan   = request.args.get("plan", "")
+    pseudo = request.args.get("pseudo", "")
+
+    # Met à jour la session si l'utilisateur est connecté
+    profile = session.get("profile")
+    if profile and profile.get("pseudo") == pseudo:
+        profile["plan"] = plan
+        session["profile"] = profile
+        session.modified = True
+
+    lang = get_lang()
+    plan_labels = {
+        "sub":       "Abonnement Alertes activé ✓",
+        "essential": "Synthèse Essentielle débloquée ✓",
+        "complete":  "Lecture Complète débloquée ✓",
+    }
+    message = plan_labels.get(plan, "Paiement confirmé ✓")
+
+    return render_template("index.html",
+        user=profile,
+        today_iso=datetime.now().strftime("%Y-%m-%d"),
+        now_hour=datetime.now().hour,
+        now_minute=datetime.now().minute,
+        lang=lang,
+        ui=lang,
+        langs=LANGS,
+        session_user=session.get("pseudo", ""),
+        session_profile=session.get("profile", {}),
+        enable_local_ai=os.environ.get("ENABLE_LOCAL_AI", "").lower() in ("1", "true"),
+        enable_features=os.environ.get("ENABLE_FEATURES", "").lower() in ("1", "true"),
+        payment_success=message,
+    )
 
 
 # ── Lancement ─────────────────────────────────────────────────────────────────

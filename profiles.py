@@ -35,6 +35,9 @@ COLS = [
     "syntheses_count",      # Q
     "syntheses_reset_date", # R
     "alerts_enabled",       # S
+    "plan",                 # T : "free" | "sub" | "essential" | "complete"
+    "plan_syntheses",       # U : nombre de synthèses restantes sur plan payant
+    "stripe_customer_id",   # V
 ]
 
 SYNTHESIS_QUOTA = 3  # max synthèses par mois (plan free)
@@ -107,6 +110,9 @@ def _row_to_profile(row: list) -> dict:
         "syntheses_count":      _safe(16, int, 0),
         "syntheses_reset_date": _safe(17) or _current_month_str(),
         "alerts_enabled":       _safe(18, int, 0),
+        "plan":                 _safe(19) or "free",
+        "plan_syntheses":       _safe(20, int, 0),
+        "stripe_customer_id":   _safe(21) or "",
     }
 
 
@@ -161,6 +167,9 @@ def create_profile(data: dict) -> dict:
         "0",                      # syntheses_count
         _current_month_str(),     # syntheses_reset_date
         "0",                      # alerts_enabled
+        "free",                   # plan
+        "0",                      # plan_syntheses
+        "",                       # stripe_customer_id
     ]
     ws.append_row(row)
     return _row_to_profile(row)
@@ -267,4 +276,73 @@ def pseudo_exists(pseudo: str) -> bool:
     for row in records[1:]:
         if row and row[0].strip().lower() == pseudo_lower:
             return True
+    return False
+
+
+# ── Gestion plans Stripe ───────────────────────────────────────────────────────
+
+PLAN_SYNTHESES = {
+    "sub":       1,
+    "essential": 1,
+    "complete":  1,
+    "free":      0,
+}
+
+
+def upgrade_plan(pseudo: str, plan: str) -> bool:
+    """
+    Met à jour le plan d'un utilisateur après paiement Stripe confirmé.
+    Crédite le nombre de synthèses correspondant au plan.
+    Retourne True si mis à jour.
+    """
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_lower = pseudo.strip().lower()
+    syntheses = PLAN_SYNTHESES.get(plan, 0)
+
+    for i, row in enumerate(records[1:], start=2):
+        if not row or row[0].strip().lower() != pseudo_lower:
+            continue
+        # Colonne T=plan (index 19), U=plan_syntheses (index 20)
+        ws.update(f"T{i}:U{i}", [[plan, str(syntheses)]])
+        return True
+    return False
+
+
+def downgrade_plan(pseudo: str) -> bool:
+    """
+    Remet le plan à "free" après annulation abonnement Stripe.
+    """
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_lower = pseudo.strip().lower()
+
+    for i, row in enumerate(records[1:], start=2):
+        if not row or row[0].strip().lower() != pseudo_lower:
+            continue
+        ws.update(f"T{i}:U{i}", [["free", "0"]])
+        return True
+    return False
+
+
+def consume_plan_synthesis(pseudo: str) -> bool:
+    """
+    Décrémente le compteur plan_syntheses d'un utilisateur.
+    Retourne True si autorisé (compteur > 0), False sinon.
+    """
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_lower = pseudo.strip().lower()
+
+    for i, row in enumerate(records[1:], start=2):
+        if not row or row[0].strip().lower() != pseudo_lower:
+            continue
+        try:
+            count = int(row[20]) if len(row) > 20 and row[20] else 0
+        except ValueError:
+            count = 0
+        if count <= 0:
+            return False
+        ws.update(f"U{i}", [[str(count - 1)]])
+        return True
     return False
