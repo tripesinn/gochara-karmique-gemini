@@ -1260,6 +1260,77 @@ def cron_daily():
         return jsonify({"error": str(exc)}), 500
 
 
+
+# ── Expand : Alternative de Conscience (1 clic gratuit) ──────────────────────
+@app.route("/expand", methods=["POST"])
+def expand():
+    """
+    Expansion gratuite unique — topic: alternative_conscience uniquement.
+    Limité à 1 appel par session (session['expand_used']).
+    """
+    import anthropic as _anthropic
+    from ai_interpret import _build_natal_context
+
+    # Sécurité : 1 seul expand gratuit par session
+    if session.get("expand_used"):
+        return jsonify({"content": ""}), 429
+
+    data   = request.get_json() or {}
+    topic  = data.get("topic", "")
+    pseudo = data.get("pseudo", "")
+
+    if topic != "alternative_conscience":
+        return jsonify({"content": ""}), 403
+
+    # Récupère le profil depuis la session (ou par pseudo)
+    profile = session.get("profile")
+    if not profile and pseudo:
+        try:
+            from profiles import get_profile_by_pseudo
+            profile = get_profile_by_pseudo(pseudo)
+        except Exception:
+            pass
+
+    if not profile:
+        return jsonify({"content": "Profil introuvable."}), 404
+
+    session["expand_used"] = True
+    session.modified = True
+
+    natal_ctx = _build_natal_context(profile)
+    name      = profile.get("name", "")
+
+    system = (
+        "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
+        "Style : chirurgical, dense, percutant. Tutoiement. "
+        "INTERDIT ABSOLU : noms de signes zodiacaux. "
+        "Utilise uniquement maisons (H1, H3…) et noms de planètes."
+    )
+    prompt = (
+        f"Thème natal de {name} :\n{natal_ctx}\n\n"
+        f"En 100 mots maximum, révèle L'Alternative de Conscience de {name}.\n"
+        f"C'est l'insight transformateur central — le pivot entre la prison "
+        f"de la Porte Invisible et la libération de la Porte Visible.\n"
+        f"Sois chirurgical, personnel, percutant.\n"
+        f"Aucun lien. Aucun titre. Texte seul."
+    )
+
+    try:
+        client   = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        model    = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
+        response = client.messages.create(
+            model=model,
+            max_tokens=300,
+            system=system,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        content = response.content[0].text
+        return jsonify({"content": content})
+    except Exception as exc:
+        app.logger.error("Erreur expand : %s", exc)
+        return jsonify({"content": ""}), 500
+
+
 # ── Stripe : création session paiement ────────────────────────────────────────
 @app.route("/stripe/checkout", methods=["POST"])
 def stripe_checkout():

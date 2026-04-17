@@ -115,6 +115,62 @@
         #synthesis-content h2 { font-family: var(--display); font-size: 1rem; letter-spacing: 0.1em; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; margin-top: 1.8rem; }
         #synthesis-content h3 { font-family: var(--display); font-size: 0.85rem; letter-spacing: 0.08em; color: var(--gold-dim); margin-top: 1.2rem; }
 
+        /* ── Liens expansibles (hook + synthèse) ────────────────────────────── */
+        #synthesis-content a[href^="expand:"],
+        #hook-natal-text a[href^="expand:"] {
+            color: var(--gold);
+            text-decoration: none;
+            background: rgba(201,168,76,0.10);
+            border: 1px solid rgba(201,168,76,0.30);
+            padding: 0.05em 0.55em 0.12em;
+            font-family: var(--mono);
+            font-size: 0.78em;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            display: inline-block;
+            margin: 3px 2px;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+        #synthesis-content a[href^="expand:"]:hover,
+        #hook-natal-text a[href^="expand:"]:hover {
+            background: rgba(201,168,76,0.22);
+            border-color: var(--gold);
+            color: var(--text);
+        }
+        #synthesis-content a[href^="expand:"].used,
+        #hook-natal-text a[href^="expand:"].used {
+            opacity: 0.35;
+            pointer-events: none;
+            cursor: default;
+        }
+        .expand-box {
+            margin: 1rem 0;
+            padding: 1rem 1.2rem;
+            border-left: 2px solid var(--gold);
+            background: rgba(201,168,76,0.05);
+            font-size: 0.95em;
+            text-align: left;
+            animation: fadeUp 0.4s ease forwards;
+        }
+        .expand-cta {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid var(--gold-dim);
+            background: rgba(201,168,76,0.07);
+            text-align: center;
+        }
+        .expand-cta p { margin: 0 0 0.8rem; }
+        .expand-cta .cta-label {
+            font-family: var(--mono); font-size: 0.7rem;
+            letter-spacing: 0.15em; color: var(--gold-dim);
+            text-transform: uppercase;
+        }
+        .expand-cta .cta-desc {
+            font-size: 0.88rem; color: var(--text-dim);
+            font-style: italic;
+        }
+
         /* ── Plans paiement ──────────────────────────────────────────────── */
         .btn-plan {
             display: flex; flex-direction: column; align-items: flex-start;
@@ -440,6 +496,7 @@ function login() {
     .then(data => {
         if (data.ok) {
             if (data.hook_natal) sessionStorage.setItem('hook_natal', data.hook_natal);
+            sessionStorage.setItem('currentPseudo', data.pseudo || pseudo);
             location.reload();
         } else {
             errDiv.style.color = "#c97a6b";
@@ -506,10 +563,83 @@ function showPaymentPlans() {
     if (hook) {
         const box  = document.getElementById('hook-natal-box');
         const text = document.getElementById('hook-natal-text');
-        if (box && text) { text.textContent = hook; box.style.display = 'block'; }
+        if (box && text) {
+            text.textContent = hook;
+            // Lien expansible unique sous le texte
+            const link = document.createElement('a');
+            link.href = 'expand:alternative_conscience';
+            link.textContent = '→ Révèle ton Alternative de Conscience';
+            link.style.display = 'block';
+            link.style.marginTop = '0.8rem';
+            text.after(link);
+            box.style.display = 'block';
+        }
         sessionStorage.removeItem('hook_natal');
     }
 })();
+
+// ── Expand topic (1 clic limité) ──────────────────────────────────────────────
+window._expandUsed = false;
+
+async function expandTopic(topic) {
+    if (window._expandUsed) return;
+    window._expandUsed = true;
+
+    // Grise tous les liens expand
+    document.querySelectorAll('a[href^="expand:"]').forEach(a => a.classList.add('used'));
+
+    const clickedLink = document.querySelector('a[href="expand:' + topic + '"]');
+    const hookBox  = document.getElementById('hook-natal-box');
+    const synthBox = document.getElementById('synthesis-content');
+
+    const expandBox = document.createElement('div');
+    expandBox.className = 'expand-box';
+    expandBox.innerHTML = '<span class="spinner"></span> Lecture en cours…';
+
+    if (clickedLink) {
+        clickedLink.insertAdjacentElement('afterend', expandBox);
+    } else if (hookBox) {
+        hookBox.querySelector('div').appendChild(expandBox);
+    } else if (synthBox) {
+        synthBox.appendChild(expandBox);
+    }
+
+    try {
+        const pseudo = sessionStorage.getItem('currentPseudo') || '';
+        const res = await fetch('/expand', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ topic, pseudo })
+        });
+        const data = await res.json();
+        expandBox.innerHTML = marked.parse(data.content || '_(aucun contenu)_');
+
+        // CTA Stripe 19,99€
+        const cta = document.createElement('div');
+        cta.className = 'expand-cta';
+        cta.innerHTML =
+            '<p class="cta-label">Lecture Complète · Synthèse Essentielle</p>' +
+            '<p class="cta-desc">Porte Visible · Cycles Nodaux · D9 Navamsa · Transits complets</p>' +
+            '<button onclick="stripeCheckout(\'complete\')" class="btn-primary" style="max-width:280px;margin:0 auto;">' +
+            '<span>Débloquer la Synthèse — 19,99€</span></button>';
+        expandBox.appendChild(cta);
+        expandBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    } catch(err) {
+        expandBox.innerHTML = '⚠ Erreur de connexion.';
+        window._expandUsed = false;
+        document.querySelectorAll('a[href^="expand:"]').forEach(a => a.classList.remove('used'));
+    }
+}
+
+// Délégation clic liens expand:
+document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="expand:"]');
+    if (!a) return;
+    e.preventDefault();
+    const topic = a.getAttribute('href').replace('expand:', '');
+    expandTopic(topic);
+});
 
 // ── Hook transit SSE ──────────────────────────────────────────────────────────
 async function requestHookTransit() {
