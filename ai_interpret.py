@@ -16,6 +16,8 @@ Hooks :
 import anthropic
 import os
 
+from astro_calc import NAKSHATRAS, NAKSHATRA_LORDS
+
 # ── Import doctrine centralisée ───────────────────────────────────────────────
 from doctrine import (
     get_system_prompt,
@@ -361,6 +363,14 @@ def _detect_transit_friction(chart_data: dict, lang: str = "fr") -> str:
     return f"\n{friction['prompt_block']}\n"
 
 
+def _get_nak_lord(nak_name: str) -> str:
+    """Retourne le régent Vimshotari d'un nakshatra, chaîne vide si inconnu."""
+    try:
+        return NAKSHATRA_LORDS[NAKSHATRAS.index(nak_name)]
+    except (ValueError, IndexError):
+        return ""
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # HOOK NATAL — affiché dès le login (natal seul, pas de transit)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -382,6 +392,9 @@ def get_hook_natal(user: dict) -> str:
     chi_h  = user.get("chiron_house", "")
     pv     = user.get("porte_visible_sign", "") or user.get("porte_visible_house", "")
     lil_h  = user.get("lilith_house", "")
+    ketu_nak   = user.get("ketu_nakshatra", "")
+    rahu_nak   = user.get("rahu_nakshatra", "")
+    chiron_nak = user.get("chiron_nakshatra", "")
 
     if not cl:
         return ""
@@ -391,7 +404,8 @@ def get_hook_natal(user: dict) -> str:
         f"Ketu (mémoire statique): H{ketu_h}. "
         f"Chiron (blessure-clé, outil d'ouverture): H{chi_h}. "
         f"Porte Visible (guérison/Stage): {pv}. "
-        f"Lilith (épreuve): H{lil_h}."
+        f"Lilith (épreuve): H{lil_h}. "
+        f"Nakshatras : Ketu en {ketu_nak} (régent {_get_nak_lord(ketu_nak)}), Rahu en {rahu_nak}, Chiron en {chiron_nak}. "
     )
 
     if lang == "fr":
@@ -409,9 +423,10 @@ def get_hook_natal(user: dict) -> str:
 {natal_mini}
 
 Écris un hook de 3 phrases exactement. Pas de titre. Pas d'introduction.
-Phrase 1 : le schéma karmique dominant que {name} rejoue (basé sur Ketu H{ketu_h}).
+Phrase 1 : le schéma karmique dominant que {name} rejoue (Ketu en {ketu_nak}, mémoire ROM figée).
 Phrase 2 : la nature de la blessure active et ce qu'elle cherche (Chiron H{chi_h} — outil d'ouverture vers la Porte Visible).
 Phrase 3 : la direction de libération qui s'ouvre (Porte Visible/Stage) + une amorce d'Alternative de Conscience.
+Intègre la notion de nakshatra et de régime doctrinal (ROM/Dharma/Chiron) sans prononcer ces mots.
 Ton : dense, précis, comme si tu lisais directement l'âme. Donne envie d'en savoir plus."""
     else:
         system = (
@@ -428,9 +443,10 @@ Ton : dense, précis, comme si tu lisais directement l'âme. Donne envie d'en sa
 {natal_mini}
 
 Write a hook of exactly 3 sentences. No title. No introduction.
-Sentence 1: the dominant karmic pattern {name} replays (based on Ketu H{ketu_h}).
+Sentence 1: the dominant karmic pattern {name} replays (Ketu in {ketu_nak}, frozen ROM memory).
 Sentence 2: the nature of the active wound and what it seeks (Chiron H{chi_h} — opening tool toward Visible Door).
 Sentence 3: the liberation direction opening (Visible Door/Stage) + a seed of Alternative of Consciousness.
+Integrate the nakshatra and doctrinal regime (ROM/Dharma/Chiron) without uttering these words.
 Tone: dense, precise, as if reading the soul directly. Make them want to know more."""
 
     hook_model = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
