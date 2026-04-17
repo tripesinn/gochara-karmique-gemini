@@ -26,7 +26,14 @@ www/
 # Android (généré — committer uniquement les sources)
 android/.gradle/
 android/app/build/
+android/build/
 android/.idea/
+
+# Gradle home cache (généré localement, jamais committer)
+caches/
+daemon/
+native/
+wrapper/
 
 # Cloudflare Wrangler (état local, cache R2, DB miniflare)
 .wrangler/

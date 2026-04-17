@@ -1261,6 +1261,30 @@ def cron_daily():
 
 
 
+# ── Capture email (pré-paiement ou suivi app) ─────────────────────────────────
+@app.route("/save_email", methods=["POST"])
+def save_email():
+    from profiles import save_email_by_pseudo
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
+    data  = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        return jsonify({"ok": False, "error": "Email invalide"}), 400
+    try:
+        pseudo = profile.get("pseudo", "")
+        ok = save_email_by_pseudo(pseudo, email)
+        if ok:
+            profile["email"] = email
+            session["profile"] = profile
+            session.modified = True
+        return jsonify({"ok": ok})
+    except Exception as exc:
+        app.logger.error("Erreur save_email : %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
 # ── Expand : Alternative de Conscience (1 clic gratuit) ──────────────────────
 @app.route("/expand", methods=["POST"])
 def expand():

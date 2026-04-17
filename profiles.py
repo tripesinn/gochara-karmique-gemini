@@ -191,6 +191,18 @@ def get_profile_by_pseudo(pseudo: str) -> dict | None:
     return None
 
 
+def save_email_by_pseudo(pseudo: str, email: str) -> bool:
+    """Met à jour uniquement la colonne email (B) pour un pseudo donné."""
+    ws = _get_sheet()
+    records = ws.get_all_values()
+    pseudo_clean = _clean_pseudo(pseudo)
+    for i, row in enumerate(records[1:], start=2):
+        if row and _clean_pseudo(row[0]) == pseudo_clean:
+            ws.update(f"B{i}", [[email.strip().lower()]])
+            return True
+    return False
+
+
 def create_profile(data: dict) -> dict:
     """Crée un nouveau profil et retourne le profil créé."""
     ws = _get_sheet()
