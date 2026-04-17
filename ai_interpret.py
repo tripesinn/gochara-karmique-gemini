@@ -541,26 +541,29 @@ Make them want the full reading. Dense and precise tone."""
 # SIGNAL DU JOUR — compact pour TikTok/Web
 # ══════════════════════════════════════════════════════════════════════════════
 
-def get_daily_signal(user: dict, transit_date: str = None) -> dict:
+def get_daily_signal(transit_date: str = None) -> dict:
     """
-    Génère le Signal du Jour compact pour TikTok/Web.
-    Retourne un dict avec hook, nakshatra actif, régime doctrinal.
+    Génère la Météo Astrologique globale pour le jour (sans user spécifique).
+    Retourne transits majeurs + régime doctrinal du jour.
 
     Retourne :
     {
-        "title": "Signal du Jour — 17/04/2026",
-        "hook": "Ta mémoire ROM est figée...",
-        "nakshatra": "Mula",
-        "regime": "ROM_oppression",
-        "regime_label": "Activation ROM — test karmique"
+        "global": {
+            "title": "Météo Astrologique — 17/04/2026",
+            "transits": "Saturne entre en Mula (régent Ketu)...",
+            "regime": "ROM_oppression",
+            "regime_label": "Activation ROM — test karmique"
+        },
+        "hook_generic": "Test karmique majeur aujourd'hui...",
+        "cta": {
+            "text": "Et toi, né sous une Pleine Lune en Lion ?",
+            "subtext": "Découvre ce que ça dit pour TON thème natal",
+            "link": "https://karmicgochara.app/register"
+        }
     }
     """
     from datetime import datetime, date as date_cls
-    from astro_calc import calculate_transits
     from transit_alerts import detect_transit_events
-
-    user = user or {}
-    lang = user.get("lang", "fr")
 
     if not transit_date:
         transit_date = str(date_cls.today())
@@ -569,14 +572,24 @@ def get_daily_signal(user: dict, transit_date: str = None) -> dict:
         transit_date_obj = datetime.strptime(transit_date, "%Y-%m-%d").date()
     except ValueError:
         return {"error": "Invalid date format. Use YYYY-MM-DD.",
-                "title": "", "hook": "", "nakshatra": "", "regime": ""}
+                "global": {}, "hook_generic": "", "cta": {}}
 
-    # Activations nakshatra du jour (entrées uniquement)
+    # Profil de référence pour calculer les positions de transit du jour
+    fake_user = {
+        "name": "Astrologue", "lang": "fr",
+        "year": 1974, "month": 10, "day": 31,
+        "hour": 8,   "minute": 25,
+        "lat": 48.7, "lon": 2.4, "tz": "Europe/Paris",
+        "ketu_nakshatra":   "",
+        "rahu_nakshatra":   "",
+        "chiron_nakshatra": "",
+    }
+
     try:
-        events = detect_transit_events(user)
+        events = detect_transit_events(fake_user)
     except Exception as exc:
         return {"error": f"Transit calculation failed: {str(exc)}",
-                "title": "", "hook": "", "nakshatra": "", "regime": ""}
+                "global": {}, "hook_generic": "", "cta": {}}
 
     nak_events = [
         e for e in events
@@ -585,50 +598,52 @@ def get_daily_signal(user: dict, transit_date: str = None) -> dict:
     primary_nak_event = nak_events[0] if nak_events else None
 
     title_str = transit_date_obj.strftime("%d/%m/%Y")
-    title = f"Signal du Jour — {title_str}" if lang == "fr" else f"Daily Signal — {title_str}"
+    title = f"Météo Astrologique — {title_str}"
 
-    # Hook de transit via calculate_transits + get_hook_transit
-    hook = ""
-    try:
-        natal = {
-            k: user[k] for k in
-            ("name", "year", "month", "day", "hour", "minute", "lat", "lon", "tz", "city")
-            if k in user
-        }
-        transit_loc = {
-            "city": user.get("transit_city") or user.get("city", "Paris, France"),
-            "lat":  float(user.get("transit_lat") or user.get("lat", 48.8566)),
-            "lon":  float(user.get("transit_lon") or user.get("lon", 2.3522)),
-            "tz":   user.get("transit_tz") or user.get("tz", "Europe/Paris"),
-        }
-        chart_data = calculate_transits(
-            natal, transit_loc,
-            transit_date_obj.year, transit_date_obj.month, transit_date_obj.day,
-            12, 0,
-        )
-        hook = get_hook_transit(chart_data, user)
-    except Exception:
-        hook = ""
+    nakshatra = regime = regime_label = transits_text = ""
 
-    # Nakshatra + régime du jour
-    nakshatra = regime = regime_label = ""
     if primary_nak_event:
-        nakshatra = primary_nak_event.get("nakshatra", "")
-        regime    = primary_nak_event.get("interpretation", "")
-        regime_labels = {
-            "ROM_oppression":       "Activation ROM — test karmique"       if lang == "fr" else "ROM Activation — karmic test",
-            "Dharma_amplification": "Activation Dharma — opportunité"       if lang == "fr" else "Dharma Activation — opportunity",
-            "Blessure_activation":  "Activation Chiron — seuil de transformation" if lang == "fr" else "Chiron Activation — threshold",
+        nakshatra      = primary_nak_event.get("nakshatra", "")
+        regime         = primary_nak_event.get("interpretation", "")
+        transit_planet = primary_nak_event.get("transit", "")
+        lord           = primary_nak_event.get("lord", "")
+        regime_labels  = {
+            "ROM_oppression":       "Activation ROM — test karmique",
+            "Dharma_amplification": "Activation Dharma — opportunité",
+            "Blessure_activation":  "Activation Chiron — seuil de transformation",
         }
-        regime_label = regime_labels.get(regime, "Activation nakshatra")
+        regime_label  = regime_labels.get(regime, "Activation nakshatra")
+        transits_text = f"{transit_planet} entre en {nakshatra} (régent {lord}) — {regime_label.lower()}"
+    else:
+        transits_text = "Aucune activation majeure détectée aujourd'hui."
+        regime        = "neutre"
+        regime_label  = "Jour stable"
 
     return {
-        "title":        title,
-        "hook":         hook,
-        "nakshatra":    nakshatra,
-        "regime":       regime,
-        "regime_label": regime_label,
+        "global": {
+            "title":        title,
+            "transits":     transits_text,
+            "regime":       regime,
+            "regime_label": regime_label,
+        },
+        "hook_generic": _generate_generic_hook(regime),
+        "cta": {
+            "text":    "Et toi, né sous une Pleine Lune en Lion ?",
+            "subtext": "Découvre ce que ça dit pour TON thème natal",
+            "link":    "https://karmicgochara.app/register",
+        },
     }
+
+
+def _generate_generic_hook(regime: str) -> str:
+    """Génère un hook générique de 1-2 phrases basé sur le régime du jour."""
+    hooks = {
+        "ROM_oppression":       "Test karmique majeur aujourd'hui — destruction des faux pouvoirs. L'âme rejoue son schéma sans fin, mais le cosmos refuse.",
+        "Dharma_amplification": "Opportunité d'expansion consciente — l'univers ouvre une porte. C'est le moment de choisir autrement.",
+        "Blessure_activation":  "La blessure profonde remonte à la surface pour se transformer. Chiron travaille — tu sens l'inconfort ? C'est bon signe.",
+        "neutre":               "Jour stable en apparence, mais chaque instant cache une mutation silencieuse de l'âme.",
+    }
+    return hooks.get(regime, "L'astrologie parle aujourd'hui — es-tu en train d'écouter ?")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
