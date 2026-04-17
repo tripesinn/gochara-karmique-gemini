@@ -163,6 +163,13 @@ def _row_to_profile(row: list) -> dict:
     }
 
 
+def get_all_profiles() -> list[dict]:
+    """Retourne tous les profils de la feuille."""
+    ws = _get_sheet()
+    rows = ws.get_all_values()
+    return [_row_to_profile(row) for row in rows[1:] if row and row[0]]
+
+
 def get_profile_by_email(email: str) -> dict | None:
     ws = _get_sheet()
     records = ws.get_all_values()
