@@ -1174,18 +1174,65 @@ def send_synthesis():
 def synthesis_prompt():
     """
     Construit et retourne le prompt (system + user) sans appeler Claude.
-    Utilisé par Gemma 3 (web OPFS ou plugin Android) pour l'inférence locale.
-    """
-    from astro_calc import calculate_transits
-    from ai_interpret import build_prompt_only
+    Utilisé par Gemma (Android Edge AI) pour l'inférence locale.
 
+    Body JSON :
+        context  : "synthesis" | "natal" | "conscience" | "signal"
+                   défaut = "synthesis"
+        date     : "YYYY-MM-DD"  (requis sauf context=natal et context=signal)
+        hour/minute : int        (optionnel)
+
+    Auth : requise sauf context="signal" (Signal du Jour est public).
+
+    Retourne :
+        {ok, system, user, context, aspects?, transit_date?}
+    """
+    from ai_interpret import (
+        build_prompt_only, build_prompt_natal,
+        build_prompt_conscience, build_prompt_signal,
+        get_daily_signal,
+    )
+
+    data    = request.get_json() or {}
+    context = data.get("context", "synthesis")
+    lang    = session.get("lang", "fr")
+
+    # ── Signal du Jour : route publique, pas d'auth ───────────────────────────
+    if context == "signal":
+        from datetime import date as date_cls
+        date_str    = data.get("date", str(date_cls.today()))
+        signal_data = get_daily_signal(date_str)
+        if "error" in signal_data:
+            return jsonify({"error": signal_data["error"]}), 400
+        prompts = build_prompt_signal(signal_data, lang=lang)
+        return jsonify({
+            "ok":      True,
+            "context": "signal",
+            "system":  prompts["system"],
+            "user":    prompts["user"],
+            "signal":  signal_data,
+        })
+
+    # ── Autres contextes : auth requise ───────────────────────────────────────
     profile = session.get("profile")
     if not profile:
         return jsonify({"error": "Non connecté"}), 401
 
-    # ── Gate paiement (même logique que /calculate) ───────────────────────────
     pseudo = profile.get("pseudo", "")
     UNLIMITED_PSEUDOS = {"jero"}
+
+    # Lecture natale — pas de quota (pas de synthèse consommée)
+    if context == "natal":
+        enriched = _enrich_profile_with_natal(profile, {})
+        prompts  = build_prompt_natal(enriched, lang=lang)
+        return jsonify({
+            "ok":      True,
+            "context": "natal",
+            "system":  prompts["system"],
+            "user":    prompts["user"],
+        })
+
+    # Synthèse complète + Alternative de Conscience : gate paiement
     if pseudo.lower() not in UNLIMITED_PSEUDOS:
         plan = profile.get("plan", "free")
         if plan in ("test", "subscription"):
@@ -1200,41 +1247,46 @@ def synthesis_prompt():
                 return jsonify({"error": "quota_exceeded",
                                 "message": "Tu as atteint ta limite gratuite."}), 429
 
-    natal = {
+    natal_data = {
         "name":   profile["name"],
-        "year":   profile["year"],  "month":  profile["month"],
-        "day":    profile["day"],   "hour":   profile["hour"],
-        "minute": profile["minute"],"lat":    profile["lat"],
-        "lon":    profile["lon"],   "tz":     profile["tz"],
+        "year":   profile["year"],   "month":  profile["month"],
+        "day":    profile["day"],    "hour":   profile["hour"],
+        "minute": profile["minute"], "lat":    profile["lat"],
+        "lon":    profile["lon"],    "tz":     profile["tz"],
         "city":   profile["city"],
     }
 
-    data      = request.get_json() or {}
-    date_str  = data.get("date", "")
-    hour      = int(data.get("hour", 12))
-    minute    = int(data.get("minute", 0))
+    date_str = data.get("date", "")
+    hour     = int(data.get("hour",   12))
+    minute   = int(data.get("minute", 0))
     transit_loc = {
         "city": data.get("transit_city") or profile.get("transit_city", TRANSIT_LOC_DEFAULT["city"]),
         "lat":  float(data.get("transit_lat") or profile.get("transit_lat", TRANSIT_LOC_DEFAULT["lat"])),
         "lon":  float(data.get("transit_lon") or profile.get("transit_lon", TRANSIT_LOC_DEFAULT["lon"])),
         "tz":   data.get("transit_tz")  or profile.get("transit_tz",  TRANSIT_LOC_DEFAULT["tz"]),
     }
-    lang = session.get("lang", "fr")
 
     try:
+        from astro_calc import calculate_transits
         year, month, day = map(int, date_str.split("-"))
-        chart_data       = calculate_transits(natal, transit_loc, year, month, day, hour, minute)
+        chart_data       = calculate_transits(natal_data, transit_loc, year, month, day, hour, minute)
         enriched_profile = _enrich_profile_with_natal(profile, chart_data.get("natal", {}))
-        prompts          = build_prompt_only(chart_data, enriched_profile, lang=lang)
+
+        if context == "conscience":
+            prompts = build_prompt_conscience(chart_data, enriched_profile, lang=lang)
+        else:
+            prompts = build_prompt_only(chart_data, enriched_profile, lang=lang)
+
         return jsonify({
-            "ok":          True,
-            "system":      prompts["system"],
-            "user":        prompts["user"],
-            "aspects":     chart_data.get("aspects", []),
+            "ok":           True,
+            "context":      context,
+            "system":       prompts["system"],
+            "user":         prompts["user"],
+            "aspects":      chart_data.get("aspects", []),
             "transit_date": chart_data.get("transit_date", ""),
         })
     except Exception as exc:
-        app.logger.error("Erreur synthesis/prompt : %s", exc, exc_info=True)
+        app.logger.error("Erreur synthesis/prompt (%s) : %s", context, exc, exc_info=True)
         return jsonify({"error": str(exc)}), 500
 
 

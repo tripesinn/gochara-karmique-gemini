@@ -789,3 +789,158 @@ Tutoiement. Direct. 200 mots max."""
     )
 
     return {"system": system, "user": user_prompt}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LECTURE NATALE — prompt Gemma (sans appel Claude)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def build_prompt_natal(user: dict, lang: str = "fr") -> dict:
+    """
+    Construit le prompt Lecture Natale SANS appeler Claude.
+    Miroir de get_hook_natal() — retourne {system, user} prêt pour Gemma.
+    Génère : 3 phrases d'accroche sur le thème natal (ROM/RAM/Stage).
+    """
+    user = user or {}
+    lang = user.get("lang", lang)
+    name = user.get("name", "l'âme")
+
+    cl         = user.get("chandra_lagna_sign", "")
+    ketu_h     = user.get("ketu_house", "")
+    chi_h      = user.get("chiron_house", "")
+    pv         = user.get("porte_visible_sign", "") or user.get("porte_visible_house", "")
+    lil_h      = user.get("lilith_house", "")
+    ketu_nak   = user.get("ketu_nakshatra", "")
+    rahu_nak   = user.get("rahu_nakshatra", "")
+    chiron_nak = user.get("chiron_nakshatra", "")
+
+    if not cl:
+        return {"system": "", "user": ""}
+
+    natal_mini = (
+        f"Chandra Lagna H1: {cl}. Ketu (ROM): H{ketu_h}. "
+        f"Chiron (RAM, outil ouverture): H{chi_h}. Porte Visible: {pv}. "
+        f"Lilith (epreuve): H{lil_h}. "
+        f"Nakshatras: Ketu en {ketu_nak}, Rahu en {rahu_nak}, Chiron en {chiron_nak}."
+    )
+
+    if lang == "en":
+        system = (
+            "You are @siderealAstro13. Sidereal Vedic karmic soul reader. "
+            "Oracular, direct, no hedging. No degrees, no orbs, no technical labels. "
+            "Address user as 'you'. FORBIDDEN: any zodiac sign name. H1-H12 only."
+        )
+        user_prompt = (
+            f"Natal chart of {name}:\n{natal_mini}\n\n"
+            f"Write exactly 3 sentences. No title. No introduction.\n"
+            f"1: dominant karmic pattern {name} replays (Ketu — frozen ROM).\n"
+            f"2: active wound and what it seeks (Chiron H{chi_h} — opening toward Visible Door).\n"
+            f"3: liberation direction (Stage) + seed of Alternative de Conscience.\n"
+            f"Dense, precise. Make them want to know more."
+        )
+    else:
+        system = (
+            "Tu es @siderealAstro13. Lecteur d'ame karmique vedique siderale. "
+            "Oraculaire, direct, sans hedging. Zero degres, zero orbes. Tutoiement. "
+            "INTERDIT : noms de signes zodiacaux. Maisons H1-H12 uniquement."
+        )
+        user_prompt = (
+            f"Theme natal de {name} :\n{natal_mini}\n\n"
+            f"Ecris exactement 3 phrases. Pas de titre. Pas d'introduction.\n"
+            f"1 : le schema karmique dominant que {name} rejoue (Ketu — ROM figee).\n"
+            f"2 : la blessure active et ce qu'elle cherche (Chiron H{chi_h} — outil vers la Porte Visible).\n"
+            f"3 : la direction de liberation (Stage) + amorce d'Alternative de Conscience.\n"
+            f"Dense, precis. Donne envie d'en savoir plus."
+        )
+
+    return {"system": system, "user": user_prompt}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALTERNATIVE DE CONSCIENCE — prompt Gemma focalisé (section 4 uniquement)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def build_prompt_conscience(chart_data: dict, user: dict = None, lang: str = "fr") -> dict:
+    """
+    Construit un prompt focalisé sur l'Alternative de Conscience SANS appeler Claude.
+    Génère uniquement la section 4 — shift actionnable immédiat.
+    Budget Gemma : ~200 tokens output.
+    """
+    user = user or {}
+    lang = user.get("lang", lang)
+    name = user.get("name", "l'ame")
+
+    aspects_text = _aspects_to_text(chart_data.get("aspects", []), max_aspects=3)
+    date         = chart_data.get("transit_date", "")
+    natal_mini   = _build_natal_context(user)
+
+    if lang == "en":
+        system = (
+            "You are @siderealAstro13. Sidereal Vedic karmic astrology. "
+            "Write ONLY the 'Alternative de Conscience' section: "
+            "a precise, actionable inner shift the soul can choose RIGHT NOW. "
+            "No intro. No other sections. Direct address. FORBIDDEN: zodiac signs. "
+            "H1-H12 only. 150 words max."
+        )
+        user_prompt = (
+            f"Transit for {name} — {date}.\nNatal:\n{natal_mini}\nAspects:\n{aspects_text}\n\n"
+            f"Write ONLY: 'ALTERNATIVE DE CONSCIENCE :' then 3-4 sentences.\n"
+            f"What {name} can stop replaying (ROM loop) and what concrete action opens the Visible Door now."
+        )
+    else:
+        system = (
+            "Tu es @siderealAstro13. Astrologie karmique vedique siderale. "
+            "Tu ecris UNIQUEMENT la section 'Alternative de Conscience' : "
+            "le shift interieur actionnable que l'ame peut choisir MAINTENANT. "
+            "Pas d'intro. Pas d'autres sections. Tutoiement. "
+            "INTERDIT : signes zodiacaux. H1-H12 uniquement. 150 mots max."
+        )
+        user_prompt = (
+            f"Transit de {name} — {date}.\nNatal :\n{natal_mini}\nAspects :\n{aspects_text}\n\n"
+            f"Ecris UNIQUEMENT : 'ALTERNATIVE DE CONSCIENCE :' puis 3-4 phrases.\n"
+            f"Ce que {name} peut cesser de rejouer (ROM) et l'action concrete qui ouvre la Porte Visible maintenant."
+        )
+
+    return {"system": system, "user": user_prompt}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIGNAL DU JOUR — prompt Gemma (narratif global, sans profil)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def build_prompt_signal(signal_data: dict, lang: str = "fr") -> dict:
+    """
+    Construit le prompt Signal du Jour pour Gemma SANS appeler Claude.
+    Prend le dict de get_daily_signal() et retourne {system, user}.
+    Génère : 3-4 phrases narratives sur la météo karmique du jour.
+    """
+    g       = signal_data.get("global", {})
+    title   = g.get("title", "Signal du Jour")
+    transit = g.get("transits", "")
+    regime  = g.get("regime", "neutre")
+    label   = g.get("regime_label", "")
+
+    if lang == "en":
+        system = (
+            "You are @siderealAstro13. Sidereal Vedic karmic astrology. "
+            "Write a short collective daily karmic signal. No personal profile. "
+            "Oracular tone. Direct. FORBIDDEN: zodiac sign names. 3-4 sentences. 120 words max."
+        )
+        user_prompt = (
+            f"Today's signal — {title}.\nActive transit: {transit}\nRegime: {label} ({regime})\n\n"
+            f"Write 3-4 sentences on the karmic meaning for all souls today. "
+            f"End with one action sentence: what to do or avoid today."
+        )
+    else:
+        system = (
+            "Tu es @siderealAstro13. Astrologie karmique vedique siderale. "
+            "Tu ecris un signal karmique collectif court pour le jour. Sans profil personnel. "
+            "Ton oraculaire. Direct. INTERDIT : signes zodiacaux. 3-4 phrases. 120 mots max."
+        )
+        user_prompt = (
+            f"Signal du jour — {title}.\nTransit actif : {transit}\nRegime : {label} ({regime})\n\n"
+            f"Ecris 3-4 phrases sur le sens karmique pour toutes les ames aujourd'hui. "
+            f"Termine par une phrase d'action : quoi faire ou eviter."
+        )
+
+    return {"system": system, "user": user_prompt}
