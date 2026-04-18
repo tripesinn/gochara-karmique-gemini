@@ -1160,11 +1160,8 @@ def send_synthesis():
 def synthesis_prompt():
     """
     Construit et retourne le prompt (system + user) sans appeler Claude.
-    Utilisé par le plugin Gemma 3 / AI Core sur Android pour l'inférence locale.
-    Désactivé sur prod (ENABLE_LOCAL_AI non défini).
+    Utilisé par Gemma 3 (web OPFS ou plugin Android) pour l'inférence locale.
     """
-    if not os.environ.get('ENABLE_LOCAL_AI', '').lower() in ('1', 'true'):
-        return jsonify({"error": "Non disponible"}), 404
     from astro_calc import calculate_transits
     from ai_interpret import build_prompt_only
 
