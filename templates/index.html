@@ -334,7 +334,6 @@
         <button onclick="logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">[ {{ lang.logout if lang.logout else 'Déconnexion' }} ]</button>
     </div>
 
-    {% if enable_local_ai %}
     <div id="banner-local-ai" style="display:none; margin-bottom:1.5rem; background:linear-gradient(135deg,#0f1a0f,#0f0f1a); border:1px solid #2a4a2a; border-radius:3px; padding:14px 16px; position:relative;">
         <div style="font-size:0.82rem; color:#6ab56a; font-family:var(--display); margin-bottom:4px;">✦ IA locale disponible</div>
         <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.5;">
@@ -350,7 +349,6 @@
         </div>
         <button onclick="dismissLocalAIBanner()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">×</button>
     </div>
-    {% endif %}
 
     <!-- Hook natal -->
     <div id="hook-natal-box" style="display:none; max-width:600px; margin:0 auto 2.5rem; padding:0 20px;">
@@ -460,12 +458,11 @@
                 ✦ Supprimer les pubs — €2,99
             </button>
 
-            {% if enable_local_ai %}
+            <!-- Sélecteur de modèle IA -->
             <button class="btn-secondary" onclick="openGemmaManager()" id="btn-gemma" style="max-width: 220px; font-size: 0.82rem;">
-                🤖 IA locale (Gemma 3)
+                ✦ IA locale (Gemma 3)
             </button>
             <span id="gemma-indicator" style="font-size:0.75rem;color:var(--text-dim);"></span>
-            {% endif %}
 
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: var(--text-dim);">
                 <input type="checkbox" id="alerts-toggle"
@@ -477,13 +474,19 @@
             <span id="alerts-status" style="font-size: 0.78rem; color: var(--text-dim);"></span>
         </div>
 
-        {% if enable_local_ai %}
+        <!-- ── Panel sélecteur de modèle IA ─────────────────────────────────── -->
         <div id="gemma-panel" style="display:none; margin-top:1.5rem; background:#0f0f22; border:1px solid var(--border); border-radius:3px; padding:16px;">
-            <div style="color:var(--gold);font-family:var(--display);font-size:0.85rem;margin-bottom:10px;">✦ Gemma 3 — Inférence locale</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="color:var(--gold);font-family:var(--display);font-size:0.85rem;">✦ Modèle IA</div>
+                <div id="gemma-model-badge" style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.12em;padding:2px 8px;border:1px solid var(--border);color:var(--text-dim);">☁ CLAUDE (SERVEUR)</div>
+            </div>
             <div id="gemma-status-text" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:12px;">Vérification…</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn-secondary" onclick="gemmaDownload()" id="btn-gemma-dl" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;">
                     ⬇ Télécharger (~400 Mo)
+                </button>
+                <button class="btn-secondary" onclick="gemmaPickFile()" id="btn-gemma-pick" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;display:none;">
+                    ✦ Sélectionner le fichier (.task)
                 </button>
                 <button class="btn-secondary" onclick="gemmaLoad()" id="btn-gemma-load" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;display:none;">
                     ▶ Charger en mémoire
@@ -496,10 +499,10 @@
                 <div id="gemma-progress-text" style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;"></div>
             </div>
             <p style="font-size:0.75rem;color:var(--text-dim);margin-top:12px;margin-bottom:0;">
-                Une fois chargé, la synthèse karmique est générée directement sur ton appareil — sans appel serveur, sans internet requis.
+                Gemma 3 actif → synthèse générée sur ton appareil, hors ligne.<br>
+                Claude (serveur) → appel API, requiert une connexion.
             </p>
         </div>
-        {% endif %}
 
         {% if enable_features %}
         <div id="calendar-panel" style="display:none; margin-top: 1.5rem;">
@@ -1014,6 +1017,7 @@ const Gemma = {
     async pollDownload(type='e2b', onProgress) { if (this.isWeb()) return; const dlId = this._dlIds[type]; if (!dlId) return; const p = this.plugin(); const interval = setInterval(async () => { try { const r = await p.checkDownloadProgress({ downloadId:dlId }); onProgress(r); if (r.status==='success'||r.status==='failed') clearInterval(interval); } catch { clearInterval(interval); } }, 2000); },
     async loadModel(type='e2b') { if (this.isWeb()) return GemmaWeb.loadModel(type); return await this.plugin().loadModel({ type }); },
     async generate(s, u, type='e2b') { if (this.isWeb()) return GemmaWeb.generate(s, u, type); return await this.plugin().generate({ system:s, user:u, type }); },
+    async pickModelFile() { if (this.isWeb()) throw new Error('Non supporté en web'); return await this.plugin().pickModelFile(); },
 };
 
 // ── Calculate avec routage Gemma/Claude ──────────────────────────────────────
@@ -1112,12 +1116,17 @@ function showLowRamBanner(ramGb) {
 function dismissLocalAIBanner() { const b = document.getElementById('banner-local-ai'); if (b) b.style.display='none'; localStorage.setItem('localAIBannerDismissed','1'); }
 
 function updateGemmaIndicator(status) {
-    const ind = document.getElementById('gemma-indicator');
-    if (!ind) return;
-    if (status.e4b_loaded)      { ind.textContent='✦ Gemma E4B local actif'; ind.style.color='#6ab56a'; }
-    else if (status.e2b_loaded) { ind.textContent='✦ Gemma E2B local actif'; ind.style.color='#6ab56a'; }
-    else if (status.e4b_exists) { ind.textContent='◆ Gemma E4B disponible'; ind.style.color='#c9a84c'; }
-    else if (status.e2b_exists) { ind.textContent='◆ Gemma E2B disponible'; ind.style.color='#c9a84c'; }
+    const ind   = document.getElementById('gemma-indicator');
+    const badge = document.getElementById('gemma-model-badge');
+    if (status.e4b_loaded || status.e2b_loaded) {
+        const label = status.e4b_loaded ? '✦ Gemma E4B local actif' : '✦ Gemma E2B local actif';
+        if (ind)   { ind.textContent = label; ind.style.color = '#6ab56a'; }
+        if (badge) { badge.textContent = '✦ GEMMA 3 (LOCAL)'; badge.style.color = '#6ab56a'; badge.style.borderColor = '#2a4a2a'; }
+    } else if (status.e4b_exists || status.e2b_exists) {
+        const label = status.e4b_exists ? '◆ Gemma E4B disponible' : '◆ Gemma E2B disponible';
+        if (ind)   { ind.textContent = label; ind.style.color = '#c9a84c'; }
+        if (badge) { badge.textContent = '☁ CLAUDE (SERVEUR)'; badge.style.color = 'var(--text-dim)'; badge.style.borderColor = 'var(--border)'; }
+    }
 }
 
 // ── Monétisation AdMob ────────────────────────────────────────────────────────
@@ -1190,14 +1199,46 @@ async function loadCalendar() {
 async function openGemmaManager() { const panel=document.getElementById('gemma-panel'); panel.style.display=panel.style.display==='none'?'block':'none'; if (panel.style.display==='block') await refreshGemmaStatus(); }
 
 async function refreshGemmaStatus() {
-    const statusEl=document.getElementById('gemma-status-text'), btnDl=document.getElementById('btn-gemma-dl'), btnLoad=document.getElementById('btn-gemma-load'), indicator=document.getElementById('gemma-indicator');
+    const statusEl  = document.getElementById('gemma-status-text');
+    const btnDl     = document.getElementById('btn-gemma-dl');
+    const btnLoad   = document.getElementById('btn-gemma-load');
+    const btnPick   = document.getElementById('btn-gemma-pick');
+    const indicator = document.getElementById('gemma-indicator');
+    const badge     = document.getElementById('gemma-model-badge');
     if (!statusEl) return;
-    const isWeb=Gemma.isWeb();
-    if (isWeb) { const hasOPFS=typeof navigator.storage?.getDirectory==='function'; if (!hasOPFS) { statusEl.textContent='⚠ Navigateur non compatible — utilise Chrome 110+ sur Android.'; btnDl.style.display='none'; btnLoad.style.display='none'; return; } }
-    const status=await Gemma.checkModels();
-    if (status.e2b_loaded) { statusEl.textContent=`✦ Gemma E2B actif (${status.e2b_sizeMb} Mo) — inférence locale prête.`; statusEl.style.color='#6ab56a'; btnDl.style.display='none'; btnLoad.style.display='none'; if (indicator) { indicator.textContent='✦ Gemma local actif'; indicator.style.color='#6ab56a'; } }
-    else if (status.e2b_exists) { statusEl.textContent=`◆ Modèle présent (${status.e2b_sizeMb} Mo) — non chargé.`; statusEl.style.color='#c9a84c'; btnDl.style.display='none'; btnLoad.style.display='block'; if (indicator) { indicator.textContent='◆ Gemma disponible'; indicator.style.color='#c9a84c'; } }
-    else { statusEl.textContent=isWeb?'Stockage dans le navigateur (~400 Mo). Wi-Fi recommandé.':'Téléchargement Android (~400 Mo). Wi-Fi recommandé.'; statusEl.style.color='var(--text-dim)'; btnDl.style.display='block'; btnLoad.style.display='none'; if (indicator) indicator.textContent=''; }
+    const isWeb = Gemma.isWeb();
+    if (isWeb) {
+        const hasOPFS = typeof navigator.storage?.getDirectory === 'function';
+        if (!hasOPFS) {
+            statusEl.textContent = '⚠ Navigateur non compatible — utilise Chrome 110+ sur Android.';
+            btnDl.style.display = 'none'; btnLoad.style.display = 'none';
+            if (btnPick) btnPick.style.display = 'none';
+            return;
+        }
+    }
+    const status = await Gemma.checkModels();
+    if (status.e2b_loaded) {
+        statusEl.textContent = `✦ Gemma E2B actif (${status.e2b_sizeMb} Mo) — inférence locale prête.`;
+        statusEl.style.color = '#6ab56a';
+        btnDl.style.display = 'none'; btnLoad.style.display = 'none';
+        if (btnPick) btnPick.style.display = 'none';
+        if (indicator) { indicator.textContent = '✦ Gemma local actif'; indicator.style.color = '#6ab56a'; }
+        if (badge) { badge.textContent = '✦ GEMMA 3 (LOCAL)'; badge.style.color = '#6ab56a'; badge.style.borderColor = '#2a4a2a'; }
+    } else if (status.e2b_exists) {
+        statusEl.textContent = `◆ Modèle présent (${status.e2b_sizeMb} Mo) — non chargé.`;
+        statusEl.style.color = '#c9a84c';
+        btnDl.style.display = 'none'; btnLoad.style.display = 'block';
+        if (btnPick) btnPick.style.display = 'none';
+        if (indicator) { indicator.textContent = '◆ Gemma disponible'; indicator.style.color = '#c9a84c'; }
+        if (badge) { badge.textContent = '☁ CLAUDE (SERVEUR)'; badge.style.color = 'var(--text-dim)'; badge.style.borderColor = 'var(--border)'; }
+    } else {
+        statusEl.textContent = isWeb ? 'Stockage dans le navigateur (~400 Mo). Wi-Fi recommandé.' : 'Téléchargement Android (~400 Mo). Wi-Fi recommandé.';
+        statusEl.style.color = 'var(--text-dim)';
+        btnDl.style.display = 'block'; btnLoad.style.display = 'none';
+        if (btnPick) btnPick.style.display = isWeb ? 'none' : 'inline-block';
+        if (indicator) indicator.textContent = '';
+        if (badge) { badge.textContent = '☁ CLAUDE (SERVEUR)'; badge.style.color = 'var(--text-dim)'; badge.style.borderColor = 'var(--border)'; }
+    }
 }
 
 function _updateGemmaProgress(p) {
@@ -1219,6 +1260,24 @@ async function gemmaLoad() {
     btnLoad.disabled=true; btnLoad.textContent='Chargement en mémoire…'; statusEl.textContent=Gemma.isWeb()?'Chargement du modèle… (30-60 sec)':'Chargement du modèle… (15-30 sec)';
     try { await Gemma.loadModel('e2b'); await refreshGemmaStatus(); }
     catch(e) { statusEl.textContent='✗ Erreur : '+e.message; statusEl.style.color='#c06060'; btnLoad.disabled=false; btnLoad.textContent='▶ Charger en mémoire'; }
+}
+
+async function gemmaPickFile() {
+    const btnPick = document.getElementById('btn-gemma-pick');
+    const statusEl = document.getElementById('gemma-status-text');
+    const origText = btnPick.innerHTML;
+    btnPick.disabled = true;
+    btnPick.innerHTML = '<span class="spinner"></span> Sélection…';
+    try {
+        await Gemma.pickModelFile();
+        await refreshGemmaStatus();
+    } catch(e) {
+        statusEl.textContent = '✗ Import annulé ou erreur : ' + e.message;
+        statusEl.style.color = '#c06060';
+    } finally {
+        btnPick.disabled = false;
+        btnPick.innerHTML = origText;
+    }
 }
 
 async function downloadAnnualReport() {
