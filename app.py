@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 import pytz
-from flask import Flask, jsonify, render_template, request, session, send_from_directory
+from flask import Flask, jsonify, make_response, render_template, request, session, send_from_directory
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -1631,6 +1631,56 @@ def content_daily():
         signal_data["cta"]["subtext"] = "Discover what it means for YOUR natal chart"
 
     return jsonify(signal_data), 200
+
+
+@app.route("/generate_task")
+def generate_task():
+    """Génère et retourne le fichier .task pour l'utilisateur connecté."""
+    from astro_calc import calculate_transits
+    from build_task_file import build_task_file, extract_natal_for_task, extract_dominant_transit
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "not_authenticated"}), 401
+
+    now = datetime.now()
+    natal = {
+        "name":   profile["name"],
+        "year":   profile["year"],
+        "month":  profile["month"],
+        "day":    profile["day"],
+        "hour":   profile["hour"],
+        "minute": profile["minute"],
+        "lat":    profile["lat"],
+        "lon":    profile["lon"],
+        "tz":     profile["tz"],
+        "city":   profile.get("city", ""),
+    }
+
+    try:
+        calc_result = calculate_transits(
+            natal=natal,
+            transit_loc=TRANSIT_LOC_DEFAULT,
+            year=now.year, month=now.month, day=now.day,
+            hour=now.hour, minute=now.minute,
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+    user = {
+        "name": profile.get("pseudo", profile.get("name", "")),
+        "lang": session.get("lang", profile.get("lang", "fr")),
+    }
+
+    natal_data   = extract_natal_for_task(calc_result)
+    transit_data = extract_dominant_transit(calc_result)
+    task         = build_task_file(user, natal_data, transit_data)
+
+    import json as _json
+    resp = make_response(_json.dumps(task, ensure_ascii=False, indent=2))
+    resp.headers["Content-Type"] = "application/json"
+    resp.headers["Content-Disposition"] = f'attachment; filename="karmic_{user["name"]}.task"'
+    return resp
 
 
 # ── Lancement ─────────────────────────────────────────────────────────────────
