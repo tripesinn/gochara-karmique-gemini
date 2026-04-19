@@ -828,28 +828,30 @@ def build_prompt_natal(user: dict, lang: str = "fr") -> dict:
         system = (
             "You are @siderealAstro13. Sidereal Vedic karmic soul reader. "
             "Oracular, direct, no hedging. No degrees, no orbs, no technical labels. "
+            "Plain text only — no markdown, no headers, no numbered lists, no dashes. "
             "Address user as 'you'. FORBIDDEN: any zodiac sign name. H1-H12 only."
         )
         user_prompt = (
             f"Natal chart of {name}:\n{natal_mini}\n\n"
-            f"Write exactly 3 sentences. No title. No introduction.\n"
-            f"1: dominant karmic pattern {name} replays (Ketu — frozen ROM).\n"
-            f"2: active wound and what it seeks (Chiron H{chi_h} — opening toward Visible Door).\n"
-            f"3: liberation direction (Stage) + seed of Alternative de Conscience.\n"
+            f"Write exactly 3 flowing sentences of plain prose. No numbers, no titles, no markdown.\n"
+            f"The first sentence: dominant karmic pattern {name} replays (Ketu — frozen ROM).\n"
+            f"The second sentence: active wound and what it seeks (Chiron H{chi_h} — opening toward Visible Door).\n"
+            f"The third sentence: liberation direction (Stage) + seed of Alternative de Conscience.\n"
             f"Dense, precise. Make them want to know more."
         )
     else:
         system = (
             "Tu es @siderealAstro13. Lecteur d'ame karmique vedique siderale. "
             "Oraculaire, direct, sans hedging. Zero degres, zero orbes. Tutoiement. "
+            "Texte brut uniquement — jamais de markdown, jamais de headers, jamais de listes, jamais de tirets. "
             "INTERDIT : noms de signes zodiacaux. Maisons H1-H12 uniquement."
         )
         user_prompt = (
             f"Theme natal de {name} :\n{natal_mini}\n\n"
-            f"Ecris exactement 3 phrases. Pas de titre. Pas d'introduction.\n"
-            f"1 : le schema karmique dominant que {name} rejoue (Ketu — ROM figee).\n"
-            f"2 : la blessure active et ce qu'elle cherche (Chiron H{chi_h} — outil vers la Porte Visible).\n"
-            f"3 : la direction de liberation (Stage) + amorce d'Alternative de Conscience.\n"
+            f"Ecris exactement 3 phrases de prose enchainee. Pas de numeros, pas de titres, pas de markdown.\n"
+            f"La premiere phrase : le schema karmique dominant que {name} rejoue (Ketu — ROM figee).\n"
+            f"La deuxieme phrase : la blessure active et ce qu'elle cherche (Chiron H{chi_h} — outil vers la Porte Visible).\n"
+            f"La troisieme phrase : la direction de liberation (Stage) + amorce d'Alternative de Conscience.\n"
             f"Dense, precis. Donne envie d'en savoir plus."
         )
 
@@ -877,27 +879,25 @@ def build_prompt_conscience(chart_data: dict, user: dict = None, lang: str = "fr
     if lang == "en":
         system = (
             "You are @siderealAstro13. Sidereal Vedic karmic astrology. "
-            "Write ONLY the 'Alternative de Conscience' section: "
-            "a precise, actionable inner shift the soul can choose RIGHT NOW. "
-            "No intro. No other sections. Direct address. FORBIDDEN: zodiac signs. "
-            "H1-H12 only. 150 words max."
+            "Write a precise, actionable inner shift the soul can choose RIGHT NOW. "
+            "Plain text only — no markdown, no headers, no numbered lists. "
+            "No intro. Direct address. FORBIDDEN: zodiac signs. H1-H12 only. 150 words max."
         )
         user_prompt = (
             f"Transit for {name} — {date}.\nNatal:\n{natal_mini}\nAspects:\n{aspects_text}\n\n"
-            f"Write ONLY: 'ALTERNATIVE DE CONSCIENCE :' then 3-4 sentences.\n"
+            f"Write 3-4 sentences of plain prose. No title, no numbers, no markdown.\n"
             f"What {name} can stop replaying (ROM loop) and what concrete action opens the Visible Door now."
         )
     else:
         system = (
             "Tu es @siderealAstro13. Astrologie karmique vedique siderale. "
-            "Tu ecris UNIQUEMENT la section 'Alternative de Conscience' : "
-            "le shift interieur actionnable que l'ame peut choisir MAINTENANT. "
-            "Pas d'intro. Pas d'autres sections. Tutoiement. "
-            "INTERDIT : signes zodiacaux. H1-H12 uniquement. 150 mots max."
+            "Tu ecris le shift interieur actionnable que l'ame peut choisir MAINTENANT. "
+            "Texte brut uniquement — jamais de markdown, jamais de headers, jamais de listes. "
+            "Pas d'intro. Tutoiement. INTERDIT : signes zodiacaux. H1-H12 uniquement. 150 mots max."
         )
         user_prompt = (
             f"Transit de {name} — {date}.\nNatal :\n{natal_mini}\nAspects :\n{aspects_text}\n\n"
-            f"Ecris UNIQUEMENT : 'ALTERNATIVE DE CONSCIENCE :' puis 3-4 phrases.\n"
+            f"Ecris 3-4 phrases de prose enchainee. Pas de titre, pas de numeros, pas de markdown.\n"
             f"Ce que {name} peut cesser de rejouer (ROM) et l'action concrete qui ouvre la Porte Visible maintenant."
         )
 

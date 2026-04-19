@@ -1273,18 +1273,19 @@ def synthesis_prompt():
         system_t = (
             "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
             "Style : oraculaire, direct, pas de liste mécanique. "
+            "Texte brut uniquement — jamais de markdown, jamais de headers, jamais de numéros, jamais de tirets. "
             "Zéro degrés, zéro orbes dans le texte. Tutoiement. "
             "INTERDIT ABSOLU : noms de signes zodiacaux. "
             "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
         )
         user_t = (
             f"Thème natal de {name_t} :\n{natal_mini}\n\n"
-            f"Aspects actifs ce jour ({date_label}) — ne pas citer tels quels :\n{aspects_text}\n\n"
+            f"Aspects actifs ce jour ({date_label}) :\n{aspects_text}\n\n"
             f"{nak_ctx}"
-            f"Écris un hook de 3 phrases. Pas de titre. Pas d'introduction.\n"
-            f"Phrase 1 : ce qui se réactive dans la mémoire karmique de {name_t} aujourd'hui.\n"
-            f"Phrase 2 : ce que ça touche dans sa blessure profonde.\n"
-            f"Phrase 3 : l'amorce de l'Alternative de Conscience.\n"
+            f"Écris exactement 3 phrases de prose enchaînée. Pas de numéros, pas de titres, pas de markdown.\n"
+            f"La première phrase : ce qui se réactive dans la mémoire karmique de {name_t} aujourd'hui.\n"
+            f"La deuxième phrase : ce que ça touche dans sa blessure profonde.\n"
+            f"La troisième phrase : l'amorce de l'Alternative de Conscience — ce qui change si {name_t} choisit autrement.\n"
             f"Donne envie d'obtenir la lecture complète. Ton dense et précis."
         )
         return jsonify({"ok": True, "context": "hook_transit", "system": system_t, "user": user_t})
