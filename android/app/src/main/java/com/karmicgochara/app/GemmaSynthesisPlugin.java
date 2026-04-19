@@ -52,9 +52,11 @@ public class GemmaSynthesisPlugin extends Plugin {
     private static final int MAX_TOKENS_SYNTHESIS = 2048;
     private static final int MAX_TOKENS_REPORT    = 4096;
 
-    // État runtime
-    private GenerativeModel model        = null;
-    private boolean         loraLoaded   = false;
+    // État runtime — static pour survivre aux recreations d'Activity
+    private static GenerativeModel  sModel      = null;
+    private static boolean          sLoraLoaded = false;
+    private static boolean          sPreparing  = false;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
 
@@ -97,38 +99,59 @@ public class GemmaSynthesisPlugin extends Plugin {
     // ── prepareModel : télécharge le modèle si besoin + charge le LoRA ───────
     @PluginMethod
     public void prepareModel(PluginCall call) {
+        if (sModel != null) {
+            // Déjà chargé (survit aux recreations d'Activity)
+            JSObject result = new JSObject();
+            result.put("ok",       true);
+            result.put("loraUsed", sLoraLoaded);
+            result.put("cached",   true);
+            call.resolve(result);
+            return;
+        }
+
         boolean useReport = Boolean.TRUE.equals(call.getBoolean("report", false));
         int maxTokens = useReport ? MAX_TOKENS_REPORT : MAX_TOKENS_SYNTHESIS;
 
+        synchronized (GemmaSynthesisPlugin.class) {
+            if (sPreparing) {
+                call.reject("ALREADY_PREPARING", "prepareModel() déjà en cours.");
+                return;
+            }
+            sPreparing = true;
+        }
+
         executor.execute(() -> {
             try {
-                // Copie le LoRA depuis assets vers le cache interne si nécessaire
                 boolean loraAvailable = ensureLoraExtracted();
-
                 GenerativeModelOptions opts = buildOptions(loraAvailable, maxTokens);
 
-                // Déclenche le téléchargement du modèle de base si non disponible
                 GenerativeModel.createOrDownload(getContext(), opts)
                     .addOnSuccessListener(m -> {
-                        model = m;
-                        loraLoaded = loraAvailable;
+                        synchronized (GemmaSynthesisPlugin.class) {
+                            sModel      = m;
+                            sLoraLoaded = loraAvailable;
+                            sPreparing  = false;
+                        }
                         JSObject result = new JSObject();
                         result.put("ok",       true);
-                        result.put("loraUsed", loraLoaded);
+                        result.put("loraUsed", sLoraLoaded);
+                        result.put("cached",   false);
                         call.resolve(result);
                     })
-                    .addOnFailureListener(e ->
-                        call.reject("PREPARE_ERROR", e.getMessage(), e)
-                    );
+                    .addOnFailureListener(e -> {
+                        synchronized (GemmaSynthesisPlugin.class) { sPreparing = false; }
+                        call.reject("PREPARE_ERROR", e.getMessage(), e);
+                    });
 
             } catch (Exception e) {
+                synchronized (GemmaSynthesisPlugin.class) { sPreparing = false; }
                 call.reject("PREPARE_ERROR", e.getMessage(), e);
             }
         });
     }
 
 
-    // ── generate : inférence Gemma (+ LoRA doctrine si disponible) ───────────
+    // ── generate : lazy-init + inférence ─────────────────────────────────────
     @PluginMethod
     public void generate(PluginCall call) {
         String system = call.getString("system", "");
@@ -140,12 +163,7 @@ public class GemmaSynthesisPlugin extends Plugin {
             call.reject("INVALID_PROMPT", "Prompt vide.");
             return;
         }
-        if (model == null) {
-            call.reject("MODEL_NOT_LOADED", "Appelle prepareModel() d'abord.");
-            return;
-        }
 
-        // Profil utilisateur pour le nakshatra RAG (optionnel)
         JSObject profileJs = call.getObject("profile", new JSObject());
         JSONObject profile;
         try { profile = new JSONObject(profileJs.toString()); }
@@ -153,13 +171,43 @@ public class GemmaSynthesisPlugin extends Plugin {
         final JSONObject finalProfile = profile;
 
         executor.execute(() -> {
+            // Lazy-init : prépare le modèle si pas encore chargé
+            if (sModel == null) {
+                try {
+                    boolean loraAvailable = ensureLoraExtracted();
+                    GenerativeModelOptions opts = buildOptions(loraAvailable, MAX_TOKENS_SYNTHESIS);
+                    // createOrDownload bloquant simulé via CountDownLatch
+                    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+                    final Exception[] loadError = {null};
+
+                    GenerativeModel.createOrDownload(getContext(), opts)
+                        .addOnSuccessListener(m -> {
+                            synchronized (GemmaSynthesisPlugin.class) {
+                                sModel      = m;
+                                sLoraLoaded = loraAvailable;
+                            }
+                            latch.countDown();
+                        })
+                        .addOnFailureListener(e -> {
+                            loadError[0] = e;
+                            latch.countDown();
+                        });
+
+                    latch.await(30, java.util.concurrent.TimeUnit.SECONDS);
+
+                    if (loadError[0] != null || sModel == null) {
+                        call.reject("MODEL_NOT_READY", "Modèle non disponible — vérifie la connexion.");
+                        return;
+                    }
+                } catch (Exception e) {
+                    call.reject("MODEL_NOT_READY", e.getMessage(), e);
+                    return;
+                }
+            }
+
             try {
-                // Priorité :
-                // 1. LoRA chargé → doctrine dans les poids, system prompt minimal
-                // 2. system fourni par l'appelant → l'utiliser tel quel
-                // 3. fallback → DoctrinePromptBuilder (prompt compressé + nakshatra RAG)
                 String contextualSystem;
-                if (loraLoaded) {
+                if (sLoraLoaded) {
                     contextualSystem = (system != null && !system.isEmpty()) ? system : "";
                 } else if (system != null && !system.isEmpty()) {
                     contextualSystem = system;
@@ -175,13 +223,13 @@ public class GemmaSynthesisPlugin extends Plugin {
                     .setContents(fullPrompt)
                     .build();
 
-                model.generateContent(request)
+                sModel.generateContent(request)
                     .addOnSuccessListener(response -> {
                         JSObject result = new JSObject();
                         result.put("ok",        true);
                         result.put("synthesis", response.getText().trim());
                         result.put("local",     true);
-                        result.put("loraUsed",  loraLoaded);
+                        result.put("loraUsed",  sLoraLoaded);
                         result.put("type",      type);
                         call.resolve(result);
                     })
@@ -199,11 +247,13 @@ public class GemmaSynthesisPlugin extends Plugin {
     // ── unloadModel : libère la mémoire ───────────────────────────────────────
     @PluginMethod
     public void unloadModel(PluginCall call) {
-        if (model != null) {
-            try { model.close(); } catch (Exception ignored) {}
-            model = null;
+        synchronized (GemmaSynthesisPlugin.class) {
+            if (sModel != null) {
+                try { sModel.close(); } catch (Exception ignored) {}
+                sModel = null;
+            }
+            sLoraLoaded = false;
         }
-        loraLoaded = false;
         JSObject result = new JSObject();
         result.put("ok", true);
         call.resolve(result);
@@ -326,7 +376,8 @@ public class GemmaSynthesisPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         executor.shutdown();
-        if (model != null) { try { model.close(); } catch (Exception ignored) {} }
+        // Ne pas fermer sModel ici — il est static et doit survivre aux recreations d'Activity.
+        // Appeler unloadModel() explicitement si on veut libérer la mémoire.
         super.handleOnDestroy();
     }
 }
