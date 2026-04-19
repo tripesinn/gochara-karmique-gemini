@@ -409,7 +409,7 @@ def upgrade_plan(pseudo: str, plan: str, stripe_customer_id: str = "") -> bool:
         ws.update(f"T{i}:U{i}", [[plan, str(syntheses)]])
         if stripe_customer_id:
             ws.update(f"V{i}", [[stripe_customer_id]])
-        ws.update(f"W{i}", [[str(chat_limit)]])
+        ws.update(f"AT{i}", [[str(chat_limit)]])
         return True
     return False
 
@@ -438,7 +438,7 @@ def get_chat_quota(pseudo: str) -> dict:
             continue
         plan = row[19] if len(row) > 19 else "free"  # col T
         try:
-            remaining = int(row[22]) if len(row) > 22 and row[22] else 0  # col W
+            remaining = int(row[45]) if len(row) > 45 and row[45] else 0  # col AT
         except ValueError:
             remaining = 0
         return {"plan": plan, "remaining": remaining, "limit": PLAN_CHAT_LIMITS.get(plan, 0)}
@@ -463,12 +463,12 @@ def consume_chat_question(pseudo: str) -> dict:
         if plan != "test":
             return {"ok": False, "remaining": 0}
         try:
-            remaining = int(row[22]) if len(row) > 22 and row[22] else 0
+            remaining = int(row[45]) if len(row) > 45 and row[45] else 0
         except ValueError:
             remaining = 0
         if remaining <= 0:
             return {"ok": False, "remaining": 0}
-        ws.update(f"W{i}", [[str(remaining - 1)]])
+        ws.update(f"AT{i}", [[str(remaining - 1)]])
         return {"ok": True, "remaining": remaining - 1}
     return {"ok": False, "remaining": 0}
 
