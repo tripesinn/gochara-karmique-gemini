@@ -193,6 +193,12 @@ LANGS = {
         "js_err_payment": "Erreur paiement",
         "js_badge_local": "⬡ IA LOCALE",
         "js_badge_claude": "☁ CLAUDE",
+        "js_chat_placeholder": "Ta question…",
+        "js_chat_send": "ENVOYER",
+        "js_chat_unlimited": "∞ Questions illimitées",
+        "js_chat_remaining": "{n}/{limit} questions",
+        "js_chat_exhausted": "Questions épuisées (0/{limit})",
+        "js_chat_upgrade_hint": "Passe à Illimité pour continuer.",
         "js_expand_link": "→ Révèle ton Alternative de Conscience",
         "js_expand_loading": "Lecture en cours…",
         "js_cta_label": "Lecture · 4,99€",
@@ -331,6 +337,12 @@ LANGS = {
         "js_err_payment": "Payment error",
         "js_badge_local": "⬡ LOCAL AI",
         "js_badge_claude": "☁ CLAUDE",
+        "js_chat_placeholder": "Your question…",
+        "js_chat_send": "SEND",
+        "js_chat_unlimited": "∞ Unlimited questions",
+        "js_chat_remaining": "{n}/{limit} questions",
+        "js_chat_exhausted": "Questions exhausted (0/{limit})",
+        "js_chat_upgrade_hint": "Upgrade to Unlimited to continue.",
         "js_expand_link": "→ Reveal your Consciousness Alternative",
         "js_expand_loading": "Reading in progress…",
         "js_cta_label": "Reading · €4.99",
@@ -941,14 +953,12 @@ def calculate():
                     "upgrade_url": "/",
                 }), 429
         else:
-            # Plan free — quota mensuel 3
-            quota = check_and_increment_synthesis(pseudo)
-            if not quota["allowed"]:
-                return jsonify({
-                    "error": "quota_exceeded",
-                    "message": "Tu as atteint ta limite gratuite. Obtiens une synthèse complète.",
-                    "upgrade_url": "/",
-                }), 429
+            # Plan free — synthèse personnelle non incluse
+            return jsonify({
+                "error": "quota_exceeded",
+                "message": "La synthèse karmique est réservée au plan Lecture.",
+                "upgrade_url": "/stripe/checkout?product=test",
+            }), 429
     # ─────────────────────────────────────────────────────────────────────────
 
     natal = {
@@ -1453,11 +1463,9 @@ def synthesis_prompt():
                 return jsonify({"error": "quota_exceeded",
                                 "message": "Tu n'as plus de synthèses disponibles sur ton plan."}), 429
         else:
-            from profiles import check_and_increment_synthesis
-            quota = check_and_increment_synthesis(pseudo)
-            if not quota["allowed"]:
-                return jsonify({"error": "quota_exceeded",
-                                "message": "Tu as atteint ta limite gratuite."}), 429
+            return jsonify({"error": "quota_exceeded",
+                            "message": "La synthèse karmique est réservée au plan Lecture.",
+                            "upgrade_url": "/stripe/checkout?product=test"}), 429
 
     natal_data = {
         "name":   profile["name"],
@@ -1560,10 +1568,33 @@ def chat_ask():
     enriched = _enrich_profile_with_natal(profile, {})
     prompts  = build_prompt_chat(message, history, enriched, lang=lang)
 
+    if local:
+        return jsonify({
+            "ok":        True,
+            "system":    prompts["system"],
+            "user":      prompts["user"],
+            "remaining": remaining,
+        })
+
+    # Génération Haiku côté serveur
+    import anthropic as _anthropic
+    try:
+        client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        model  = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
+        msg = client.messages.create(
+            model=model,
+            max_tokens=600,
+            system=prompts["system"],
+            messages=[{"role": "user", "content": prompts["user"]}],
+        )
+        answer = msg.content[0].text.strip()
+    except Exception as e:
+        app.logger.error("Chat Haiku error: %s", e)
+        return jsonify({"error": "generation_failed", "message": str(e)}), 500
+
     return jsonify({
         "ok":        True,
-        "system":    prompts["system"],
-        "user":      prompts["user"],
+        "answer":    answer,
         "remaining": remaining,
     })
 
