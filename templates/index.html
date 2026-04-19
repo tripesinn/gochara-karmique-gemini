@@ -1142,6 +1142,27 @@ function _dedupeGemma(text) {
     return full.trim();
 }
 
+// Chrome Built-in AI (window.LanguageModel) — Pixel 9 / Chrome 127+ avec flag
+const ChromeAI = {
+    _api() { return window.LanguageModel || window.ai?.languageModel || null; },
+    async isAvailable() {
+        try {
+            const api = this._api();
+            if (!api) return false;
+            const av = await api.availability();
+            return av === 'available';
+        } catch { return false; }
+    },
+    async generate(system, user) {
+        const api = this._api();
+        const session = await api.create({ systemPrompt: system, temperature: 0.7, topK: 40 });
+        try {
+            const raw = await session.prompt(user);
+            return { ok: true, synthesis: raw.trim(), local: true, model: 'chrome-ai' };
+        } finally { try { session.destroy(); } catch {} }
+    },
+};
+
 const GemmaWeb = {
     _llm: { e2b: null, e4b: null }, _genai: null, _sdk: null,
     async _loadSDK() { if (this._sdk) return this._sdk; this._sdk = await import(GEMMA_SDK_URL); return this._sdk; },
@@ -1184,11 +1205,11 @@ const Gemma = {
     plugin() { return window.Capacitor?.Plugins?.GemmaSynthesis ?? null; },
     isWeb()  { return !this.plugin(); },
     async checkModels() { if (this.isWeb()) return GemmaWeb.checkModels(); try { return await this.plugin().checkModels(); } catch { return { e2b_exists:false, e2b_loaded:false, e4b_exists:false, e4b_loaded:false }; } },
-    async isAvailable() { try { const r = await this.checkModels(); return r.e2b_loaded||r.e4b_loaded; } catch { return false; } },
+    async isAvailable() { try { if (await ChromeAI.isAvailable()) return true; const r = await this.checkModels(); return r.e2b_loaded||r.e4b_loaded; } catch { return false; } },
     async downloadModel(type='e2b', onProgress) { if (this.isWeb()) return GemmaWeb.downloadModel(type, onProgress); const r = await this.plugin().downloadModel({ type }); this._dlIds[type] = r.downloadId??null; return r; },
     async pollDownload(type='e2b', onProgress) { if (this.isWeb()) return; const dlId = this._dlIds[type]; if (!dlId) return; const p = this.plugin(); const interval = setInterval(async () => { try { const r = await p.checkDownloadProgress({ downloadId:dlId }); onProgress(r); if (r.status==='success'||r.status==='failed') clearInterval(interval); } catch { clearInterval(interval); } }, 2000); },
     async loadModel(type='e2b') { if (this.isWeb()) return GemmaWeb.loadModel(type); return await this.plugin().loadModel({ type }); },
-    async generate(s, u, type='e2b') { if (this.isWeb()) return GemmaWeb.generate(s, u, type); return await this.plugin().generate({ system:s, user:u, type }); },
+    async generate(s, u, type='e2b') { if (await ChromeAI.isAvailable()) return ChromeAI.generate(s, u); if (this.isWeb()) return GemmaWeb.generate(s, u, type); return await this.plugin().generate({ system:s, user:u, type }); },
     async pickModelFile() {
         if (this.isWeb()) {
             return new Promise((resolve, reject) => {

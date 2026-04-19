@@ -757,6 +757,27 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
 }
 
+// ✦ Chrome Built-in AI (window.LanguageModel — Chrome 127+ Android) ✦
+const ChromeAI = {
+    _api() { return window.LanguageModel || window.ai?.languageModel || null; },
+    async isAvailable() {
+        try {
+            const api = this._api();
+            if (!api) return false;
+            const av = await api.availability();
+            return av === 'available';
+        } catch { return false; }
+    },
+    async generate(system, user) {
+        const api = this._api();
+        const session = await api.create({ systemPrompt: system, temperature: 0.7, topK: 40 });
+        try {
+            const raw = await session.prompt(user);
+            return { ok: true, synthesis: raw.trim(), local: true, model: 'chrome-ai' };
+        } finally { try { session.destroy(); } catch {} }
+    },
+};
+
 // ✦ Gemma 3 - Inférence locale (AI Core / MediaPipe) ✦
 // ══════════════════════════════════════════════════
 
@@ -770,6 +791,7 @@ const Gemma = {
     },
 
     async isAvailable() {
+        if (await ChromeAI.isAvailable()) return true;
         if (this._available !== null) return this._available;
         const p = this.plugin();
         if (!p) { this._available = false; return false; }
@@ -824,6 +846,7 @@ const Gemma = {
     },
 
     async generate(systemPrompt, userPrompt, prefix = '') {
+        if (await ChromeAI.isAvailable()) return ChromeAI.generate(systemPrompt, userPrompt);
         const p = this.plugin();
         if (!p) throw new Error('Plugin non disponible');
         return await p.generate({ system: systemPrompt, user: userPrompt, prefix });
