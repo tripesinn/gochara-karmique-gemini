@@ -499,6 +499,9 @@
                     style="accent-color: var(--gold); width: 16px; height: 16px;">
                 {{ lang.alerts_label }}
             </label>
+            <button onclick="testAlert()" style="background:none; border:1px solid var(--border); color:var(--text-dim); font-size:0.75rem; padding:3px 10px; cursor:pointer; border-radius:2px; letter-spacing:0.05em;">
+                TEST →
+            </button>
             <span id="alerts-status" style="font-size: 0.78rem; color: var(--text-dim);"></span>
         </div>
 
@@ -1348,6 +1351,17 @@ async function toggleAlerts(enabled) {
         if (data.ok) { status.textContent = enabled ? T.js_alerts_enabled : T.js_alerts_disabled; status.style.color='#6a9f6a'; }
         else         { status.textContent='✗ '+(data.error||'Erreur'); status.style.color='#c06060'; document.getElementById('alerts-toggle').checked=!enabled; }
     } catch { status.textContent=T.js_email_network_err; status.style.color='#c06060'; document.getElementById('alerts-toggle').checked=!enabled; }
+}
+
+async function testAlert() {
+    const status = document.getElementById('alerts-status');
+    status.textContent = '⟳ Envoi test…'; status.style.color = 'var(--gold)';
+    try {
+        const res  = await fetch('/alert/test', { method:'POST' });
+        const data = await res.json();
+        if (data.ok) { status.textContent = '✓ Email envoyé (' + data.events + ' événement(s)) → ' + data.email; status.style.color = '#6a9f6a'; }
+        else         { status.textContent = '✗ ' + (data.error || 'Erreur'); status.style.color = '#c06060'; }
+    } catch { status.textContent = '✗ Erreur réseau'; status.style.color = '#c06060'; }
 }
 
 // ── Calendrier mensuel ────────────────────────────────────────────────────────

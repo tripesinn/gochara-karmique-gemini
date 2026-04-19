@@ -1692,6 +1692,46 @@ def cron_daily():
 
 
 
+# ── Test alerte manuelle ───────────────────────────────────────────────────────
+@app.route("/alert/test", methods=["POST"])
+def alert_test():
+    """Envoie un email d'alerte test à l'utilisateur connecté (transits réels ou synthétiques)."""
+    from transit_alerts import detect_transit_events, send_alert_email
+
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"error": "Non connecté"}), 401
+
+    email = (profile.get("email") or "").strip()
+    if not email:
+        return jsonify({"error": "Aucun email enregistré sur ce compte."}), 400
+
+    enriched = _enrich_profile_with_natal(profile, {})
+
+    try:
+        events = detect_transit_events(enriched)
+    except Exception as exc:
+        app.logger.error("alert/test detect error: %s", exc, exc_info=True)
+        events = []
+
+    if not events:
+        # Événement synthétique pour valider le canal email
+        events = [{
+            "type":    "debut",
+            "kind":    "nakshatra",
+            "transit": "Saturne ♄",
+            "natal":   "Ketu",
+            "nakshatra": "Mula",
+            "lord":    "Ketu",
+            "interpretation": "ROM_oppression",
+        }]
+
+    sent = send_alert_email(enriched, events)
+    if sent:
+        return jsonify({"ok": True, "email": email, "events": len(events)})
+    return jsonify({"error": "Échec envoi email (vérifier RESEND_API_KEY)."}), 500
+
+
 # ── Capture email (pré-paiement ou suivi app) ─────────────────────────────────
 @app.route("/save_email", methods=["POST"])
 def save_email():
