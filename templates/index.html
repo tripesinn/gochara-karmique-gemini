@@ -379,22 +379,6 @@
         <button onclick="logout()" style="background:none; border:none; color:var(--text-dim); cursor:pointer;">[ {{ lang.logout if lang.logout else 'Déconnexion' }} ]</button>
     </div>
 
-    <div id="banner-local-ai" style="display:none; margin-bottom:1.5rem; background:linear-gradient(135deg,#0f1a0f,#0f0f1a); border:1px solid #2a4a2a; border-radius:3px; padding:14px 16px; position:relative;">
-        <div style="font-size:0.82rem; color:#6ab56a; font-family:var(--display); margin-bottom:4px;">✦ IA locale disponible</div>
-        <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.5;">
-            Télécharge le patch IA (~400 Mo) pour générer ta synthèse karmique <strong style="color:var(--text);">hors ligne, sans serveur</strong>, directement sur ton téléphone.
-        </div>
-        <div style="margin-top:10px; display:flex; gap:8px;">
-            <button onclick="openGemmaManager();dismissLocalAIBanner();" class="btn-secondary" style="width:auto;padding:0.5rem 1rem;font-size:0.78rem;border-color:#2a4a2a;color:#6ab56a;">
-                ⬇ Télécharger le patch IA
-            </button>
-            <button onclick="dismissLocalAIBanner()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.78rem;">
-                Plus tard
-            </button>
-        </div>
-        <button onclick="dismissLocalAIBanner()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">×</button>
-    </div>
-
     <!-- Hook natal -->
     <div id="hook-natal-box" style="display:none; max-width:600px; margin:0 auto 2.5rem; padding:0 20px;">
         <div style="border-left:2px solid var(--gold-dim); padding:1rem 1.2rem; background:var(--mist);">
@@ -445,7 +429,7 @@
             <span id="btn-text">✦ OBTENIR LA LECTURE COMPLÈTE</span>
         </button>
         <div style="font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); letter-spacing:0.15em; margin-top:0.5rem;">
-            Analyse védique complète · @siderealAstro13
+            Interprétation @siderealastro13
         </div>
     </div>
 
@@ -498,12 +482,6 @@
                 ✦ Supprimer les pubs — €2,99
             </button>
 
-            <!-- Sélecteur de modèle IA -->
-            <button class="btn-secondary" onclick="openGemmaManager()" id="btn-gemma" style="max-width: 220px; font-size: 0.82rem;">
-                ✦ IA locale (Gemma 3)
-            </button>
-            <span id="gemma-indicator" style="font-size:0.75rem;color:var(--text-dim);"></span>
-
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: var(--text-dim);">
                 <input type="checkbox" id="alerts-toggle"
                     {% if session_profile and session_profile.get('alerts_enabled') %}checked{% endif %}
@@ -512,36 +490,6 @@
                 🔔 Alertes transit par email
             </label>
             <span id="alerts-status" style="font-size: 0.78rem; color: var(--text-dim);"></span>
-        </div>
-
-        <!-- ── Panel sélecteur de modèle IA ─────────────────────────────────── -->
-        <div id="gemma-panel" style="display:none; margin-top:1.5rem; background:#0f0f22; border:1px solid var(--border); border-radius:3px; padding:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="color:var(--gold);font-family:var(--display);font-size:0.85rem;">✦ Modèle IA</div>
-                <div id="gemma-model-badge" style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.12em;padding:2px 8px;border:1px solid var(--border);color:var(--text-dim);">☁ CLAUDE (SERVEUR)</div>
-            </div>
-            <div id="gemma-status-text" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:12px;">Vérification…</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn-secondary" onclick="gemmaDownload()" id="btn-gemma-dl" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;">
-                    ⬇ Télécharger (~400 Mo)
-                </button>
-                <button class="btn-secondary" onclick="gemmaPickFile()" id="btn-gemma-pick" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;display:none;">
-                    ✦ Sélectionner le fichier (.task)
-                </button>
-                <button class="btn-secondary" onclick="gemmaLoad()" id="btn-gemma-load" style="width:auto;padding:0.6rem 1rem;font-size:0.78rem;display:none;">
-                    ▶ Charger en mémoire
-                </button>
-            </div>
-            <div id="gemma-dl-progress" style="margin-top:10px;display:none;">
-                <div style="background:#1a1a2a;border-radius:2px;height:6px;overflow:hidden;">
-                    <div id="gemma-progress-bar" style="height:100%;background:var(--gold);width:0%;transition:width 0.3s;"></div>
-                </div>
-                <div id="gemma-progress-text" style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;"></div>
-            </div>
-            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:12px;margin-bottom:0;">
-                Gemma 3 actif → synthèse générée sur ton appareil, hors ligne.<br>
-                Claude (serveur) → appel API, requiert une connexion.
-            </p>
         </div>
 
         {% if enable_features %}
@@ -734,8 +682,8 @@ function cleanHook(text) {
     function applyBadge(eng) {
         const badge = document.getElementById('natal-engine-badge');
         if (!badge) return;
-        if (eng === 'gemma') {
-            badge.textContent = '⬡ GEMMA LOCAL';
+        if (eng === 'gemma' || eng === 'chrome-ai') {
+            badge.textContent = '⬡ IA LOCALE';
             badge.style.cssText = 'background:rgba(180,140,60,0.15);color:var(--gold);border:1px solid rgba(180,140,60,0.3);';
         } else {
             badge.textContent = '☁ CLAUDE';
@@ -819,8 +767,8 @@ async function expandTopic(topic) {
         const cta = document.createElement('div');
         cta.className = 'expand-cta';
         cta.innerHTML =
-            '<p class="cta-label">Test Gemma · 4,99€</p>' +
-            '<p class="cta-desc">Synthèse complète · 3 questions chatbot · IA locale</p>' +
+            '<p class="cta-label">Lecture · 4,99€</p>' +
+            '<p class="cta-desc">Synthèse complète · 3 questions chatbot · accès immédiat</p>' +
             '<button onclick="stripeCheckout(\'test\')" class="btn-primary" style="max-width:280px;margin:0 auto;">' +
             '<span>Débloquer la Synthèse — 4,99€</span></button>';
         return cta;
@@ -1107,42 +1055,8 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
 let lastSynthesis = '';
 
-// ── Gemma / local AI ──────────────────────────────────────────────────────────
-const GEMMA_WASM_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.26/wasm';
-const GEMMA_SDK_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.26/genai_bundle.mjs';
-
-if (typeof navigator !== 'undefined' && navigator.gpu) {
-    const _orig = navigator.gpu.requestAdapter.bind(navigator.gpu);
-    navigator.gpu.requestAdapter = async (...args) => {
-        const adapter = await _orig(...args);
-        if (adapter && typeof adapter.requestAdapterInfo !== 'function')
-            adapter.requestAdapterInfo = async () => adapter.info ?? {};
-        return adapter;
-    };
-}
-
-const GEMMA_MODEL_URLS = { e2b: 'https://models.karmicgochara.app/gemma3-1b-it-int4-web.task', e4b: 'https://models.karmicgochara.app/gemma3-1b-it-int4-web.task' };
-const GEMMA_FILENAMES  = { e2b: 'gemma_e2b.task', e4b: 'gemma_e4b.task' };
-
-function _dedupeGemma(text) {
-    const sentences = text.split(/(?<=[.!?»])\s+/);
-    const seen = new Set(); const out = [];
-    for (const s of sentences) {
-        const key = s.trim().slice(0, 60).toLowerCase();
-        if (key.length > 10 && seen.has(key)) break;
-        seen.add(key); out.push(s);
-    }
-    const full = out.join(' ');
-    const actionIdx = full.search(/##\s*4\./);
-    if (actionIdx !== -1) {
-        const after = full.slice(actionIdx);
-        const next  = after.slice(10).search(/##\s*[1-9]\./);
-        if (next !== -1) return full.slice(0, actionIdx + 10 + next).trim();
-    }
-    return full.trim();
-}
-
-// Chrome Built-in AI (window.LanguageModel) — Pixel 9 / Chrome 127+ avec flag
+// ── Local AI ──────────────────────────────────────────────────────────────────
+// Chrome Built-in AI (window.LanguageModel) — Chrome 127+ desktop avec flag
 const ChromeAI = {
     _api() { return window.LanguageModel || window.ai?.languageModel || null; },
     async isAvailable() {
@@ -1163,76 +1077,12 @@ const ChromeAI = {
     },
 };
 
-const GemmaWeb = {
-    _llm: { e2b: null, e4b: null }, _genai: null, _sdk: null,
-    async _loadSDK() { if (this._sdk) return this._sdk; this._sdk = await import(GEMMA_SDK_URL); return this._sdk; },
-    async _getGenai() { if (this._genai) return this._genai; const { FilesetResolver } = await this._loadSDK(); this._genai = await FilesetResolver.forGenAiTasks(GEMMA_WASM_CDN); return this._genai; },
-    async checkModels() {
-        const out = { e2b_exists: false, e2b_loaded: !!this._llm.e2b, e4b_exists: false, e4b_loaded: !!this._llm.e4b, e2b_sizeMb: 0, e4b_sizeMb: 0 };
-        try { const root = await navigator.storage.getDirectory(); for (const type of ['e2b','e4b']) { try { const fh = await root.getFileHandle(GEMMA_FILENAMES[type]); const file = await fh.getFile(); if (file.size > 1_000_000) { out[`${type}_exists`] = true; out[`${type}_sizeMb`] = Math.round(file.size/1024/1024); } } catch {} } } catch {}
-        return out;
-    },
-    async downloadModel(type='e2b', onProgress) {
-        const root = await navigator.storage.getDirectory();
-        try { const fh = await root.getFileHandle(GEMMA_FILENAMES[type]); const file = await fh.getFile(); if (file.size > 1_000_000) { if (onProgress) onProgress({ status:'success', progress:100, dlMb:Math.round(file.size/1024/1024), totalMb:Math.round(file.size/1024/1024) }); return { ok:true, already:true }; } } catch {}
-        const res = await fetch(GEMMA_MODEL_URLS[type]);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const total = parseInt(res.headers.get('content-length')||'0'); let loaded = 0;
-        const fh = await root.getFileHandle(GEMMA_FILENAMES[type], { create:true });
-        const wr = await fh.createWritable(); const reader = res.body.getReader();
-        while (true) { const { done, value } = await reader.read(); if (done) break; await wr.write(value); loaded += value.length; if (onProgress) onProgress({ status:'running', progress: total>0?Math.round(loaded*100/total):0, dlMb:Math.round(loaded/1024/1024), totalMb:Math.round(total/1024/1024) }); }
-        await wr.close(); if (onProgress) onProgress({ status:'success', progress:100 }); return { ok:true, already:false };
-    },
-    async loadModel(type='e2b') {
-        const { LlmInference } = await this._loadSDK(); const genai = await this._getGenai();
-        const root = await navigator.storage.getDirectory(); const fh = await root.getFileHandle(GEMMA_FILENAMES[type]);
-        const file = await fh.getFile(); const buffer = await file.arrayBuffer();
-        if (this._llm[type]) { try { this._llm[type].close(); } catch {} }
-        this._llm[type] = await LlmInference.createFromOptions(genai, { baseOptions: { modelAssetBuffer: new Uint8Array(buffer) }, maxTokens:8192, topK:40, temperature:0.7 });
-        return { ok:true, type };
-    },
-    async generate(system, user, type='e2b') {
-        let llm = this._llm[type]; if (!llm && type==='e4b' && this._llm.e2b) llm = this._llm.e2b;
-        if (!llm) throw new Error('Modèle non chargé');
-        const primer = "## 1."; const prompt = `<start_of_turn>user\n${system?system+'\n\n':''}${user}<end_of_turn>\n<start_of_turn>model\n${primer}`;
-        const raw = await llm.generateResponse(prompt);
-        return { ok:true, synthesis:_dedupeGemma((primer+raw).trim()), local:true, model:type };
-    },
-};
-
 const Gemma = {
-    _dlIds: { e2b:null, e4b:null },
     plugin() { return window.Capacitor?.Plugins?.GemmaSynthesis ?? null; },
     isWeb()  { return !this.plugin(); },
-    async checkModels() { if (this.isWeb()) return GemmaWeb.checkModels(); try { return await this.plugin().checkModels(); } catch { return { e2b_exists:false, e2b_loaded:false, e4b_exists:false, e4b_loaded:false }; } },
+    async checkModels() { try { if (this.isWeb()) return { e2b_exists:false, e2b_loaded:false, e4b_exists:false, e4b_loaded:false }; return await this.plugin().checkModels(); } catch { return { e2b_exists:false, e2b_loaded:false, e4b_exists:false, e4b_loaded:false }; } },
     async isAvailable() { try { if (await ChromeAI.isAvailable()) return true; const r = await this.checkModels(); return r.e2b_loaded||r.e4b_loaded; } catch { return false; } },
-    async downloadModel(type='e2b', onProgress) { if (this.isWeb()) return GemmaWeb.downloadModel(type, onProgress); const r = await this.plugin().downloadModel({ type }); this._dlIds[type] = r.downloadId??null; return r; },
-    async pollDownload(type='e2b', onProgress) { if (this.isWeb()) return; const dlId = this._dlIds[type]; if (!dlId) return; const p = this.plugin(); const interval = setInterval(async () => { try { const r = await p.checkDownloadProgress({ downloadId:dlId }); onProgress(r); if (r.status==='success'||r.status==='failed') clearInterval(interval); } catch { clearInterval(interval); } }, 2000); },
-    async loadModel(type='e2b') { if (this.isWeb()) return GemmaWeb.loadModel(type); return await this.plugin().loadModel({ type }); },
-    async generate(s, u, type='e2b') { if (await ChromeAI.isAvailable()) return ChromeAI.generate(s, u); if (this.isWeb()) return GemmaWeb.generate(s, u, type); return await this.plugin().generate({ system:s, user:u, type }); },
-    async pickModelFile() {
-        if (this.isWeb()) {
-            return new Promise((resolve, reject) => {
-                const inp = document.createElement('input');
-                inp.type = 'file'; inp.accept = '.task,application/octet-stream';
-                inp.onchange = async () => {
-                    const file = inp.files[0];
-                    if (!file) { reject(new Error('Aucun fichier sélectionné')); return; }
-                    try {
-                        const root = await navigator.storage.getDirectory();
-                        const fh = await root.getFileHandle(GEMMA_FILENAMES['e2b'], { create: true });
-                        const wr = await fh.createWritable();
-                        await wr.write(await file.arrayBuffer());
-                        await wr.close();
-                        resolve({ ok: true });
-                    } catch(e) { reject(e); }
-                };
-                inp.oncancel = () => reject(new Error('Annulé'));
-                inp.click();
-            });
-        }
-        return await this.plugin().pickModelFile();
-    },
+    async generate(s, u, type='e2b') { if (await ChromeAI.isAvailable()) return ChromeAI.generate(s, u); if (!this.isWeb()) return await this.plugin().generate({ system:s, user:u, type }); throw new Error('Aucun modèle local disponible'); },
 };
 
 // ── Calculate avec routage Gemma/Claude ──────────────────────────────────────
@@ -1298,59 +1148,8 @@ function showLocalBadge(isLocal, modelType) {
         const box = document.getElementById('synthesis-box').querySelector('div');
         if (box) box.prepend(badge);
     }
-    if (isLocal) { badge.textContent = '✦ ' + (modelType==='e4b'?'Gemma E4B local':'Gemma E2B local'); badge.style.cssText += 'background:#1a2a1a;color:#6ab56a;border:1px solid #2a4a2a;'; }
+    if (isLocal) { badge.textContent = '⬡ IA LOCALE'; badge.style.cssText += 'background:#1a2a1a;color:#6ab56a;border:1px solid #2a4a2a;'; }
     else         { badge.textContent = '☁ Claude'; badge.style.cssText += 'background:#1a1a2a;color:#9090b0;border:1px solid #2a2a4a;'; }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    Gemma.checkModels().then(status => {
-        updateGemmaIndicator(status);
-        // Badge explicite si modèle absent — indique à l'user de recharger après login
-        const ind = document.getElementById('gemma-indicator');
-        if (ind && !status.e2b_loaded && !status.e4b_loaded) {
-            ind.textContent = '☁ IA serveur (Gemma non chargé)';
-            ind.style.color = 'rgba(255,255,255,0.3)';
-        }
-    });
-    initLocalAIBanner();
-});
-
-async function initLocalAIBanner() {
-    const isNative  = window.Capacitor?.isNativePlatform?.() ?? false;
-    const isChrome  = /Chrome\//.test(navigator.userAgent) && /Android/.test(navigator.userAgent);
-    const dismissed = localStorage.getItem('localAIBannerDismissed');
-    const banner    = document.getElementById('banner-local-ai');
-    if (!banner || (!isNative && !isChrome)) return;
-    let can_e2b = true, ramGb = null;
-    if (isNative && Gemma.plugin()) { try { const mem = await Gemma.plugin().getDeviceMemory(); can_e2b = mem.can_e2b??mem.sufficient??false; ramGb = mem.totalRamGb; } catch {} }
-    if (ramGb === null && navigator.deviceMemory) { ramGb = navigator.deviceMemory; can_e2b = ramGb >= 4; }
-    if (!can_e2b) { showLowRamBanner(ramGb); return; }
-    if (!dismissed) { const status = await Gemma.checkModels(); if (!status.e2b_exists) banner.style.display = 'block'; }
-}
-
-function showLowRamBanner(ramGb) {
-    const banner = document.getElementById('banner-local-ai');
-    if (!banner) return;
-    const ram = ramGb ? ` (${ramGb} Go détectés)` : '';
-    banner.style.borderColor = '#2a2a3a'; banner.style.background = 'linear-gradient(135deg,#0f0f18,#0f0f1a)';
-    banner.innerHTML = `<div style="font-size:0.82rem;color:var(--text-dim);font-family:var(--display);margin-bottom:4px;">☁ Mode Cloud actif</div><div style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;">Votre appareil est trop léger pour l'IA locale${ram}.<br>Nous utiliserons la version <strong style="color:var(--text);">Cloud (Haiku)</strong> pour vous.</div><button onclick="this.parentElement.style.display='none'" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;">×</button>`;
-    banner.style.display = 'block';
-}
-
-function dismissLocalAIBanner() { const b = document.getElementById('banner-local-ai'); if (b) b.style.display='none'; localStorage.setItem('localAIBannerDismissed','1'); }
-
-function updateGemmaIndicator(status) {
-    const ind   = document.getElementById('gemma-indicator');
-    const badge = document.getElementById('gemma-model-badge');
-    if (status.e4b_loaded || status.e2b_loaded) {
-        const label = status.e4b_loaded ? '✦ Gemma E4B local actif' : '✦ Gemma E2B local actif';
-        if (ind)   { ind.textContent = label; ind.style.color = '#6ab56a'; }
-        if (badge) { badge.textContent = '✦ GEMMA 3 (LOCAL)'; badge.style.color = '#6ab56a'; badge.style.borderColor = '#2a4a2a'; }
-    } else if (status.e4b_exists || status.e2b_exists) {
-        const label = status.e4b_exists ? '◆ Gemma E4B disponible' : '◆ Gemma E2B disponible';
-        if (ind)   { ind.textContent = label; ind.style.color = '#c9a84c'; }
-        if (badge) { badge.textContent = '☁ CLAUDE (SERVEUR)'; badge.style.color = 'var(--text-dim)'; badge.style.borderColor = 'var(--border)'; }
-    }
 }
 
 // ── Monétisation AdMob ────────────────────────────────────────────────────────
@@ -1417,91 +1216,6 @@ async function loadCalendar() {
         }
         html+='</div>'; content.innerHTML=html;
     } catch { loading.style.display='none'; content.innerHTML='<p style="color:#c06060;">Erreur de connexion.</p>'; }
-}
-
-// ── Gemma Manager UI ──────────────────────────────────────────────────────────
-async function openGemmaManager() { const panel=document.getElementById('gemma-panel'); panel.style.display=panel.style.display==='none'?'block':'none'; if (panel.style.display==='block') await refreshGemmaStatus(); }
-
-async function refreshGemmaStatus() {
-    const statusEl  = document.getElementById('gemma-status-text');
-    const btnDl     = document.getElementById('btn-gemma-dl');
-    const btnLoad   = document.getElementById('btn-gemma-load');
-    const btnPick   = document.getElementById('btn-gemma-pick');
-    const indicator = document.getElementById('gemma-indicator');
-    const badge     = document.getElementById('gemma-model-badge');
-    if (!statusEl) return;
-    const isWeb = Gemma.isWeb();
-    if (isWeb) {
-        const hasOPFS = typeof navigator.storage?.getDirectory === 'function';
-        if (!hasOPFS) {
-            statusEl.textContent = '⚠ Navigateur non compatible — utilise Chrome 110+ sur Android.';
-            btnDl.style.display = 'none'; btnLoad.style.display = 'none';
-            if (btnPick) btnPick.style.display = 'none';
-            return;
-        }
-    }
-    const status = await Gemma.checkModels();
-    if (status.e2b_loaded) {
-        statusEl.textContent = `✦ Gemma E2B actif (${status.e2b_sizeMb} Mo) — inférence locale prête.`;
-        statusEl.style.color = '#6ab56a';
-        btnDl.style.display = 'none'; btnLoad.style.display = 'none';
-        if (btnPick) btnPick.style.display = 'none';
-        if (indicator) { indicator.textContent = '✦ Gemma local actif'; indicator.style.color = '#6ab56a'; }
-        if (badge) { badge.textContent = '✦ GEMMA 3 (LOCAL)'; badge.style.color = '#6ab56a'; badge.style.borderColor = '#2a4a2a'; }
-    } else if (status.e2b_exists) {
-        statusEl.textContent = `◆ Modèle présent (${status.e2b_sizeMb} Mo) — non chargé.`;
-        statusEl.style.color = '#c9a84c';
-        btnDl.style.display = 'none'; btnLoad.style.display = 'block';
-        if (btnPick) btnPick.style.display = 'none';
-        if (indicator) { indicator.textContent = '◆ Gemma disponible'; indicator.style.color = '#c9a84c'; }
-        if (badge) { badge.textContent = '☁ CLAUDE (SERVEUR)'; badge.style.color = 'var(--text-dim)'; badge.style.borderColor = 'var(--border)'; }
-    } else {
-        statusEl.textContent = isWeb ? 'Stockage dans le navigateur (~400 Mo). Wi-Fi recommandé.' : 'Téléchargement Android (~400 Mo). Wi-Fi recommandé.';
-        statusEl.style.color = 'var(--text-dim)';
-        btnDl.style.display = 'block'; btnLoad.style.display = 'none';
-        if (btnPick) btnPick.style.display = 'inline-block';
-        if (indicator) indicator.textContent = '';
-        if (badge) { badge.textContent = '☁ CLAUDE (SERVEUR)'; badge.style.color = 'var(--text-dim)'; badge.style.borderColor = 'var(--border)'; }
-    }
-}
-
-function _updateGemmaProgress(p) {
-    const bar=document.getElementById('gemma-progress-bar'), txt=document.getElementById('gemma-progress-text'), progress=document.getElementById('gemma-dl-progress');
-    if (!bar) return;
-    progress.style.display='block'; bar.style.width=p.progress+'%'; txt.textContent=`${p.dlMb} Mo / ${p.totalMb>0?p.totalMb+' Mo':'?'} — ${p.progress}%`;
-    if (p.status==='success') setTimeout(()=>{progress.style.display='none';refreshGemmaStatus();},600);
-    if (p.status==='failed') { document.getElementById('gemma-status-text').textContent='✗ Échec du téléchargement.'; document.getElementById('gemma-status-text').style.color='#c06060'; const btnDl=document.getElementById('btn-gemma-dl'); btnDl.disabled=false; btnDl.textContent='⬇ Réessayer'; }
-}
-
-async function gemmaDownload() {
-    const btnDl=document.getElementById('btn-gemma-dl'); btnDl.disabled=true; btnDl.textContent=Gemma.isWeb()?'Téléchargement en cours…':'Lancement du téléchargement…';
-    try { if (Gemma.isWeb()) { const r=await Gemma.downloadModel('e2b',_updateGemmaProgress); if (r.already) await refreshGemmaStatus(); } else { const r=await Gemma.downloadModel('e2b'); if (r.already){await refreshGemmaStatus();return;} Gemma.pollDownload('e2b',_updateGemmaProgress); } }
-    catch(e) { btnDl.disabled=false; btnDl.textContent='⬇ Réessayer'; document.getElementById('gemma-status-text').textContent='✗ Erreur : '+e.message; document.getElementById('gemma-status-text').style.color='#c06060'; }
-}
-
-async function gemmaLoad() {
-    const btnLoad=document.getElementById('btn-gemma-load'), statusEl=document.getElementById('gemma-status-text');
-    btnLoad.disabled=true; btnLoad.textContent='Chargement en mémoire…'; statusEl.textContent=Gemma.isWeb()?'Chargement du modèle… (30-60 sec)':'Chargement du modèle… (15-30 sec)';
-    try { await Gemma.loadModel('e2b'); await refreshGemmaStatus(); }
-    catch(e) { statusEl.textContent='✗ Erreur : '+e.message; statusEl.style.color='#c06060'; btnLoad.disabled=false; btnLoad.textContent='▶ Charger en mémoire'; }
-}
-
-async function gemmaPickFile() {
-    const btnPick = document.getElementById('btn-gemma-pick');
-    const statusEl = document.getElementById('gemma-status-text');
-    const origText = btnPick.innerHTML;
-    btnPick.disabled = true;
-    btnPick.innerHTML = '<span class="spinner"></span> Sélection…';
-    try {
-        await Gemma.pickModelFile();
-        await refreshGemmaStatus();
-    } catch(e) {
-        statusEl.textContent = '✗ Import annulé ou erreur : ' + e.message;
-        statusEl.style.color = '#c06060';
-    } finally {
-        btnPick.disabled = false;
-        btnPick.innerHTML = origText;
-    }
 }
 
 async function downloadAnnualReport() {
