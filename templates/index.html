@@ -1428,6 +1428,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (p) p.innerHTML  = T.js_modal_text;
     if (l) l.textContent = T.js_modal_consent;
     if (d) d.textContent = T.js_modal_decline;
+
+    // Auto-lancement depuis lien email (?open=synthesis)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('open') === 'synthesis') {
+        history.replaceState({}, '', window.location.pathname);
+        const btn = document.getElementById('calc-btn');
+        if (btn) setTimeout(() => btn.click(), 600);
+    }
+    if (params.get('upgrade') === 'subscription') {
+        history.replaceState({}, '', window.location.pathname);
+        setTimeout(() => showPaymentPlans(), 400);
+    }
 });
 </script>
 

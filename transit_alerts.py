@@ -408,7 +408,7 @@ def _build_alert_html(profile: dict, events: list[dict], upgrade_cta: bool = Fal
   <p style="color:#9090b0;font-size:12px;margin-top:0;">{name} · {today_str} · Astrologie Védique Sidérale</p>
   <table>{rows}</table>
   <div style="margin-top:28px;text-align:center;">
-    <a href="https://karmicgochara.app/" style="display:inline-block;background:#d4a017;color:#0a0a1a;text-decoration:none;padding:12px 28px;border-radius:3px;font-weight:bold;font-size:14px;letter-spacing:0.08em;">
+    <a href="https://karmicgochara.app/?open=synthesis" style="display:inline-block;background:#d4a017;color:#0a0a1a;text-decoration:none;padding:12px 28px;border-radius:3px;font-weight:bold;font-size:14px;letter-spacing:0.08em;">
       ✦ VOIR MON INTERPRÉTATION →
     </a>
     <p style="margin-top:12px;font-size:11px;color:#606080;">
