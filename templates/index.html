@@ -488,11 +488,6 @@
             {% if enable_features %}
             {% endif %}
 
-            <button id="btn-unlock" class="btn-secondary" onclick="Monetization.purchase()"
-                style="max-width: 220px; font-size: 0.82rem; display:none;">
-                ✦ Supprimer les pubs — €2,99
-            </button>
-
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: var(--text-dim);">
                 <input type="checkbox" id="alerts-toggle"
                     {% if session_profile and session_profile.get('alerts_enabled') %}checked{% endif %}
@@ -668,7 +663,7 @@ async function stripeCheckout(plan) {
         const res = await fetch('/stripe/checkout', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ plan })
+            body: JSON.stringify({ product_type: plan })
         });
         const data = await res.json();
         if (data.url) {
