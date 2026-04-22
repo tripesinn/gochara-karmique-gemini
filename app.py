@@ -843,22 +843,51 @@ def register():
     pseudo = (data.get("pseudo") or "").strip()
     if not pseudo:
         return jsonify({"ok": False, "error": "Pseudo requis"}), 400
+
+    app.logger.info("REGISTER data reçue: %s", data)
+
+    # Normalise : parse birth_date / birth_time si envoyés comme strings
+    if "birth_date" in data and "year" not in data:
+        try:
+            parts = str(data["birth_date"]).split("-")
+            data["year"], data["month"], data["day"] = int(parts[0]), int(parts[1]), int(parts[2])
+        except Exception as e:
+            app.logger.warning("Parse birth_date échoué: %s", e)
+    if "birth_time" in data and "hour" not in data:
+        try:
+            tp = str(data["birth_time"]).split(":")
+            data["hour"], data["minute"] = int(tp[0]), int(tp[1])
+        except Exception as e:
+            app.logger.warning("Parse birth_time échoué: %s", e)
+    # Valeurs par défaut obligatoires
+    data.setdefault("name", pseudo)
+    data.setdefault("city", data.get("birth_city", ""))
+    data.setdefault("lat", 48.8566)
+    data.setdefault("lon", 2.3522)
+    data.setdefault("tz", "Europe/Paris")
+
     try:
         if pseudo_exists(pseudo):
             return jsonify({"ok": False, "error": "Pseudo déjà pris"}), 409
         email = (data.get("email") or "").strip().lower()
         if email and get_profile_by_email(email):
             return jsonify({"ok": False, "error": "Email déjà enregistré"}), 409
+
+        # 1. Create basic profile in sheet
         profile = create_profile(data)
+        session["pseudo"] = pseudo
+        session["profile"] = profile
     except Exception as exc:
         app.logger.error("Erreur Sheets register : %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
 
-    # ── Calcul natal immédiat + stockage Sheets ───────────────────────────────
+    # 2. Try to calculate natal and enrich
+    hook_natal = ""
     try:
         from astro_calc import calculate_transits
         from profiles import save_natal_to_sheet
         from datetime import date as _date
+        from ai_interpret import get_hook_natal
 
         natal_input = {
             "name":   profile["name"],
@@ -869,33 +898,49 @@ def register():
             "city":   profile["city"],
         }
         today = _date.today()
-        # Transit = même lieu que natal, date du jour (on veut juste le natal)
         transit_loc = {
             "city": profile["city"], "lat": profile["lat"],
             "lon":  profile["lon"],  "tz":  profile["tz"],
         }
         natal_result     = calculate_transits(natal_input, transit_loc,
                                               today.year, today.month, today.day, 12, 0)
-        enriched_profile = _enrich_profile_with_natal(profile, natal_result.get("natal", {}))
-        save_natal_to_sheet(pseudo, enriched_profile)
-        profile = enriched_profile  # profil enrichi en session
+        
+        # Verify result content before enriching
+        if not natal_result.get("natal"):
+            app.logger.error("Calcul natal a retourné un résultat vide pour %s", pseudo)
+        else:
+            enriched_profile = _enrich_profile_with_natal(profile, natal_result.get("natal", {}))
+            
+            # 3. Save natal info to sheet and update session
+            if save_natal_to_sheet(pseudo, enriched_profile):
+                profile = enriched_profile
+                session["profile"] = profile
+                app.logger.info("Profil enrichi et sauvegardé pour %s", pseudo)
+            else:
+                app.logger.error("Échec de save_natal_to_sheet pour %s", pseudo)
+                
+            # 4. Generate hook
+            hook_natal = get_hook_natal(profile)
     except Exception as exc:
-        app.logger.warning("Calcul natal register échoué (non bloquant) : %s", exc)
-        # Non bloquant — l'inscription réussit quand même
-
-    session["profile"] = profile
-    session["pseudo"] = pseudo
-
-    # ── Hook natal dès l'inscription ─────────────────────────────────────────
-    hook_natal = ""
-    try:
-        from ai_interpret import get_hook_natal
-        hook_natal = get_hook_natal(profile)
-    except Exception as exc:
-        app.logger.warning("Hook natal register échoué : %s", exc)
+        app.logger.error("Calcul natal register échoué pour %s : %s", pseudo, exc, exc_info=True)
 
     return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal, "hook_engine": "claude"})
 
+@app.route("/chart/karmic.svg")
+def karmic_chart_svg():
+    profile = session.get("profile")
+    if not profile or "natal_positions" not in profile:
+        return "Non autorisé ou thème non calculé", 401
+    
+    from svg_chart import generate_karmic_chart_svg
+    lang = session.get("lang", "fr")
+    svg_content = generate_karmic_chart_svg(profile["natal_positions"], lang=lang)
+    
+    response = make_response(svg_content)
+    response.headers["Content-Type"] = "image/svg+xml"
+    # Allow caching for 24h as it's a natal chart (doesn't change)
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -961,7 +1006,8 @@ def calculate():
         quota = {"allowed": True, "remaining": 999}
     else:
         plan = profile.get("plan", "free")
-        if plan in ("test", "subscription"):
+        plan_normalized = plan.lower().replace("é", "e")
+        if plan_normalized in ("test", "subscription", "lecture", "essential", "illimite"):
             # Utilisateur payant — consomme une synthèse plan
             from profiles import consume_plan_synthesis
             allowed = consume_plan_synthesis(pseudo)
@@ -1093,7 +1139,8 @@ def hook_transit():
     from astro_calc import calculate_transits
     from ai_interpret import _build_system_prompt, _aspects_to_text, _build_natal_context
     from flask import Response, stream_with_context
-    import anthropic as _anthropic
+    from google import genai
+    from google.genai import types
     import json as _json
 
     profile = session.get("profile")
@@ -1223,7 +1270,7 @@ def hook_transit():
             f"Make them want the full reading. Dense and precise."
         )
 
-    hook_model = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
+    hook_model = os.environ.get("HOOK_MODEL", "gemini-2.5-flash")
 
     # ── Stream SSE ────────────────────────────────────────────────────────────
     # On capture le profil enrichi dans une var locale pour le cache post-stream
@@ -1232,17 +1279,20 @@ def hook_transit():
 
     def generate():
         full_text = []
-        client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         try:
-            with client.messages.stream(
+            response = client.models.generate_content_stream(
                 model=hook_model,
-                max_tokens=250,
-                system=system,
-                messages=[{"role": "user", "content": prompt}],
-            ) as stream:
-                for chunk in stream.text_stream:
-                    full_text.append(chunk)
-                    yield f"data: {_json.dumps(chunk)}\n\n"
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system,
+                    max_output_tokens=250,
+                )
+            )
+            for chunk in response:
+                if chunk.text:
+                    full_text.append(chunk.text)
+                    yield f"data: {_json.dumps(chunk.text)}\n\n"
             # Mise en cache après stream complet
             complete = "".join(full_text)
             with app.app_context():
@@ -1477,7 +1527,8 @@ def synthesis_prompt():
     # Synthèse complète + Alternative de Conscience : gate paiement
     if pseudo.lower() not in UNLIMITED_PSEUDOS:
         plan = profile.get("plan", "free")
-        if plan in ("test", "subscription"):
+        plan_normalized = plan.lower().replace("é", "e")
+        if plan_normalized in ("test", "subscription", "lecture", "essential", "illimite"):
             from profiles import consume_plan_synthesis
             if not consume_plan_synthesis(pseudo):
                 return jsonify({"error": "quota_exceeded",
@@ -1596,20 +1647,24 @@ def chat_ask():
             "remaining": remaining,
         })
 
-    # Génération Haiku côté serveur
-    import anthropic as _anthropic
+    # Génération Gemini côté serveur
+    from google import genai
+    from google.genai import types
     try:
-        client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        model  = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
-        msg = client.messages.create(
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        model  = os.environ.get("HOOK_MODEL", "gemini-2.5-flash")
+        
+        response = client.models.generate_content(
             model=model,
-            max_tokens=600,
-            system=prompts["system"],
-            messages=[{"role": "user", "content": prompts["user"]}],
+            contents=prompts["user"],
+            config=types.GenerateContentConfig(
+                system_instruction=prompts["system"],
+                max_output_tokens=600,
+            )
         )
-        answer = msg.content[0].text.strip()
+        answer = response.text.strip()
     except Exception as e:
-        app.logger.error("Chat Haiku error: %s", e)
+        app.logger.error("Chat Gemini error: %s", e)
         return jsonify({"error": "generation_failed", "message": str(e)}), 500
 
     return jsonify({
@@ -1781,7 +1836,6 @@ def expand():
     Expansion gratuite unique — topic: alternative_conscience uniquement.
     Limité à 1 appel par session (session['expand_used']).
     """
-    import anthropic as _anthropic
     from ai_interpret import _build_natal_context
 
     # Sécurité : 1 seul expand gratuit par session
@@ -1829,15 +1883,19 @@ def expand():
     )
 
     try:
-        client   = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        model    = os.environ.get("HOOK_MODEL", "claude-haiku-4-5-20251001")
-        response = client.messages.create(
+        from google import genai
+        from google.genai import types
+        client   = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        model    = os.environ.get("HOOK_MODEL", "gemini-2.5-flash")
+        response = client.models.generate_content(
             model=model,
-            max_tokens=300,
-            system=system,
-            messages=[{"role": "user", "content": prompt}]
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                max_output_tokens=300,
+            )
         )
-        content = response.content[0].text
+        content = response.text
         return jsonify({"content": content})
     except Exception as exc:
         app.logger.error("Erreur expand : %s", exc)
@@ -1868,7 +1926,7 @@ def stripe_checkout():
     if not email:
         return jsonify({"error": "Email requis pour le paiement"}), 400
 
-    base_url = request.host_url.rstrip("/")
+    base_url = os.environ.get("DEEP_LINK_BASE_URL") or request.host_url.rstrip("/")
     try:
         url = create_checkout_session(product_type, email, pseudo, base_url)
         return jsonify({"url": url})

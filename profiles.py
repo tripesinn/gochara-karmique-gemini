@@ -14,62 +14,86 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
 ]
 
-# Colonnes du Google Sheet (ordre fixe)
+# ── Définition complète et ordonnée de toutes les colonnes ───────────────────
+# Bloc 1 — Profil de base (A–V, indices 0–21)
 COLS = [
-    "pseudo",               # A
-    "email",                # B
-    "name",                 # C
-    "year",                 # D
-    "month",                # E
-    "day",                  # F
-    "hour",                 # G
-    "minute",               # H
-    "lat",                  # I
-    "lon",                  # J
-    "tz",                   # K
-    "city",                 # L
-    "transit_city",         # M
-    "transit_lat",          # N
-    "transit_lon",          # O
-    "transit_tz",           # P
-    "syntheses_count",      # Q
-    "syntheses_reset_date", # R
-    "alerts_enabled",       # S
-    "plan",                 # T : "free" | "sub" | "essential" | "complete"
-    "plan_syntheses",       # U : nombre de synthèses restantes sur plan payant
-    "stripe_customer_id",   # V
+    "pseudo",               # A  0
+    "email",                # B  1
+    "name",                 # C  2
+    "year",                 # D  3
+    "month",                # E  4
+    "day",                  # F  5
+    "hour",                 # G  6
+    "minute",               # H  7
+    "lat",                  # I  8
+    "lon",                  # J  9
+    "tz",                   # K  10
+    "city",                 # L  11
+    "transit_city",         # M  12
+    "transit_lat",          # N  13
+    "transit_lon",          # O  14
+    "transit_tz",           # P  15
+    "syntheses_count",      # Q  16
+    "syntheses_reset_date", # R  17
+    "alerts_enabled",       # S  18
+    "plan",                 # T  19
+    "plan_syntheses",       # U  20
+    "stripe_customer_id",   # V  21
 ]
 
-# Colonnes natales — à partir de W (index 22)
+# Bloc 2 — Données natales calculées (W–AS, indices 22–44)
 NATAL_COLS = [
-    "chandra_lagna_sign",    # W  (22)
-    "ketu_sign",             # X  (23)
-    "ketu_house",            # Y  (24)
-    "ketu_nakshatra",        # Z  (25)
-    "rahu_sign",             # AA (26)
-    "rahu_house",            # AB (27)
-    "rahu_nakshatra",        # AC (28)
-    "chiron_sign",           # AD (29)
-    "chiron_house",          # AE (30)
-    "chiron_nakshatra",      # AF (31)
-    "lilith_sign",           # AG (32)
-    "lilith_house",          # AH (33)
-    "saturn_sign",           # AI (34)
-    "saturn_house",          # AJ (35)
-    "jupiter_sign",          # AK (36)
-    "jupiter_house",         # AL (37)
-    "porte_visible_sign",    # AM (38)
-    "porte_visible_house",   # AN (39)
-    "porte_visible_deg",     # AO (40)
-    "porte_invisible_sign",  # AP (41)
-    "porte_invisible_house", # AQ (42)
-    "moon_longitude_sid",    # AR (43)
-    "chandra_lagna_degree",  # AS (44)
+    "chandra_lagna_sign",    # W  22
+    "ketu_sign",             # X  23
+    "ketu_house",            # Y  24
+    "ketu_nakshatra",        # Z  25
+    "rahu_sign",             # AA 26
+    "rahu_house",            # AB 27
+    "rahu_nakshatra",        # AC 28
+    "chiron_sign",           # AD 29
+    "chiron_house",          # AE 30
+    "chiron_nakshatra",      # AF 31
+    "lilith_sign",           # AG 32
+    "lilith_house",          # AH 33
+    "saturn_sign",           # AI 34
+    "saturn_house",          # AJ 35
+    "jupiter_sign",          # AK 36
+    "jupiter_house",         # AL 37
+    "porte_visible_sign",    # AM 38
+    "porte_visible_house",   # AN 39
+    "porte_visible_deg",     # AO 40
+    "porte_invisible_sign",  # AP 41
+    "porte_invisible_house", # AQ 42
+    "moon_longitude_sid",    # AR 43
+    "chandra_lagna_degree",  # AS 44
 ]
+
+# Bloc 3 — Quotas chatbot et alertes (AT–AV, indices 45–47)
+QUOTA_COLS = [
+    "chat_remaining",        # AT 45
+    "chat_reset_month",      # AU 46
+    "alert_sent",            # AV 47
+]
+
+# Liste maître — toutes les colonnes dans l'ordre
+ALL_COLS = COLS + NATAL_COLS + QUOTA_COLS
+
+# Index nommés pour éviter les nombres magiques
+C = {name: i for i, name in enumerate(ALL_COLS)}
 
 SYNTHESIS_QUOTA = 3  # max synthèses par mois (plan free)
 
 _sheet = None
+
+
+def _col(idx: int) -> str:
+    """Convertit un index 0-based en lettre(s) de colonne Sheets (A, B, …, AA, …)."""
+    idx += 1
+    result = ""
+    while idx:
+        idx, rem = divmod(idx - 1, 26)
+        result = chr(65 + rem) + result
+    return result
 
 
 def _current_month_str() -> str:
@@ -97,11 +121,11 @@ def _get_sheet():
     try:
         ws = spreadsheet.sheet1
     except Exception:
-        ws = spreadsheet.add_worksheet(title="profiles", rows=1000, cols=20)
+        ws = spreadsheet.add_worksheet(title="profiles", rows=1000, cols=len(ALL_COLS) + 5)
 
     # Créer l'en-tête si la feuille est vide
     if not ws.row_values(1):
-        ws.append_row(COLS)
+        ws.append_row(ALL_COLS)
 
     _sheet = ws
     return _sheet
@@ -378,15 +402,19 @@ def set_alerts(pseudo: str, enabled: bool) -> bool:
 # ── Gestion plans Stripe ───────────────────────────────────────────────────────
 
 PLAN_SYNTHESES = {
-    "test":         1,    # one-shot → 1 synthèse + 3 questions chatbot
-    "subscription": 10,   # 10/mois via serveur (Haiku) — illimité si Gemma local (managé côté Edge AI)
-    "free":         0,
+    "lecture":  1,    # one-shot → 1 synthèse + 3 questions chatbot
+    "essential": 1,   # legacy name for lecture
+    "illimite": -1,   # illimité
+    "illimité": -1,   # legacy/manual name with accent
+    "free":     0,
 }
 
 PLAN_CHAT_LIMITS = {
-    "test":         3,    # 3 questions chatbot one-shot
-    "subscription": 10,   # 10/mois via serveur (Haiku) — illimité si Gemma local
-    "free":         0,
+    "lecture":  3,    # 3 questions chatbot one-shot
+    "essential": 3,
+    "illimite": 10,   # 10/mois via serveur (Gemini) — illimité si IA local
+    "illimité": 10,
+    "free":     0,
 }
 
 
@@ -410,7 +438,9 @@ def upgrade_plan(pseudo: str, plan: str, stripe_customer_id: str = "") -> bool:
         if stripe_customer_id:
             ws.update(f"V{i}", [[stripe_customer_id]])
         current_month = _current_month_str()[:7]
-        ws.update(f"AT{i}:AU{i}", [[str(chat_limit), current_month]])
+        cr = _col(C["chat_remaining"])
+        cm = _col(C["chat_reset_month"])
+        ws.update(f"{cr}{i}:{cm}{i}", [[str(chat_limit), current_month]])
         return True
     return False
 
@@ -438,19 +468,20 @@ def get_chat_quota(pseudo: str) -> dict:
     for row in records[1:]:
         if not row or row[0].strip().lower() != pseudo_lower:
             continue
-        plan = row[19] if len(row) > 19 else "free"
+        plan = row[C["plan"]] if len(row) > C["plan"] else "free"
+        plan_normalized = plan.lower().replace("é", "e")
         try:
-            remaining = int(row[45]) if len(row) > 45 and row[45] else 0
+            remaining = int(row[C["chat_remaining"]]) if len(row) > C["chat_remaining"] and row[C["chat_remaining"]] else 0
         except ValueError:
             remaining = 0
-        if plan == "subscription":
-            reset_month = row[46] if len(row) > 46 else ""
+        if plan_normalized in ("illimite", "subscription"):
+            reset_month = row[C["chat_reset_month"]] if len(row) > C["chat_reset_month"] else ""
             if reset_month != current_month:
-                remaining = PLAN_CHAT_LIMITS["subscription"]
+                remaining = PLAN_CHAT_LIMITS.get(plan, 10)
         return {
             "plan": plan, "remaining": remaining,
             "limit": PLAN_CHAT_LIMITS.get(plan, 0),
-            "local_unlimited": plan == "subscription",
+            "local_unlimited": plan_normalized in ("illimite", "subscription"),
         }
     return {"plan": "free", "remaining": 0, "limit": 0, "local_unlimited": False}
 
@@ -471,33 +502,36 @@ def consume_chat_question(pseudo: str, local: bool = False) -> dict:
     for i, row in enumerate(records[1:], start=2):
         if not row or row[0].strip().lower() != pseudo_lower:
             continue
-        plan = row[19] if len(row) > 19 else "free"
+        plan = row[C["plan"]] if len(row) > C["plan"] else "free"
+        plan_normalized = plan.lower().replace("é", "e")
+        cr_col = _col(C["chat_remaining"])
+        cm_col = _col(C["chat_reset_month"])
 
-        if plan == "subscription":
+        if plan_normalized in ("illimite", "subscription"):
             if local:
                 return {"ok": True, "remaining": -1, "local": True}
             try:
-                remaining = int(row[45]) if len(row) > 45 and row[45] else 0
+                remaining = int(row[C["chat_remaining"]]) if len(row) > C["chat_remaining"] and row[C["chat_remaining"]] else 0
             except ValueError:
                 remaining = 0
-            reset_month = row[46] if len(row) > 46 else ""
+            reset_month = row[C["chat_reset_month"]] if len(row) > C["chat_reset_month"] else ""
             if reset_month != current_month:
-                remaining = PLAN_CHAT_LIMITS["subscription"]
-                ws.update(f"AU{i}", [[current_month]])
+                remaining = PLAN_CHAT_LIMITS.get(plan, 10)
+                ws.update(f"{cm_col}{i}", [[current_month]])
             if remaining <= 0:
                 return {"ok": False, "remaining": 0, "local": False}
-            ws.update(f"AT{i}", [[str(remaining - 1)]])
+            ws.update(f"{cr_col}{i}", [[str(remaining - 1)]])
             return {"ok": True, "remaining": remaining - 1, "local": False}
 
-        if plan != "test":
+        if plan_normalized not in ("test", "lecture", "essential"):
             return {"ok": False, "remaining": 0, "local": False}
         try:
-            remaining = int(row[45]) if len(row) > 45 and row[45] else 0
+            remaining = int(row[C["chat_remaining"]]) if len(row) > C["chat_remaining"] and row[C["chat_remaining"]] else 0
         except ValueError:
             remaining = 0
         if remaining <= 0:
             return {"ok": False, "remaining": 0, "local": False}
-        ws.update(f"AT{i}", [[str(remaining - 1)]])
+        ws.update(f"{cr_col}{i}", [[str(remaining - 1)]])
         return {"ok": True, "remaining": remaining - 1, "local": False}
     return {"ok": False, "remaining": 0, "local": False}
 
@@ -506,18 +540,19 @@ def get_and_consume_alert(pseudo: str, plan: str) -> dict:
     """
     Gère le quota d'alertes selon le plan.
     - free        → refusé
-    - test        → 1 alerte one-shot (col AV, index 47)
-    - subscription → illimité
+    - test/lecture→ 1 alerte one-shot (col AV, index 47)
+    - illimite    → illimité
 
     Retourne {"ok": bool, "is_last": bool}
     is_last=True si c'est la dernière alerte disponible (test plan).
     """
-    if plan == "free":
+    plan_normalized = plan.lower().replace("é", "e")
+    if plan_normalized == "free":
         return {"ok": False, "is_last": False}
-    if plan == "subscription":
+    if plan_normalized in ("illimite", "subscription"):
         return {"ok": True, "is_last": False}
 
-    # plan == "test" → 1 alerte max
+    # plan == "test" ou "lecture" → 1 alerte max
     ws = _get_sheet()
     records = ws.get_all_values()
     pseudo_lower = pseudo.strip().lower()
@@ -525,20 +560,20 @@ def get_and_consume_alert(pseudo: str, plan: str) -> dict:
         if not row or row[0].strip().lower() != pseudo_lower:
             continue
         try:
-            sent = int(row[47]) if len(row) > 47 and row[47] else 0
+            sent = int(row[C["alert_sent"]]) if len(row) > C["alert_sent"] and row[C["alert_sent"]] else 0
         except ValueError:
             sent = 0
         if sent >= 1:
             return {"ok": False, "is_last": False}
-        ws.update(f"AV{i}", [["1"]])
+        ws.update(f"{_col(C['alert_sent'])}{i}", [["1"]])
         return {"ok": True, "is_last": True}
     return {"ok": False, "is_last": False}
 
 
 def consume_plan_synthesis(pseudo: str) -> bool:
     """
-    Décrémente le compteur plan_syntheses d'un utilisateur.
-    Retourne True si autorisé (compteur > 0), False sinon.
+    Décrémente le compteur plan_syntheses d'un utilisateur si applicable.
+    Retourne True si autorisé (illimité ou compteur > 0), False sinon.
     """
     ws = _get_sheet()
     records = ws.get_all_values()
@@ -547,12 +582,20 @@ def consume_plan_synthesis(pseudo: str) -> bool:
     for i, row in enumerate(records[1:], start=2):
         if not row or row[0].strip().lower() != pseudo_lower:
             continue
+        
+        plan = row[19] if len(row) > 19 else "free"
+        plan_normalized = plan.lower().replace("é", "e")
+        if plan_normalized in ("illimite", "subscription"):
+            return True  # Illimité pour les abonnés
+
         try:
             count = int(row[20]) if len(row) > 20 and row[20] else 0
         except ValueError:
             count = 0
+            
         if count <= 0:
             return False
+            
         ws.update(f"U{i}", [[str(count - 1)]])
         return True
     return False
