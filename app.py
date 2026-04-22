@@ -1286,7 +1286,7 @@ def hook_transit():
             f"Make them want the full reading. Dense and precise."
         )
 
-    hook_model = os.environ.get("HOOK_MODEL", "gemini-2.5-flash")
+    hook_model = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
 
     # ── Stream SSE ────────────────────────────────────────────────────────────
     # On capture le profil enrichi dans une var locale pour le cache post-stream
@@ -1681,7 +1681,7 @@ def chat_ask():
     import google.generativeai as genai
     try:
         genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-        _model_name = os.environ.get("HOOK_MODEL", "gemini-2.0-flash")
+        _model_name = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
         _m = genai.GenerativeModel(model_name=_model_name, system_instruction=prompts["system"])
         response = _m.generate_content(prompts["user"], generation_config={"max_output_tokens": 600})
         answer = response.text.strip()
@@ -1907,7 +1907,7 @@ def expand():
     try:
         import google.generativeai as genai
         genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-        _model_name = os.environ.get("HOOK_MODEL", "gemini-2.0-flash")
+        _model_name = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
         _m = genai.GenerativeModel(model_name=_model_name, system_instruction=system)
         response = _m.generate_content(prompt, generation_config={"max_output_tokens": 300})
         content = response.text

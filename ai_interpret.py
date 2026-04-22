@@ -450,7 +450,7 @@ Integrate the nakshatra and doctrinal regime (ROM/Dharma/Chiron) without utterin
 Tone: dense, precise, as if reading the soul directly. Make them want to know more."""
 
     _get_gemini_client()
-    hook_model = os.environ.get("HOOK_MODEL", "gemini-2.0-flash")
+    hook_model = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
     model = genai.GenerativeModel(model_name=hook_model, system_instruction=system)
     response = model.generate_content(prompt, generation_config={"max_output_tokens": 200})
     return response.text
@@ -527,7 +527,7 @@ Sentence 3: the seed of the Alternative of Consciousness — what changes if {na
 Make them want the full reading. Dense and precise tone."""
 
     _get_gemini_client()
-    hook_model = os.environ.get("HOOK_MODEL", "gemini-2.0-flash")
+    hook_model = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
     model = genai.GenerativeModel(model_name=hook_model, system_instruction=system)
     response = model.generate_content(prompt, generation_config={"max_output_tokens": 200})
     return response.text
@@ -716,7 +716,7 @@ MANDATORY STYLE: soul reader, not technical astrologer.
 Minimum 300 words. Do not truncate. Language: {lang_name}."""
 
     _get_gemini_client()
-    synthesis_model = os.environ.get("SYNTHESIS_MODEL", "gemini-2.0-flash")
+    synthesis_model = os.environ.get("SYNTHESIS_MODEL", "gemini-1.5-flash")
     model = genai.GenerativeModel(model_name=synthesis_model, system_instruction=_build_system_prompt(user, use_vault=True))
     response = model.generate_content(prompt, generation_config={"max_output_tokens": 4000})
     return response.text
