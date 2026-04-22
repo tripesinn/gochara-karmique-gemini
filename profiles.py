@@ -104,7 +104,6 @@ def _current_month_str() -> str:
 
 def _get_sheet():
     global _sheet
-    _sheet = None # Reset pour forcer la relecture
     if _sheet is not None:
         return _sheet
 
