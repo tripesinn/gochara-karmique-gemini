@@ -259,27 +259,31 @@ def update_profile(email: str, data: dict) -> dict | None:
             existing_alerts     = row[18] if len(row) > 18 else "0"
 
             new_row = [
-                data.get("pseudo",       row[0]  if len(row) > 0  else ""),
+                data.get("pseudo") if "pseudo" in data and data.get("pseudo") is not None else (row[0] if len(row) > 0 else ""),
                 row[1],  # email immuable
-                data.get("name",         row[2]  if len(row) > 2  else ""),
-                str(data.get("year",     row[3]  if len(row) > 3  else "")),
-                str(data.get("month",    row[4]  if len(row) > 4  else "")),
-                str(data.get("day",      row[5]  if len(row) > 5  else "")),
-                str(data.get("hour",     row[6]  if len(row) > 6  else "")),
-                str(data.get("minute",   row[7]  if len(row) > 7  else "")),
-                str(data.get("lat",      row[8]  if len(row) > 8  else "")),
-                str(data.get("lon",      row[9]  if len(row) > 9  else "")),
-                data.get("tz",           row[10] if len(row) > 10 else "Europe/Paris"),
-                data.get("city",         row[11] if len(row) > 11 else ""),
-                data.get("transit_city", row[12] if len(row) > 12 else ""),
-                str(data.get("transit_lat", row[13] if len(row) > 13 else "")),
-                str(data.get("transit_lon", row[14] if len(row) > 14 else "")),
-                data.get("transit_tz",   row[15] if len(row) > 15 else "Europe/Paris"),
-                existing_count,       # préservé
-                existing_reset_date,  # préservé
-                existing_alerts,      # préservé
+                data.get("name") if "name" in data and data.get("name") is not None else (row[2] if len(row) > 2 else ""),
+                str(data.get("year") if "year" in data and data.get("year") is not None else (row[3] if len(row) > 3 else "")),
+                str(data.get("month") if "month" in data and data.get("month") is not None else (row[4] if len(row) > 4 else "")),
+                str(data.get("day") if "day" in data and data.get("day") is not None else (row[5] if len(row) > 5 else "")),
+                str(data.get("hour") if "hour" in data and data.get("hour") is not None else (row[6] if len(row) > 6 else "")),
+                str(data.get("minute") if "minute" in data and data.get("minute") is not None else (row[7] if len(row) > 7 else "")),
+                str(data.get("lat") if "lat" in data and data.get("lat") is not None else (row[8] if len(row) > 8 else "")),
+                str(data.get("lon") if "lon" in data and data.get("lon") is not None else (row[9] if len(row) > 9 else "")),
+                data.get("tz") if "tz" in data and data.get("tz") is not None else (row[10] if len(row) > 10 else "Europe/Paris"),
+                data.get("city") if "city" in data and data.get("city") is not None else (row[11] if len(row) > 11 else ""),
+                data.get("transit_city") if "transit_city" in data and data.get("transit_city") is not None else (row[12] if len(row) > 12 else ""),
+                str(data.get("transit_lat") if "transit_lat" in data and data.get("transit_lat") is not None else (row[13] if len(row) > 13 else "")),
+                str(data.get("transit_lon") if "transit_lon" in data and data.get("transit_lon") is not None else (row[14] if len(row) > 14 else "")),
+                data.get("transit_tz") if "transit_tz" in data and data.get("transit_tz") is not None else (row[15] if len(row) > 15 else "Europe/Paris"),
+                existing_count,
+                existing_reset_date,
+                existing_alerts,
             ]
-            ws.update(f"A{i}:S{i}", [new_row])
+            # Reconstruire la ligne complète pour le retour afin d'inclure les données natales calculées
+            if len(row) > 19:
+                new_row.extend(row[19:])
+
+            ws.update(f"A{i}:S{i}", [new_row[:19]])
             return _row_to_profile(new_row)
     return None
 
