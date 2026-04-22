@@ -390,6 +390,23 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
     positions = {}
 
     for name, pid in PLANETS.items():
+        # Chiron : képlérien en priorité (pas de fichier seas_18.se1 sur Render)
+        if pid == swe.CHIRON:
+            try:
+                c_lon = _chiron_sid_lon(jd)
+                nak_data = lon_to_nakshatra(c_lon)
+                positions[name] = {
+                    "lon": c_lon, "lon_raw": c_lon, "speed": 0.05,
+                    "retrograde": False, "display": lon_to_display(c_lon),
+                    "nakshatra": nak_data["nakshatra"],
+                    "pada": nak_data["pada"], "nak_lord": nak_data["lord"],
+                    "d9": lon_to_d9(c_lon), "d10": lon_to_d10(c_lon), "d60": lon_to_d60(c_lon),
+                }
+            except Exception as _e2:
+                import logging as _log
+                _log.warning("astro_calc: fallback Chiron échoué : %s", _e2)
+                positions[name] = None
+            continue
         try:
             result, _ = swe.calc_ut(jd, pid, flags)
             planet_lon = result[0] % 360
@@ -411,21 +428,6 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
         except Exception as _e:
             import logging as _log
             _log.warning("astro_calc: calcul échoué pour %s : %s", name, _e)
-            if pid == swe.CHIRON:
-                try:
-                    c_lon = _chiron_sid_lon(jd)
-                    nak_data = lon_to_nakshatra(c_lon)
-                    positions[name] = {
-                        "lon": c_lon, "lon_raw": c_lon, "speed": 0.05,
-                        "retrograde": False, "display": lon_to_display(c_lon),
-                        "nakshatra": nak_data["nakshatra"],
-                        "pada": nak_data["pada"], "nak_lord": nak_data["lord"],
-                        "d9": lon_to_d9(c_lon), "d10": lon_to_d10(c_lon), "d60": lon_to_d60(c_lon),
-                    }
-                    _log.info("astro_calc: Chiron calculé via fallback képlérien (%.2f°)", c_lon)
-                    continue
-                except Exception as _e2:
-                    _log.warning("astro_calc: fallback Chiron échoué : %s", _e2)
             positions[name] = None
 
     # ── Nœud Sud ─────────────────────────────────────────────────────────────
