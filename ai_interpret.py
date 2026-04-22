@@ -441,7 +441,7 @@ Sentence 3: the liberation direction opening (Visible Door/Stage) + a seed of Al
 Integrate the nakshatra and doctrinal regime (ROM/Dharma/Chiron) without uttering these words.
 Tone: dense, precise, as if reading the soul directly. Make them want to know more."""
 
-    return gemini_api.generate(system, prompt, max_tokens=200)
+    return gemini_api.generate(system, prompt, max_tokens=400)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -514,7 +514,7 @@ Sentence 2: what this touches in their core wound (Chiron = opening tool toward 
 Sentence 3: the seed of the Alternative of Consciousness — what changes if {name} chooses differently.
 Make them want the full reading. Dense and precise tone."""
 
-    return gemini_api.generate(system, prompt, max_tokens=200)
+    return gemini_api.generate(system, prompt, max_tokens=400)
 # ══════════════════════════════════════════════════════════════════════════════
 # SIGNAL DU JOUR — compact pour TikTok/Web
 # ══════════════════════════════════════════════════════════════════════════════
