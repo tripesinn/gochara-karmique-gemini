@@ -1207,8 +1207,8 @@ def hook_transit():
         try:
             from profiles import update_profile
             update_profile(profile["email"], {**profile, **new_transit})
-        except Exception:
-            pass
+        except Exception as e:
+            app.logger.warning("update_profile hook/transit: %s", e)
     session["profile"] = {**profile, **new_transit}
     session.modified = True
 
@@ -1539,6 +1539,22 @@ def synthesis_prompt():
             f"La troisième phrase : l'amorce de l'Alternative de Conscience — ce qui change si {name_t} choisit autrement.\n"
             f"Donne envie d'obtenir la lecture complète. Ton dense et précis."
         )
+        # Sauvegarde transit_date + localisation
+        new_transit_t = {
+            "transit_city": transit_loc_t["city"],
+            "transit_lat":  transit_loc_t["lat"],
+            "transit_lon":  transit_loc_t["lon"],
+            "transit_tz":   transit_loc_t["tz"],
+            "transit_date": date_str,
+        }
+        if transit_loc_t["city"] != profile.get("transit_city") or date_str != profile.get("transit_date"):
+            try:
+                from profiles import update_profile
+                update_profile(profile["email"], {**profile, **new_transit_t})
+            except Exception as e:
+                app.logger.warning("update_profile hook_transit prompt: %s", e)
+        session["profile"] = {**profile, **new_transit_t}
+        session.modified = True
         return jsonify({"ok": True, "context": "hook_transit", "system": system_t, "user": user_t})
 
     # Synthèse complète + Alternative de Conscience : gate paiement
