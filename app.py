@@ -1139,7 +1139,6 @@ def hook_transit():
     from astro_calc import calculate_transits
     from ai_interpret import _build_system_prompt, _aspects_to_text, _build_natal_context
     from flask import Response, stream_with_context
-    import google.generativeai as genai
     import json as _json
 
     profile = session.get("profile")
@@ -1295,22 +1294,11 @@ def hook_transit():
 
     def generate():
         full_text = []
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        import gemini_api
         try:
-            _model = genai.GenerativeModel(model_name=hook_model, system_instruction=system)
-            response = _model.generate_content(
-                prompt,
-                generation_config={"max_output_tokens": 250},
-                stream=True,
-            )
-            for chunk in response:
-                try:
-                    text = chunk.text
-                except (ValueError, AttributeError):
-                    continue  # chunk finish_reason sans texte
-                if text:
-                    full_text.append(text)
-                    yield f"data: {_json.dumps(text)}\n\n"
+            for text in gemini_api.stream(system, prompt, max_tokens=250):
+                full_text.append(text)
+                yield f"data: {_json.dumps(text)}\n\n"
             yield f"data: [DONE]\n\n"
         except Exception as exc:
             app.logger.error("Erreur stream hook transit : %s", exc)
@@ -1678,13 +1666,9 @@ def chat_ask():
         })
 
     # Génération Gemini côté serveur
-    import google.generativeai as genai
+    import gemini_api
     try:
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-        _model_name = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
-        _m = genai.GenerativeModel(model_name=_model_name, system_instruction=prompts["system"])
-        response = _m.generate_content(prompts["user"], generation_config={"max_output_tokens": 600})
-        answer = response.text.strip()
+        answer = gemini_api.generate(prompts["system"], prompts["user"], max_tokens=600).strip()
     except Exception as e:
         app.logger.error("Chat Gemini error: %s", e)
         return jsonify({"error": "generation_failed", "message": str(e)}), 500
@@ -1905,12 +1889,8 @@ def expand():
     )
 
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-        _model_name = os.environ.get("HOOK_MODEL", "gemini-1.5-flash")
-        _m = genai.GenerativeModel(model_name=_model_name, system_instruction=system)
-        response = _m.generate_content(prompt, generation_config={"max_output_tokens": 300})
-        content = response.text
+        import gemini_api
+        content = gemini_api.generate(system, prompt, max_tokens=300)
         return jsonify({"content": content})
     except Exception as exc:
         app.logger.error("Erreur expand : %s", exc)
