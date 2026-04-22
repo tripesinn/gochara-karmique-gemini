@@ -1151,8 +1151,7 @@
                 gocharaBtn.style.borderBottomColor = 'transparent';
                 viewGochara.style.display = 'none';
                 viewCarte.style.display = 'block';
-                // force reload of the chart if it failed before? 
-                // document.getElementById('karmic-chart-img').src = '/chart/karmic.svg?' + new Date().getTime();
+                document.getElementById('karmic-chart-img').src = '/chart/karmic.svg?' + new Date().getTime();
             } else {
                 gocharaBtn.style.color = 'var(--gold)';
                 gocharaBtn.style.borderBottomColor = 'var(--gold)';
