@@ -859,6 +859,11 @@ def register():
     data.setdefault("lat", 48.8566)
     data.setdefault("lon", 2.3522)
     data.setdefault("tz", "Europe/Paris")
+    # Transit = lieu natal par défaut
+    data.setdefault("transit_city", data.get("city", ""))
+    data.setdefault("transit_lat",  data.get("lat", 48.8566))
+    data.setdefault("transit_lon",  data.get("lon", 2.3522))
+    data.setdefault("transit_tz",   data.get("tz", "Europe/Paris"))
 
     try:
         if pseudo_exists(pseudo):

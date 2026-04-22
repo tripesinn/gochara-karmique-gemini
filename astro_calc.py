@@ -101,6 +101,80 @@ NAKSHATRA_LORDS = [
     "Saturne", "Mercure",  # 19-27
 ]
 
+# Durées des périodes Vimshottari (en années)
+DASHAS_DURATION = {
+    "Ketu": 7, "Vénus": 20, "Soleil": 6, "Lune": 10,
+    "Mars": 7, "Rahu": 18, "Jupiter": 16, "Saturne": 19, "Mercure": 17
+}
+DASHAS_SEQUENCE = ["Ketu", "Vénus", "Soleil", "Lune", "Mars", "Rahu", "Jupiter", "Saturne", "Mercure"]
+
+
+def calc_vimshottari(moon_lon: float, birth_jd: float) -> list[dict]:
+    """
+    Calcule les périodes de Maha Dasha à partir de la longitude de la Lune.
+    """
+    from datetime import timedelta
+    nak_size = 360.0 / 27.0
+    nak_idx = int(moon_lon / nak_size)
+    rem_in_nak = (nak_idx + 1) * nak_size - moon_lon
+    
+    first_lord = NAKSHATRA_LORDS[nak_idx]
+    first_duration = DASHAS_DURATION[first_lord]
+    
+    # Proportion restante de la première période
+    fraction_remaining = rem_in_nak / nak_size
+    years_remaining = first_duration * fraction_remaining
+    
+    # Conversion JD en datetime (simplifié)
+    from datetime import datetime, timezone
+    # JD 2440587.5 = 1970-01-01 12:00 UTC
+    dt_birth = datetime.fromtimestamp((birth_jd - 2440587.5) * 86400, tz=timezone.utc)
+    
+    current_date = dt_birth + timedelta(days=years_remaining * 365.25)
+    
+    dashas = []
+    # Première période (partielle)
+    dashas.append({
+        "lord": first_lord,
+        "end_date": current_date.strftime("%d/%m/%Y"),
+        "is_current": years_remaining > 0
+    })
+    
+    # Périodes suivantes (cycle de 120 ans)
+    seq_idx = DASHAS_SEQUENCE.index(first_lord)
+    for i in range(1, 9):
+        lord = DASHAS_SEQUENCE[(seq_idx + i) % 9]
+        duration = DASHAS_DURATION[lord]
+        current_date += timedelta(days=duration * 365.25)
+        dashas.append({
+            "lord": lord,
+            "end_date": current_date.strftime("%d/%m/%Y"),
+            "is_current": False # sera ajusté par le front
+        })
+        
+    return dashas
+
+
+def check_sade_sati(saturn_lon: float, moon_lon: float) -> dict:
+    """
+    Vérifie si l'utilisateur est en Sade Sati.
+    Sade Sati = Saturne transite les maisons 12, 1 ou 2 depuis la Lune.
+    """
+    moon_sign_idx = int(moon_lon / 30)
+    saturn_sign_idx = int(saturn_lon / 30)
+    
+    # Distance en signes (0-11)
+    diff = (saturn_sign_idx - moon_sign_idx + 12) % 12
+    
+    if diff == 11:
+        return {"active": True, "phase": "1 (Maison 12 - Prémonition/Pression)"}
+    elif diff == 0:
+        return {"active": True, "phase": "2 (Maison 1 - Pic/Épreuve)"}
+    elif diff == 1:
+        return {"active": True, "phase": "3 (Maison 2 - Conséquences/Bilan)"}
+    else:
+        return {"active": False, "phase": None}
+
 
 def lon_to_nakshatra(lon: float) -> dict:
     """
@@ -300,7 +374,9 @@ def _calc_positions(jd: float, lat: float, lon: float) -> dict:
                 "d10":        lon_to_d10(planet_lon),
                 "d60":        lon_to_d60(planet_lon),
             }
-        except Exception:
+        except Exception as _e:
+            import logging as _log
+            _log.warning("astro_calc: calcul échoué pour %s : %s", name, _e)
             positions[name] = None
 
     # ── Nœud Sud ─────────────────────────────────────────────────────────────
@@ -424,6 +500,11 @@ def calculate_transits(natal: dict, transit_loc: dict,
         for n_name, n_data in natal_pos.items():
             if n_data is None:
                 continue
+            
+            # Ignorer le retour de Lilith (Lilith sur elle-même)
+            if t_name == "Lilith ⚸" and n_name == "Lilith ⚸":
+                continue
+                
             n_lon = n_data["lon"]
 
             diff = abs(t_lon - n_lon) % 360
@@ -465,10 +546,24 @@ def calculate_transits(natal: dict, transit_loc: dict,
                 }
         return result
 
+    # ── Timing (Vimshottari Dasha & Sade Sati) ────────────────────────────────
+    moon_natal = natal_pos.get("Lune ☽")
+    sat_transit = transit_pos.get("Saturne ♄")
+    
+    dashas = []
+    if moon_natal:
+        dashas = calc_vimshottari(moon_natal["lon"], natal_jd)
+        
+    sade_sati = {"active": False, "phase": None}
+    if moon_natal and sat_transit:
+        sade_sati = check_sade_sati(sat_transit["lon"], moon_natal["lon"])
+
     return {
         "aspects":       aspects,
         "natal":         _display_dict(natal_pos),
         "transits":      _display_dict(transit_pos),
         "transit_date":  f"{day:02d}/{month:02d}/{year}",
         "transit_time":  f"{hour:02d}h{minute:02d}",
+        "dashas":        dashas,
+        "sade_sati":     sade_sati,
     }

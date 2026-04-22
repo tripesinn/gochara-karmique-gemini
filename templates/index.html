@@ -1610,6 +1610,21 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Pré-charger la ville de transit depuis le profil sauvegardé
+            {% if user and user.transit_city %}
+            transitGeo = {
+                city: {{ user.transit_city | tojson }},
+                lat:  {{ user.transit_lat | default(48.8566) }},
+                lon:  {{ user.transit_lon | default(2.3522) }},
+                tz:   {{ user.transit_tz | default('Europe/Paris') | tojson }},
+            };
+            const cityInput = document.getElementById('transit-city-input');
+            if (cityInput) {
+                cityInput.value = transitGeo.city;
+                document.getElementById('geo-icon').textContent = '✓';
+            }
+            {% endif %}
+
             const dateInput = document.getElementById('transit-date');
             if (dateInput) dateInput.addEventListener('change', resetHookTransit);
         });
