@@ -1296,7 +1296,7 @@ def hook_transit():
         full_text = []
         import gemini_api
         try:
-            for text in gemini_api.stream(system, prompt, max_tokens=1024):
+            for text in gemini_api.stream(system, prompt):
                 full_text.append(text)
                 yield f"data: {_json.dumps(text)}\n\n"
             yield f"data: [DONE]\n\n"
