@@ -792,6 +792,15 @@ def login():
         return jsonify({"ok": False, "error": str(exc)}), 500
     if not profile:
         return jsonify({"ok": False, "error": f"Pseudo '{pseudo}' introuvable. Crée ton profil d'abord."}), 404
+
+    # ── Contournement de la latence de Google Sheets après paiement ───────────
+    if session.get("payment_completed"):
+        payment_info = session.pop("payment_completed", None)
+        if payment_info and payment_info.get("pseudo") == pseudo:
+            # Forcer la mise à jour du plan en mémoire pour la session
+            profile["plan"] = payment_info.get("plan", profile["plan"])
+            app.logger.info(f"Login post-paiement : plan forcé à '{profile['plan']}' pour {pseudo}")
+
     session["profile"] = profile
     session["pseudo"] = pseudo
 
@@ -1902,6 +1911,55 @@ def _fulfill_order(pseudo: str, plan: str, stripe_customer_id: str = ""):
         raise
 
 
+# ── Chat : Sauvegarde locale du résumé (utilisateurs Illimité) ─────────────
+@app.route("/summarize_chat", methods=["POST"])
+def summarize_chat():
+    """
+    Crée un résumé d'une conversation pour la sauvegarde locale.
+    Réservé au plan "illimite".
+    """
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"ok": False, "error": "Non connecté"}), 401
+
+    # Normalise le nom du plan pour la vérification
+    plan = (profile.get("plan", "free") or "free").lower().replace("é", "e")
+    if plan != "illimite":
+        return jsonify({"ok": False, "error": "Fonctionnalité réservée au plan Illimité"}), 403
+
+    data    = request.get_json() or {}
+    history = data.get("history", [])
+    if not history:
+        return jsonify({"ok": False, "error": "Historique de chat vide"}), 400
+
+    lang = session.get("lang", "fr")
+    # Construit une version texte simple de l'historique
+    transcript = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history])
+
+    if lang == "fr":
+        system_prompt = (
+            "Tu es un expert en synthèse. Résume la conversation suivante en une seule phrase (15-20 mots max). "
+            "Ce résumé servira de contexte pour une future conversation. "
+            "Capture l'intention principale et les thèmes clés de manière concise."
+        )
+        user_prompt = f"Voici la conversation à résumer :\n\n{transcript}"
+    else:
+        system_prompt = (
+            "You are a synthesis expert. Summarize the following conversation in a single sentence (15-20 words max). "
+            "This summary will be used as context for a future conversation. "
+            "Capture the main intent and key themes concisely."
+        )
+        user_prompt = f"Here is the conversation to summarize:\n\n{transcript}"
+
+    try:
+        import gemini_api
+        summary = gemini_api.generate(system_prompt, user_prompt, max_tokens=100)
+        return jsonify({"ok": True, "summary": summary.strip()})
+    except Exception as exc:
+        app.logger.error("Erreur summarize_chat : %s", exc)
+        return jsonify({"ok": False, "error": "Erreur lors de la génération du résumé"}), 500
+
+
 # ── Stripe : création session paiement ────────────────────────────────────────
 @app.route("/stripe/checkout", methods=["POST"])
 def stripe_checkout():
@@ -1963,24 +2021,36 @@ def api_complete_payment():
     if not all([session_id, plan, pseudo]):
         return jsonify({"ok": False, "error": "Paramètres manquants"}), 400
 
-    # Vérification de sécurité : on s'assure que le paiement est réel
     if not verify_checkout_session(session_id):
         app.logger.warning("Échec de vérification pour session Stripe : %s", session_id)
         return jsonify({"ok": False, "error": "Session de paiement invalide"}), 403
 
     try:
-        # Met à jour le plan dans la base de données
         _fulfill_order(pseudo, plan)
-
-        # Met à jour la session pour une expérience fluide
         profile = get_profile_by_pseudo(pseudo)
-        session["profile"] = profile
+
+        # ── Mise à jour de la session actuelle et drapeau pour le login ─────
+        # Met à jour la session en cours au cas où elle ne serait pas perdue.
+        if "profile" in session:
+            session["profile"] = profile
+        
+        # Ajoute un drapeau pour la reconnexion afin de contrer la latence de Sheets.
+        session["payment_completed"] = {"pseudo": pseudo, "plan": plan}
         session.modified = True
 
         return jsonify({"ok": True, "plan": plan})
     except Exception as exc:
         app.logger.error("Erreur api_complete_payment pour %s : %s", pseudo, exc)
         return jsonify({"ok": False, "error": "Erreur interne"}), 500
+
+
+@app.route("/api/profile")
+def api_profile():
+    """Retourne le profil de l'utilisateur connecté."""
+    profile = session.get("profile")
+    if not profile:
+        return jsonify({"ok": False, "error": "Non authentifié"}), 401
+    return jsonify({"ok": True, "profile": profile})
 
 
 # ── Stripe : webhook (méthode de secours) ─────────────────────────────────────

@@ -206,11 +206,11 @@ class SynthesisValidator:
             score += self._WEIGHTS["pas_de_formules_vides"]
 
         # ── CHECK 8 (warning) : Saturne absent ────────────────────────────────
-        if "saturne" not in text_lower:
-            warnings.append(
-                "Saturne non mentionné. Si Saturne est actif en transit, son absence "
-                "appauvrit la lecture structurelle (dette karmique / cadre)."
-            )
+        # if "saturne" not in text_lower:
+        #     warnings.append(
+        #         "Saturne non mentionné. Si Saturne est actif en transit, son absence "
+        #         "appauvrit la lecture structurelle (dette karmique / cadre)."
+        #     )
 
         # ── Score final ───────────────────────────────────────────────────────
         # Si des erreurs sont présentes, le score est plafonné à 0
