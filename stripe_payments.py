@@ -75,6 +75,19 @@ def verify_webhook(payload: bytes, sig_header: str) -> dict:
     return s.Webhook.construct_event(payload, sig_header, secret)
 
 
+def verify_checkout_session(session_id: str) -> bool:
+    """
+    Vérifie qu'une session Checkout a bien été payée.
+    Retourne True si le statut est 'paid', sinon False.
+    """
+    s = _stripe_client()
+    try:
+        session_obj = s.checkout.Session.retrieve(session_id)
+        return session_obj and session_obj.payment_status == 'paid'
+    except Exception:
+        return False
+
+
 def get_plan_from_price(price_id: str) -> str:
     """Retourne le plan correspondant à un Price ID Stripe."""
     mapping = {

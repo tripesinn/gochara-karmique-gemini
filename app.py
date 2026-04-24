@@ -933,21 +933,7 @@ def register():
 
     return jsonify({"ok": True, "pseudo": pseudo, "profile": profile, "hook_natal": hook_natal, "hook_engine": "claude"})
 
-@app.route("/chart/karmic.svg")
-def karmic_chart_svg():
-    profile = session.get("profile")
-    if not profile or "natal_positions" not in profile:
-        return "Non autorisé ou thème non calculé", 401
-    
-    from svg_chart import generate_karmic_chart_svg
-    lang = session.get("lang", "fr")
-    svg_content = generate_karmic_chart_svg(profile["natal_positions"], lang=lang)
-    
-    response = make_response(svg_content)
-    response.headers["Content-Type"] = "image/svg+xml"
-    # Allow caching for 24h as it's a natal chart (doesn't change)
-    response.headers["Cache-Control"] = "public, max-age=86400"
-    return response
+
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -1905,12 +1891,23 @@ def expand():
         return jsonify({"content": ""}), 500
 
 
+def _fulfill_order(pseudo: str, plan: str, stripe_customer_id: str = ""):
+    """Met à jour le plan d'un utilisateur après un paiement réussi."""
+    from profiles import upgrade_plan
+    try:
+        upgrade_plan(pseudo, plan, stripe_customer_id=stripe_customer_id)
+        app.logger.info("Plan upgradé : %s → %s (customer: %s)", pseudo, plan, stripe_customer_id)
+    except Exception as exc:
+        app.logger.error("Erreur _fulfill_order pour %s : %s", pseudo, exc)
+        raise
+
+
 # ── Stripe : création session paiement ────────────────────────────────────────
 @app.route("/stripe/checkout", methods=["POST"])
 def stripe_checkout():
     """
     Crée une session Stripe Checkout.
-    Body JSON : {"product_type": "test_gemma"|"gemma_unlimited"}
+    Body JSON : {"product_type": "test"|"subscription"}
     Retourne  : {"url": "https://checkout.stripe.com/..."}
     """
     from stripe_payments import create_checkout_session
@@ -1938,17 +1935,62 @@ def stripe_checkout():
         return jsonify({"error": str(exc)}), 500
 
 
-# ── Stripe : webhook paiement confirmé ────────────────────────────────────────
+# ── Stripe : succès paiement (page de transition) ──────────────────────────────
+@app.route("/stripe/success")
+def stripe_success():
+    """
+    Affiche une page de transition pendant que le paiement est vérifié
+    et que la session utilisateur est mise à jour.
+    """
+    return render_template("payment_success.html")
+
+
+# ── API : validation post-paiement ───────────────────────────────────────────
+@app.route("/api/complete_payment", methods=["POST"])
+def api_complete_payment():
+    """
+    Vérifie la session de paiement Stripe et met à jour le profil utilisateur.
+    Appelé par le script sur la page /stripe/success.
+    """
+    from stripe_payments import verify_checkout_session
+    from profiles import get_profile_by_pseudo
+
+    data = request.get_json() or {}
+    session_id = data.get("session_id")
+    plan = data.get("plan")
+    pseudo = data.get("pseudo")
+
+    if not all([session_id, plan, pseudo]):
+        return jsonify({"ok": False, "error": "Paramètres manquants"}), 400
+
+    # Vérification de sécurité : on s'assure que le paiement est réel
+    if not verify_checkout_session(session_id):
+        app.logger.warning("Échec de vérification pour session Stripe : %s", session_id)
+        return jsonify({"ok": False, "error": "Session de paiement invalide"}), 403
+
+    try:
+        # Met à jour le plan dans la base de données
+        _fulfill_order(pseudo, plan)
+
+        # Met à jour la session pour une expérience fluide
+        profile = get_profile_by_pseudo(pseudo)
+        session["profile"] = profile
+        session.modified = True
+
+        return jsonify({"ok": True, "plan": plan})
+    except Exception as exc:
+        app.logger.error("Erreur api_complete_payment pour %s : %s", pseudo, exc)
+        return jsonify({"ok": False, "error": "Erreur interne"}), 500
+
+
+# ── Stripe : webhook (méthode de secours) ─────────────────────────────────────
 @app.route("/stripe/webhook", methods=["POST"])
 def stripe_webhook():
     """
     Reçoit les événements Stripe et met à jour le plan utilisateur.
-    Événements gérés :
-      - checkout.session.completed → upgrade plan + crédite synthèses
-      - customer.subscription.deleted → retour plan free
+    C'est la méthode de garantie si l'utilisateur ferme son navigateur.
     """
     from stripe_payments import verify_webhook, get_plan_from_price
-    from profiles import upgrade_plan, downgrade_plan
 
     payload    = request.get_data()
     sig_header = request.headers.get("Stripe-Signature", "")
@@ -1965,53 +2007,27 @@ def stripe_webhook():
         metadata = obj.get("metadata") or {}
         pseudo   = metadata.get("pseudo", "")
         plan     = metadata.get("plan", "")
-
-        # Récupère le price_id pour les one-shots si plan absent des metadata
-        if not plan:
-            line_items_raw = obj.get("line_items") or {}
-            line_items = line_items_raw.get("data", []) if isinstance(line_items_raw, dict) else []
-            if line_items:
-                price_obj = line_items[0].get("price") or {}
-                plan = get_plan_from_price(price_obj.get("id", "") if isinstance(price_obj, dict) else "")
-
-        stripe_customer_id = obj.get("customer", "") or ""
+        customer = obj.get("customer", "") or ""
 
         if pseudo and plan:
-            try:
-                upgrade_plan(pseudo, plan, stripe_customer_id=stripe_customer_id)
-                app.logger.info("Plan upgradé : %s → %s (customer: %s)", pseudo, plan, stripe_customer_id)
-            except Exception as exc:
-                app.logger.error("Erreur upgrade plan : %s", exc)
+            _fulfill_order(pseudo, plan, stripe_customer_id=customer)
 
     elif event["type"] == "customer.subscription.deleted":
+        from profiles import get_profile_by_email, downgrade_plan
         obj_raw = event["data"]["object"]
         obj     = obj_raw.to_dict() if hasattr(obj_raw, "to_dict") else dict(obj_raw)
-        # Retrouve le pseudo via customer email
-        email   = obj.get("customer_email", "") or ""
-        if email:
+        customer_id = obj.get("id", "")
+        if customer_id:
             try:
-                from profiles import get_profile_by_email, downgrade_plan
-                profile_data = get_profile_by_email(email)
-                if profile_data:
-                    downgrade_plan(profile_data["pseudo"])
-                    app.logger.info("Abonnement annulé : %s", profile_data["pseudo"])
+                # La logique pour retrouver un profil par customer_id doit être implémentée
+                # dans profiles.py si nécessaire. Pour l'instant, on log.
+                app.logger.info("Abonnement annulé pour customer_id: %s", customer_id)
+                # downgrade_plan_by_customer_id(customer_id)
             except Exception as exc:
                 app.logger.error("Erreur downgrade plan : %s", exc)
 
     return jsonify({"ok": True})
 
-
-# ── Stripe : succès paiement ───────────────────────────────────────────────────
-@app.route("/stripe/success")
-def stripe_success():
-    """
-    Redirect après paiement réussi.
-    Stripe redirige ici avec ?session_id=...&plan=...&pseudo=...
-    """
-    plan   = request.args.get("plan", "")
-    pseudo = request.args.get("pseudo", "")
-
-    # Met à jour la session si l'utilisateur est connecté
     profile = session.get("profile")
     if profile and profile.get("pseudo") == pseudo:
         profile["plan"] = plan
