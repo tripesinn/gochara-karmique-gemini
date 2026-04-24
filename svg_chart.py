@@ -27,8 +27,8 @@ def generate_karmic_chart_svg(natal_positions, lang='fr'):
     
     def get_coords(lon, radius):
         # Rotation pour que l'ASC soit à 180° (à gauche)
-        # En SVG, 0° est à 3h, on tourne dans le sens horaire
-        angle_deg = (lon - asc_lon + 180) % 360
+        # Pour un sens anti-horaire : on soustrait la longitude au lieu de l'ajouter
+        angle_deg = (asc_lon - lon + 180) % 360
         angle_rad = math.radians(angle_deg)
         x = CENTER + radius * math.cos(angle_rad)
         y = CENTER + radius * math.sin(angle_rad)
@@ -55,12 +55,12 @@ def generate_karmic_chart_svg(natal_positions, lang='fr'):
         
         # Texte des signes au milieu de chaque segment
         sign_angle = angle + 15
-        sx, sy = get_coords(sign_angle, RADIUS + 15)
-        svg.append(f'<text x="{sx}" y="{sy}" fill="{GOLD_COLOR}" font-size="14" text-anchor="middle" alignment-baseline="middle" font-family="serif">{SIGNS[i % 12]}</text>')
+        sx, sy = get_coords(sign_angle, RADIUS + 18)
+        svg.append(f'<text x="{sx}" y="{sy}" fill="{GOLD_COLOR}" font-size="20" text-anchor="middle" alignment-baseline="middle" font-family="serif">{SIGNS[i % 12]}</text>')
 
     # 2. Dessin des planètes
     planet_symbols = {
-        "Soleil ☀": "☉", "Lune ☽": "☽", "Mercure ☿": "☿", "Vénus ♀": "♀", "Mars ♂": "♂",
+        "Soleil ☉": "☉", "Lune ☽": "☽", "Mercure ☿": "☿", "Vénus ♀": "♀", "Mars ♂": "♂",
         "Jupiter ♃": "♃", "Saturne ♄": "♄", "Uranus ♅": "♅", "Neptune ♆": "♆", "Pluton ♇": "♇",
         "Chiron ⚷": "⚷", "Nœud Nord ☊": "☊", "Nœud Sud ☋": "☋", "Lilith ⚸": "⚸",
         "Porte Visible ⊙": "⊙", "Porte Invisible ⊗": "⊗"
@@ -68,7 +68,7 @@ def generate_karmic_chart_svg(natal_positions, lang='fr'):
     
     # On filtre pour ne pas surcharger et on place les symboles
     important_planets = [
-        "Lune ☽", "Soleil ☀", "Nœud Nord ☊", "Nœud Sud ☋", "Chiron ⚷", 
+        "Lune ☽", "Soleil ☉", "Nœud Nord ☊", "Nœud Sud ☋", "Chiron ⚷", 
         "Saturne ♄", "Jupiter ♃", "Porte Visible ⊙", "Porte Invisible ⊗"
     ]
     
@@ -85,18 +85,18 @@ def generate_karmic_chart_svg(natal_positions, lang='fr'):
         # Couleur spéciale pour Chiron / Portes
         color = PURPLE_COLOR if "Chiron" in p_name or "Porte" in p_name else GOLD_COLOR
         
-        svg.append(f'<text x="{px}" y="{py}" fill="{color}" font-size="18" text-anchor="middle" alignment-baseline="middle">{symbol}</text>')
+        svg.append(f'<text x="{px}" y="{py}" fill="{color}" font-size="26" text-anchor="middle" alignment-baseline="middle">{symbol}</text>')
 
     # 3. Centre et Ascendant
     svg.append(f'<circle cx="{CENTER}" cy="{CENTER}" r="3" fill="{GOLD_COLOR}"/>')
     # Ligne d'horizon (ASC-DSC)
     x_asc, y_asc = get_coords(asc_lon, RADIUS)
     x_dsc, y_dsc = get_coords(asc_lon + 180, RADIUS)
-    svg.append(f'<line x1="{x_asc}" y1="{y_asc}" x2="{x_dsc}" y2="{y_dsc}" stroke="{GOLD_COLOR}" stroke-width="1" stroke-dasharray="4"/>')
+    svg.append(f'<line x1="{x_asc}" y1="{y_asc}" x2="{x_dsc}" y2="{y_dsc}" stroke="{GOLD_COLOR}" stroke-width="1.5" stroke-dasharray="4"/>')
     
     # Label ASC
-    lx, ly = get_coords(asc_lon, RADIUS + 30)
-    svg.append(f'<text x="{lx}" y="{ly}" fill="{GOLD_COLOR}" font-size="10" font-weight="bold" text-anchor="middle" font-family="monospace">ASC</text>')
+    lx, ly = get_coords(asc_lon, RADIUS + 35)
+    svg.append(f'<text x="{lx}" y="{ly}" fill="{GOLD_COLOR}" font-size="12" font-weight="bold" text-anchor="middle" font-family="monospace">ASC</text>')
 
     svg.append('</svg>')
     return "\n".join(svg)
