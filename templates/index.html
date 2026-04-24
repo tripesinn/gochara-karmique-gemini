@@ -1722,8 +1722,6 @@
             if (dateInput) dateInput.addEventListener('change', resetHookTransit);
         });
 
-        let transitGeo = null;
-        let birthGeo = null;
 
         function useGeolocation() {
             const icon = document.getElementById('geo-icon');
@@ -1760,7 +1758,6 @@
             );
         }
 
-        let _cityTimer = null;
         function onCityInput(val) {
             if (!val.trim()) { transitGeo = null; hideSuggestions(); return; }
             clearTimeout(_cityTimer);
@@ -1809,7 +1806,6 @@
         });
 
         // ── Autocomplétion ville de naissance ─────────────────────────────────────────
-        let _birthCityTimer = null;
         function onBirthCityInput(val) {
             if (!val.trim()) { hideBirthSuggestions(); return; }
             clearTimeout(_birthCityTimer);
@@ -1873,7 +1869,6 @@
 
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
-        let lastSynthesis = '';
 
         // ── Calculate avec routage Gemma/Claude ──────────────────────────────────────
         async function calculateWithRouting() {
@@ -1986,7 +1981,6 @@
         }
 
         // ── Chatbot karmique ──────────────────────────────────────────────────────────
-        let chatHistory = [];
 
         async function initChat() {
             const section = document.getElementById('chat-section');
@@ -2109,7 +2103,6 @@
         }
 
         // ── Calendrier mensuel ────────────────────────────────────────────────────────
-        let calYear = new Date().getFullYear(), calMonth = new Date().getMonth() + 1, calOpen = false;
         const MONTH_FR = T.js_months;
 
         function toggleCalendar() { const panel = document.getElementById('calendar-panel'); calOpen = !calOpen; panel.style.display = calOpen ? 'block' : 'none'; if (calOpen) loadCalendar(); }
@@ -2191,7 +2184,6 @@
 
     <script>
         // ── Dataset rating ─────────────────────────────────────────────────────────
-        let _pendingRating = 0;
 
         function showRatingBar() {
             const bar = document.getElementById('rating-bar');
