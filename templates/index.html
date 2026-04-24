@@ -1136,6 +1136,24 @@
 
     <script>
         const T = {{ lang | tojson }};
+        const CURRENT_PSEUDO = "{{ session_user }}";
+
+        // ── Persistance Locale ──────────────────────────────────────────────────────
+        const KarmicStore = {
+            _key() { return 'kg_data_' + (CURRENT_PSEUDO || 'guest'); },
+            save(data) {
+                const current = this.get();
+                localStorage.setItem(this._key(), JSON.stringify({ ...current, ...data }));
+            },
+            get() {
+                try {
+                    return JSON.parse(localStorage.getItem(this._key()) || '{}');
+                } catch { return {}; }
+            },
+            clear() {
+                localStorage.removeItem(this._key());
+            }
+        };
 
         // ── Local AI ──────────────────────────────────────────────────────────────────
         // Chrome Built-in AI (window.LanguageModel) — Chrome 127+ desktop avec flag
@@ -1659,6 +1677,18 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Restauration depuis le Store
+            const saved = KarmicStore.get();
+            const currentTransitDate = document.getElementById('transit-date')?.value;
+            
+            if (saved.lastSynthesis && saved.lastDate === currentTransitDate) {
+                showSynthesis(saved.lastSynthesis, null);
+                if (saved.chatHistory && saved.chatHistory.length > 0) {
+                    chatHistory = saved.chatHistory;
+                    chatHistory.forEach(msg => addChatBubble(msg.role, msg.content));
+                }
+            }
+
             // Pré-charger la ville de transit depuis le profil sauvegardé
             {% if user and user.transit_city %}
             transitGeo = {
@@ -1883,7 +1913,16 @@
             document.getElementById('email-status').textContent = '';
             document.getElementById('synthesis-box').scrollIntoView({ behavior: 'smooth' });
             showRatingBar();
+
+            // Persistance de la synthèse
+            KarmicStore.save({
+                lastSynthesis: text,
+                lastDate: document.getElementById('transit-date')?.value
+            });
+
             chatHistory = [];
+            KarmicStore.save({ chatHistory: [] });
+
             // Contexte transit depuis email
             if (window._emailCtx) {
                 const { transit, nak, point, regime } = window._emailCtx;
@@ -1973,7 +2012,11 @@
             const bubble = document.createElement('div');
             bubble.style.cssText = `max-width:80%; padding:0.6rem 1rem; border-radius:6px; font-size:0.95rem; line-height:1.6;
         background:${isUser ? 'rgba(201,168,76,0.15)' : 'var(--surface)'}; border:1px solid var(--border); color:var(--text);`;
-            bubble.innerHTML = marked.parse(text);
+            
+            // Sécurité marked
+            if (window.marked) bubble.innerHTML = marked.parse(text);
+            else bubble.textContent = text;
+            
             div.appendChild(bubble);
             hist.appendChild(div);
             hist.scrollTop = hist.scrollHeight;
@@ -1991,6 +2034,7 @@
 
             const localAvailable = await Gemma.isAvailable();
             chatHistory.push({ role: 'user', content: msg });
+            KarmicStore.save({ chatHistory });
 
             try {
                 const r = await fetch('/chat/ask', {
@@ -2017,6 +2061,7 @@
                 }
 
                 chatHistory.push({ role: 'assistant', content: answer });
+                KarmicStore.save({ chatHistory });
                 addChatBubble('assistant', answer);
                 updateChatQuotaLabel(d.remaining, null, null);
             } catch (e) {
