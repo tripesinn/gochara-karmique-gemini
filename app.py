@@ -1251,18 +1251,42 @@ def calculate():
         return jsonify({"error": str(exc)}), 500
 
 
+# ── CTA Helper ────────────────────────────────────────────────────────────────
+def get_hook_cta(lang: str = "fr") -> dict:
+    """
+    Génère la CTA (Call-To-Action) qui accompagne le hook gratuit.
+    Injectée à la fin du stream SSE pour créer tension → conversion.
+    """
+    MYPOS_URL = os.environ.get("MYPOS_URL", "https://mypos.com/@karmic-gochara")
+
+    if lang == "en":
+        return {
+            "text": "This diagnosis is incomplete. Your full Alternative of Consciousness, all 5 pillars and your Karmic Map are waiting.",
+            "button": "Get the full analysis — €4.99",
+            "url": MYPOS_URL,
+        }
+    else:
+        return {
+            "text": "Ce diagnostic est incomplet. L'Alternative de Conscience complète, les 5 piliers et ta Carte Karmique t'attendent.",
+            "button": "Voir l'analyse complète — 4,99€",
+            "url": MYPOS_URL,
+        }
+
 
 @app.route("/hook/transit", methods=["POST"])
 def hook_transit():
     """
-    Hook de 3 phrases basé sur les aspects du jour — streaming SSE.
-    Le calcul astro se fait d'abord, puis le texte est streamé mot à mot.
+    Hook de 4 phrases (Mirror → Wound → Friction → Open Door) basé sur les aspects du jour — streaming SSE.
+    Crée une tension irrésolvable qui vend la synthèse payante.
+    Le calcul astro se fait d'abord, puis le texte est streamé mot à mot, suivi de la CTA.
     Cache 24h par pseudo+date (si déjà en cache → replay rapide streamé).
 
     Body JSON : {"date": "2026-04-09", "hour": 12, "minute": 0,
                  "transit_city": "...", "transit_lat": ..., "transit_lon": ..., "transit_tz": "..."}
     Retourne : text/event-stream SSE
       data: <chunk>\n\n   — tokens au fil de l'eau
+      data: [CTA]\n\n   — marqueur début CTA
+      data: {cta_json}\n\n   — CTA JSON (text, button, url)
       data: [DONE]\n\n   — fin du stream
       data: [ERROR] message\n\n — erreur
     """
@@ -1386,62 +1410,75 @@ def hook_transit():
     ]
     nakshatra_context = ("Activations nakshatra actives :\n" + "\n".join(_nak_lines) + "\n\n") if _nak_lines else ""
 
+    system = (
+        "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
+        "Style : oraculaire, direct, sans hedging. "
+        "Zéro degrés, zéro orbes, zéro labels techniques visibles. "
+        "Tutoiement direct. "
+        "INTERDIT ABSOLU : noms de signes zodiacaux "
+        "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
+        "Sagittaire, Capricorne, Verseau, Poissons). "
+        "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
+    )
+
     if lang == "fr":
-        system = (
-            "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
-            "Style : oraculaire, direct, pas de liste mécanique. "
-            "Zéro degrés, zéro orbes dans le texte. Tutoiement. "
-            "INTERDIT ABSOLU : noms de signes zodiacaux "
-            "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
-            "Sagittaire, Capricorne, Verseau, Poissons). "
-            "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
-        )
         prompt = (
+            f"Tu ES @siderealAstro13. Génère un hook de 4 phrases EXACTEMENT.\n\n"
             f"Thème natal de {name} :\n{natal_mini}\n\n"
             f"Aspects actifs ce jour ({date_label}) — ne pas citer tels quels :\n{aspects_text}\n\n"
             f"{nakshatra_context}"
-            f"Écris un hook de 3 phrases. Pas de titre. Pas d'introduction.\n"
-            f"Phrase 1 : ce qui se réactive dans la mémoire karmique de {name} aujourd'hui.\n"
-            f"Phrase 2 : ce que ça touche dans sa blessure profonde.\n"
-            f"Phrase 3 : l'amorce de l'Alternative de Conscience — ce qui change si {name} choisit autrement.\n"
-            f"Donne envie d'obtenir la lecture complète. Ton dense et précis."
+            f"Structure obligatoire :\n"
+            f"1. MIROIR : Ce que {name} vit concrètement EN CE MOMENT.\n"
+            f"2. BLESSURE : Ce que cette période réveille dans sa blessure profonde.\n"
+            f"3. FRICTION : Ce que la période rend insupportable ou répétitif.\n"
+            f"4. PORTE ENTROUVERTE : Amorce l'Alternative de Conscience SANS la révéler.\n\n"
+            f"Règles absolues :\n"
+            f"- 4 phrases. Pas 3. Pas 5.\n"
+            f"- Tutoiement direct.\n"
+            f"- Zéro jargon astro (pas de 'ton Ketu', 'ta Porte Invisible', 'ton Chiron').\n"
+            f"- La phrase 4 s'arrête juste avant de donner la clé — elle suspend, elle frustre, elle appelle la suite.\n"
+            f"- Le hook ne délivre PAS l'Alternative de Conscience — il la rend désirable.\n"
         )
     else:
-        system = (
-            "You are @siderealAstro13. Vedic karmic soul reader. "
-            "Style: oracular, direct, no mechanical list. "
-            "No degrees, no orbs in the text. Address as 'you'. "
-            "ABSOLUTE PROHIBITION: zodiac sign names "
-            "(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, "
-            "Sagittarius, Capricorn, Aquarius, Pisces). "
-            "Use only house numbers (H1, H3…) and planet names."
-        )
         prompt = (
+            f"You ARE @siderealAstro13. Generate a hook of EXACTLY 4 sentences.\n\n"
             f"Natal chart of {name}:\n{natal_mini}\n\n"
-            f"Active aspects ({date_label}) — do not quote as-is:\n{aspects_text}\n\n"
+            f"Active aspects today ({date_label}) — do not quote as-is:\n{aspects_text}\n\n"
             f"{nakshatra_context}"
-            f"Write a hook of 3 sentences. No title. No introduction.\n"
-            f"Sentence 1: what reactivates in {name}'s karmic memory today.\n"
-            f"Sentence 2: what this touches in their core wound.\n"
-            f"Sentence 3: the seed of the Alternative of Consciousness.\n"
-            f"Make them want the full reading. Dense and precise."
+            f"Mandatory structure:\n"
+            f"1. MIRROR: What {name} is living concretely RIGHT NOW.\n"
+            f"2. WOUND: What this period reawakens in their deep wound.\n"
+            f"3. FRICTION: What the period makes unbearable or repetitive.\n"
+            f"4. OPEN DOOR: Begin the Alternative of Consciousness WITHOUT revealing it.\n\n"
+            f"Absolute rules:\n"
+            f"- 4 sentences. Not 3. Not 5.\n"
+            f"- Direct address: 'you', 'your'.\n"
+            f"- Zero astro jargon (no 'your Ketu', 'your Invisible Door', 'your Chiron').\n"
+            f"- Sentence 4 stops just before giving the key — it suspends, it frustrates, it calls for more.\n"
+            f"- The hook does NOT deliver the Alternative of Consciousness — it makes it desirable.\n"
         )
 
-    hook_model = os.environ.get("HOOK_MODEL", "gemini-2.5-flash")
+    hook_model = os.environ.get("HOOK_MODEL", "claude-sonnet-4-6")
 
     # ── Stream SSE ────────────────────────────────────────────────────────────
     # On capture le profil enrichi dans une var locale pour le cache post-stream
     _enriched = enriched_profile
     _cache_key = cache_key
+    _lang = lang
 
     def generate():
         full_text = []
         from ai_interpret import stream_ai
         try:
-            for text in stream_ai(system, prompt, user=_enriched, max_tokens=1024):
+            for text in stream_ai(system, prompt, user=_enriched, max_tokens=600):
                 if not text.startswith("[ERROR]"):
                     full_text.append(text)
                 yield f"data: {_json.dumps(text)}\n\n"
+
+            # Injection de la CTA après le hook
+            cta = get_hook_cta(lang=_lang)
+            yield f"data: {_json.dumps('[CTA]')}\n\n"
+            yield f"data: {_json.dumps(cta)}\n\n"
             yield f"data: [DONE]\n\n"
         except Exception as exc:
             app.logger.error("Erreur stream hook transit : %s", exc)

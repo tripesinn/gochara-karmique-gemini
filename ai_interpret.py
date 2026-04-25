@@ -156,6 +156,51 @@ def _load_vault(include_keywords: bool = True) -> str | None:
 
 # ── Configuration Gemini ──────────────────────────────────────────────────────
 
+# ══════════════════════════════════════════════════════════════════════════════
+# MODEL ASSIGNMENT — Router par cas d'usage
+# ══════════════════════════════════════════════════════════════════════════════
+HOOK_MODEL = "claude-sonnet-4-6"        # Hook gratuit — rapide, cheap
+SYNTHESIS_MODEL = "claude-opus-4-7"     # Synthèse payante — meilleure qualité doctrinal
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HOOK PROMPTS — Mirror → Wound → Friction → Open Door
+# ══════════════════════════════════════════════════════════════════════════════
+
+HOOK_PROMPT_FR = """Tu ES @siderealAstro13. Génère un hook de 4 phrases EXACTEMENT.
+
+Structure obligatoire :
+1. MIROIR : Ce que {name} vit concrètement EN CE MOMENT — comportement reconnaissable, pas de jargon astro.
+2. BLESSURE : Ce que cette période réveille dans sa blessure profonde — sensation, pas mécanique.
+3. FRICTION : Ce que la période rend insupportable ou répétitif — l'endroit qui frotte le plus.
+4. PORTE ENTROUVERTE : Amorce l'Alternative de Conscience SANS la révéler.
+   La phrase doit être incomplète, suspendue — elle indique qu'une clé existe mais s'arrête avant de la donner.
+   Format : "Ce que tu dois comprendre sur [thème central], c'est que..."  ou équivalent — puis STOP.
+
+RÈGLES ABSOLUES :
+- 4 phrases. Pas 3. Pas 5.
+- Tutoiement direct.
+- Zéro jargon astro (pas de "ton Ketu", "ta Porte Invisible", "ton Chiron").
+- La phrase 4 NE CONCLUT PAS. Elle suspend. Elle frustre. Elle appelle la suite.
+- Le hook ne délivre PAS l'Alternative de Conscience — il la rend désirable.
+"""
+
+HOOK_PROMPT_EN = """You ARE @siderealAstro13. Generate a hook of EXACTLY 4 sentences.
+
+Mandatory structure:
+1. MIRROR: What {name} is concretely living RIGHT NOW — recognizable behavior, no astro jargon.
+2. WOUND: What this period reawakens in their deep wound — sensation, not mechanics.
+3. FRICTION: What the period makes unbearable or repetitive — where it chafes most.
+4. OPEN DOOR: Begin the Alternative of Consciousness WITHOUT revealing it.
+   The sentence must be incomplete, suspended — it signals a key exists but stops before giving it.
+   Format: "What you need to understand about [core theme] is that..." then STOP.
+
+ABSOLUTE RULES:
+- 4 sentences. Not 3. Not 5.
+- Direct address: "you", "your".
+- Zero astro jargon (no "your Ketu", "your Invisible Door", "your Chiron").
+- Sentence 4 does NOT conclude. It suspends. It frustrates. It calls for more.
+- The hook does NOT deliver the Alternative of Consciousness — it makes it desirable.
+"""
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PROMPT SYSTÈME — personnalisé par utilisateur, doctrine centralisée
@@ -466,9 +511,10 @@ def _get_nak_lord(nak_name: str) -> str:
 
 def get_hook_natal(user: dict) -> str:
     """
-    Génère un hook de 3-4 phrases basé uniquement sur le thème natal.
+    Génère un hook de 3-4 phrases (Mirror → Wound → Friction → Open Door) basé uniquement sur le thème natal.
     Appelé dès le login — zéro calcul de transit requis.
     Mis en cache côté app.py (clé: pseudo, durée: 7 jours).
+    Modèle : Sonnet (rapide, cheap)
 
     Retourne une chaîne HTML-safe prête à afficher.
     """
@@ -497,48 +543,39 @@ def get_hook_natal(user: dict) -> str:
         f"Nakshatras : Ketu en {ketu_nak} (régent {_get_nak_lord(ketu_nak)}), Rahu en {rahu_nak}, Chiron en {chiron_nak}. "
     )
 
+    system = (
+        "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
+        "Ton style : oraculaire, direct, sans hedging. "
+        "Zéro degrés, zéro orbes, zéro labels techniques visibles. "
+        "Tutoiement direct. "
+        "INTERDIT ABSOLU dans le texte rendu : noms de signes zodiacaux "
+        "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
+        "Sagittaire, Capricorne, Verseau, Poissons). "
+        "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
+    )
+
     if lang == "fr":
-        system = (
-            "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
-            "Ton style : oraculaire, direct, sans hedging. "
-            "Zéro degrés, zéro orbes, zéro labels techniques visibles. "
-            "Tutoiement direct. "
-            "INTERDIT ABSOLU dans le texte rendu : noms de signes zodiacaux "
-            "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
-            "Sagittaire, Capricorne, Verseau, Poissons). "
-            "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
-        )
-        prompt = f"""Thème natal de {name} :
+        hook_template = HOOK_PROMPT_FR.format(name=name)
+        prompt = f"""{hook_template}
+
+Thème natal de {name} :
 {natal_mini}
 
-Écris un hook de 3 phrases exactement. Pas de titre. Pas d'introduction.
-Phrase 1 : le schéma karmique dominant que {name} rejoue (Ketu en {ketu_nak}, mémoire ROM figée).
-Phrase 2 : la nature de la blessure active et ce qu'elle cherche (Chiron H{chi_h} — outil d'ouverture vers la Porte Visible).
-Phrase 3 : la direction de libération qui s'ouvre (Porte Visible/Stage) + une amorce d'Alternative de Conscience.
-Intègre la notion de nakshatra et de régime doctrinal (ROM/Dharma/Chiron) sans prononcer ces mots.
-Ton : dense, précis, comme si tu lisais directement l'âme. Donne envie d'en savoir plus."""
+CONTEXTE : Hook au login (natal seul, zéro transits). Tu dois créer une tension qui donne envie de rentrer dans l'appli.
+La phrase 4 s'arrête juste avant de donner la clé — elle fruste, elle appelle la suite."""
     else:
-        system = (
-            "You are @siderealAstro13. Vedic karmic soul reader. "
-            "Style: oracular, direct, no hedging. "
-            "No degrees, no orbs, no visible technical labels. "
-            "Address user directly as 'you'. "
-            "ABSOLUTE PROHIBITION in rendered text: zodiac sign names "
-            "(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, "
-            "Sagittarius, Capricorn, Aquarius, Pisces). "
-            "Use only house numbers (H1, H3…) and planet names."
-        )
-        prompt = f"""Natal chart of {name}:
+        hook_template = HOOK_PROMPT_EN.format(name=name)
+        prompt = f"""{hook_template}
+
+Natal chart of {name}:
 {natal_mini}
 
-Write a hook of exactly 3 sentences. No title. No introduction.
-Sentence 1: the dominant karmic pattern {name} replays (Ketu in {ketu_nak}, frozen ROM memory).
-Sentence 2: the nature of the active wound and what it seeks (Chiron H{chi_h} — opening tool toward Visible Door).
-Sentence 3: the liberation direction opening (Visible Door/Stage) + a seed of Alternative of Consciousness.
-Integrate the nakshatra and doctrinal regime (ROM/Dharma/Chiron) without uttering these words.
-Tone: dense, precise, as if reading the soul directly. Make them want to know more."""
+CONTEXT: Hook at login (natal only, zero transits). You must create tension that makes them want to enter the app.
+Sentence 4 stops just before giving the key — it frustrates, it calls for more."""
 
-    return generate_ai(system, prompt, user=user, max_tokens=1024)
+    # Force le modèle Sonnet pour le hook
+    user_with_model = {**(user or {}), "user_model": HOOK_MODEL}
+    return generate_ai(system, prompt, user=user_with_model, max_tokens=600)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -547,9 +584,10 @@ Tone: dense, precise, as if reading the soul directly. Make them want to know mo
 
 def get_hook_transit(chart_data: dict, user: dict = None) -> str:
     """
-    Génère un hook de 3-4 phrases basé sur les aspects du jour.
+    Génère un hook de 4 phrases (Mirror → Wound → Friction → Open Door) basé sur les aspects du jour.
     Appelé après calculate_transits(), avant get_synthesis().
     Mis en cache côté app.py (clé: pseudo+date, durée: 24h).
+    Modèle : Sonnet (rapide, cheap)
 
     chart_data : dict retourné par calculate_transits()
     Retourne une chaîne prête à afficher.
@@ -568,50 +606,45 @@ def get_hook_transit(chart_data: dict, user: dict = None) -> str:
 
     natal_mini = _build_natal_context(user)
 
+    system = (
+        "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
+        "Style : oraculaire, direct, sans hedging. "
+        "Zéro degrés, zéro orbes, zéro labels techniques visibles. "
+        "Tutoiement direct. "
+        "INTERDIT ABSOLU dans le texte rendu : noms de signes zodiacaux "
+        "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
+        "Sagittaire, Capricorne, Verseau, Poissons). "
+        "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
+    )
+
     if lang == "fr":
-        system = (
-            "Tu es @siderealAstro13. Lecteur d'âme karmique védique. "
-            "Style : oraculaire, direct, pas de liste mécanique. "
-            "Zéro degrés, zéro orbes dans le texte. Tutoiement. "
-            "INTERDIT ABSOLU dans le texte rendu : noms de signes zodiacaux "
-            "(Bélier, Taureau, Gémeaux, Cancer, Lion, Vierge, Balance, Scorpion, "
-            "Sagittaire, Capricorne, Verseau, Poissons). "
-            "Utilise uniquement les maisons (H1, H3…) et les noms de planètes."
-        )
-        prompt = f"""Thème natal de {name} :
+        hook_template = HOOK_PROMPT_FR.format(name=name)
+        prompt = f"""{hook_template}
+
+Thème natal de {name} :
 {natal_mini}
 
-Aspects actifs ce jour ({date}) — ne pas citer tels quels :
+Aspects actifs ce jour ({date}) — ne pas citer tels quels dans le texte :
 {aspects_text}
 
-Écris un hook de 3 phrases. Pas de titre. Pas d'introduction.
-Phrase 1 : ce qui se réactive dans la mémoire karmique de {name} aujourd'hui.
-Phrase 2 : ce que ça touche dans sa blessure profonde (Chiron = outil d'ouverture vers la Porte Visible).
-Phrase 3 : l'amorce de l'Alternative de Conscience — ce qui change si {name} choisit autrement.
-Donne envie d'obtenir la lecture complète. Ton dense et précis."""
+CONTEXTE : Tu dois créer une tension irrésolvable. Le hook livre un diagnostic incomplet qui crée du désir.
+La phrase 4 s'arrête avant de révéler la clé. C'est ça qui vend la synthèse."""
     else:
-        system = (
-            "You are @siderealAstro13. Vedic karmic soul reader. "
-            "Style: oracular, direct, no mechanical list. "
-            "No degrees, no orbs in the text. Address as 'you'. "
-            "ABSOLUTE PROHIBITION in rendered text: zodiac sign names "
-            "(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, "
-            "Sagittarius, Capricorn, Aquarius, Pisces). "
-            "Use only house numbers (H1, H3…) and planet names."
-        )
-        prompt = f"""Natal chart of {name}:
+        hook_template = HOOK_PROMPT_EN.format(name=name)
+        prompt = f"""{hook_template}
+
+Natal chart of {name}:
 {natal_mini}
 
-Active aspects today ({date}) — do not quote as-is:
+Active aspects today ({date}) — do not quote as-is in text:
 {aspects_text}
 
-Write a hook of 3 sentences. No title. No introduction.
-Sentence 1: what reactivates in {name}'s karmic memory today.
-Sentence 2: what this touches in their core wound (Chiron = opening tool toward Visible Door).
-Sentence 3: the seed of the Alternative of Consciousness — what changes if {name} chooses differently.
-Make them want the full reading. Dense and precise tone."""
+CONTEXT: You must create unresolvable tension. The hook delivers incomplete diagnosis that creates desire.
+Sentence 4 stops before revealing the key. That's what sells the full synthesis."""
 
-    return generate_ai(system, prompt, user=user, max_tokens=1024)
+    # Force le modèle Sonnet pour le hook
+    user_with_model = {**(user or {}), "user_model": HOOK_MODEL}
+    return generate_ai(system, prompt, user=user_with_model, max_tokens=600)
 # ══════════════════════════════════════════════════════════════════════════════
 # SIGNAL DU JOUR — compact pour TikTok/Web
 # ══════════════════════════════════════════════════════════════════════════════
@@ -706,11 +739,15 @@ def _generate_generic_hook(regime: str) -> str:
 def get_synthesis(chart_data: dict, user: dict = None, lang: str = "fr") -> str:
     """
     Génère la synthèse karmique complète (payant).
+    Modèle : Opus pour la meilleure qualité doctrinal.
     chart_data : dict retourné par calculate_transits()
     user       : dict du profil utilisateur (session["profile"])
     """
     user = user or {}
     lang = user.get("lang", lang)
+
+    # Force le modèle Opus pour la synthèse payante
+    user = {**user, "user_model": SYNTHESIS_MODEL}
 
     aspects_text  = _aspects_to_text(chart_data.get("aspects", []))
     natal_context = _build_natal_context(user)
@@ -794,7 +831,7 @@ MANDATORY STYLE: soul reader, not technical astrologer.
 
 Minimum 300 words. Do not truncate. Language: {lang_name}."""
 
-    return generate_ai(_build_system_prompt(user, use_vault=True), prompt, user=user, max_tokens=8192)
+    return generate_ai(_build_system_prompt(user, use_vault=True), prompt, user=user, max_tokens=4000)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
