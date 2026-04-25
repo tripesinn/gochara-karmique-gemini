@@ -1236,7 +1236,13 @@
                 gocharaBtn.style.borderBottomColor = 'transparent';
                 viewGochara.style.display = 'none';
                 viewCarte.style.display = 'block';
-                document.getElementById('karmic-chart-img').src = '/chart/karmic.svg?' + new Date().getTime();
+                // Passer la date de transit sélectionnée pour afficher les planètes du jour
+                const tDate = document.getElementById('transit-date')?.value || '';
+                const tHour = new Date().getHours();
+                const chartParams = tDate
+                    ? `date=${tDate}&hour=${tHour}&t=${Date.now()}`
+                    : `t=${Date.now()}`;
+                document.getElementById('karmic-chart-img').src = '/chart/karmic.svg?' + chartParams;
             } else {
                 gocharaBtn.style.color = 'var(--gold)';
                 gocharaBtn.style.borderBottomColor = 'var(--gold)';

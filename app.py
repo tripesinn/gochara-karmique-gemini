@@ -1002,28 +1002,59 @@ def karmic_chart_svg():
     if not profile:
         return "Non autorisé", 401
 
-    natal_pos = profile.get("natal_positions")
+    from astro_calc import calculate_transits
+    from svg_chart import generate_karmic_chart_svg
 
-    # Recalculer si absent de la session (pour limiter taille cookie)
+    # ── Natal positions ───────────────────────────────────────────────────────
+    natal_pos = profile.get("natal_positions")
     if not natal_pos:
         try:
-            from astro_calc import calculate_transits
-            # Transit sur le lieu de naissance à la date de naissance pour retrouver le natal pur
-            # On utilise 12h00 par défaut si non spécifié, mais ici on a l'heure exacte du profil
-            res = calculate_transits(profile, profile, profile["year"], profile["month"], profile["day"], profile["hour"], profile["minute"])
+            res = calculate_transits(
+                profile, profile,
+                profile["year"], profile["month"], profile["day"],
+                profile["hour"], profile["minute"],
+            )
             natal_pos = res.get("natal", {})
         except Exception as exc:
             app.logger.error("Erreur recalcul natal pour SVG: %s", exc)
             return "Erreur calcul", 500
 
-    from svg_chart import generate_karmic_chart_svg
+    # ── Transit positions (optionnel — paramètres ?date=YYYY-MM-DD&hour=H) ───
+    transit_pos  = None
+    transit_date = None
+    date_param   = request.args.get("date", "").strip()
+    if date_param:
+        try:
+            from datetime import date as _date
+            parts = date_param.split("-")
+            yr, mo, dy = int(parts[0]), int(parts[1]), int(parts[2])
+            hr = int(request.args.get("hour", 12))
+            mn = int(request.args.get("minute", 0))
+            transit_loc = {
+                "city": profile.get("transit_city") or profile.get("city", ""),
+                "lat":  float(profile.get("transit_lat") or profile.get("lat", 48.8566)),
+                "lon":  float(profile.get("transit_lon") or profile.get("lon", 2.3522)),
+                "tz":   profile.get("transit_tz") or profile.get("tz", "Europe/Paris"),
+            }
+            tr_result = calculate_transits(profile, transit_loc, yr, mo, dy, hr, mn)
+            transit_pos  = tr_result.get("transits", {})
+            transit_date = date_param
+        except Exception as exc:
+            app.logger.warning("SVG transit calc error: %s", exc)
+
     lang = session.get("lang", "fr")
-    svg_content = generate_karmic_chart_svg(natal_pos, lang=lang)
+    svg_content = generate_karmic_chart_svg(
+        natal_pos,
+        transit_positions=transit_pos,
+        lang=lang,
+        transit_date=transit_date,
+    )
 
     response = make_response(svg_content)
     response.headers["Content-Type"] = "image/svg+xml"
-    # Allow caching for 24h as it's a natal chart (doesn't change)
-    response.headers["Cache-Control"] = "public, max-age=86400"
+    # Cache court si transit demandé (change chaque jour), sinon 24h pour le natal seul
+    ttl = 3600 if transit_pos else 86400
+    response.headers["Cache-Control"] = f"public, max-age={ttl}"
     return response
 
 
