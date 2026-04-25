@@ -275,7 +275,7 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
                           "Porte Visible ⊙", "Porte Invisible ⊗")
         filt  = ' filter="url(#glow)"' if is_key else ''
         px, py = xy(disp_lon, R_NATAL)
-        svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="15" '
+        svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="21" '
                    f'text-anchor="middle" dominant-baseline="middle"{filt}>{sym}</text>')
 
         # Degree label
@@ -311,7 +311,7 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
 
             # Glyph
             px, py = xy(disp_lon, R_TR_SYM)
-            svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="13" '
+            svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="17" '
                        f'text-anchor="middle" dominant-baseline="middle" opacity="0.9">{sym}</text>')
 
             # Degree label
