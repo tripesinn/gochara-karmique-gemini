@@ -686,6 +686,40 @@
         #consent-actions button {
             flex: 1;
         }
+
+        .cta-block {
+            padding: 1.5rem;
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            border-radius: 8px;
+            background: rgba(201, 168, 76, 0.05);
+            text-align: center;
+        }
+
+        .cta-text {
+            color: #aaa;
+            font-size: 0.95rem;
+            margin: 0 0 1.2rem 0;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 12px 28px;
+            background: transparent;
+            border: 1px solid #c9a44c;
+            color: #c9a44c;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .cta-button:hover {
+            background: #c9a44c;
+            color: #080808;
+        }
     </style>
 </head>
 
@@ -1677,6 +1711,8 @@
                 let buffer = '';
                 if (spinner) spinner.style.display = 'none';
 
+                let ctaData = null;
+                let nextIsCta = false;
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -1687,7 +1723,13 @@
                         if (!line.startsWith('data: ')) continue;
                         const payload = line.slice(6).trim();
                         if (payload === '[DONE]') {
-                            if (cta) { cta.style.display = 'block'; cta.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                            // Show CTA if available, otherwise show synthesis button
+                            if (ctaData && cta) {
+                                renderHookCTA(ctaData, cta);
+                            } else if (cta) {
+                                cta.style.display = 'block';
+                            }
+                            if (cta) cta.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             btnText.innerHTML = T.js_transit_reread;
                             btn.disabled = false;
                             return;
@@ -1697,6 +1739,16 @@
                             btn.disabled = false;
                             return;
                         }
+                        if (payload === '[CTA]') {
+                            nextIsCta = true;
+                            continue;
+                        }
+                        if (nextIsCta) {
+                            nextIsCta = false;
+                            try { ctaData = JSON.parse(payload); } catch (e) { console.error('CTA parse error:', e); }
+                            continue;
+                        }
+                        // Regular hook text chunk
                         try { const chunk = JSON.parse(payload); if (text) text.textContent += chunk; } catch { }
                     }
                 }
@@ -1709,12 +1761,40 @@
             }
         }
 
+        function renderHookCTA(cta, container) {
+            const lang = document.documentElement.lang || 'fr';
+            const ctaText = lang === 'en' ? cta.text_en : cta.text_fr;
+            const ctaButton = lang === 'en' ? cta.button_en : cta.button_fr;
+            const ctaUrl = cta.url;
+
+            container.innerHTML = `
+                <div class="cta-block">
+                    <p class="cta-text">${ctaText}</p>
+                    <a href="${ctaUrl}" target="_blank" class="cta-button">${ctaButton}</a>
+                </div>
+            `;
+            container.style.display = 'block';
+        }
+
         function resetHookTransit() {
             const cta = document.getElementById('synthesis-cta');
             const text = document.getElementById('hook-transit-text');
             const box = document.getElementById('hook-transit-box');
             const btn = document.getElementById('hook-btn-text');
-            if (cta) cta.style.display = 'none';
+            if (cta) {
+                cta.style.display = 'none';
+                cta.innerHTML = `
+                    <button id="calc-btn" class="btn-primary"
+                        style="max-width: 300px; border-color: var(--gold); color: var(--gold);"
+                        onclick="calculateWithRouting()">
+                        <span id="btn-text">${T.btn_reading || 'Voir l\'analyse complète'}</span>
+                    </button>
+                    <div
+                        style="font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); letter-spacing:0.15em; margin-top:0.5rem;">
+                        ${T.interp_credit || ''}
+                    </div>
+                `;
+            }
             if (text) text.textContent = '';
             if (box) box.style.display = 'none';
             if (btn) btn.innerHTML = '◆ VOIR LE SIGNAL DU JOUR';
