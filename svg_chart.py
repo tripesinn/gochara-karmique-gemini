@@ -31,7 +31,7 @@ _SIGNS = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓
 
 # Planet name → (glyph, natal_color)
 _NATAL_SYM = {
-    "Soleil ☉":          ("☉", _GOLD),
+    "Soleil ☀":          ("☀", _GOLD),
     "Lune ☽":            ("☽", _GOLD),
     "Mercure ☿":         ("☿", _TEXT),
     "Vénus ♀":           ("♀", _TEXT),
@@ -45,13 +45,13 @@ _NATAL_SYM = {
     "Nœud Nord ☊":       ("☊", _CYAN),
     "Nœud Sud ☋":        ("☋", _CYAN),
     "Lilith ⚸":          ("⚸", _PURPLE),
-    "Porte Visible ⊙":   ("⊙", _GOLD),
-    "Porte Invisible ⊗": ("⊗", _PURPLE),
+    "Porte Visible ⊙":   ("♄/♅", _GOLD),
+    "Porte Invisible ⊗": ("♅/♄", _PURPLE),
 }
 
 # Transit glyph → color override (different from natal)
 _TRANSIT_COLOR = {
-    "Soleil ☉":    _CYAN,
+    "Soleil ☀":    _CYAN,
     "Lune ☽":      _CYAN,
     "Mercure ☿":   "#9dd4dc",
     "Vénus ♀":     "#9dd4dc",
@@ -62,7 +62,7 @@ _TRANSIT_COLOR = {
 }
 
 _IMPORTANT_NATAL = [
-    "Lune ☽", "Soleil ☉", "Saturne ♄", "Jupiter ♃",
+    "Lune ☽", "Soleil ☀", "Saturne ♄", "Jupiter ♃",
     "Nœud Nord ☊", "Nœud Sud ☋",
     "Chiron ⚷", "Lilith ⚸",
     "Porte Visible ⊙", "Porte Invisible ⊗",
@@ -70,7 +70,7 @@ _IMPORTANT_NATAL = [
 ]
 
 _IMPORTANT_TRANSIT = [
-    "Soleil ☉", "Lune ☽", "Mars ♂", "Vénus ♀",
+    "Soleil ☀", "Lune ☽", "Mars ♂", "Vénus ♀",
     "Mercure ☿", "Jupiter ♃", "Saturne ♄", "Nœud Nord ☊",
 ]
 
@@ -94,7 +94,7 @@ def _spread(items, min_gap=8.0, iterations=25):
             l1 = result[i][1] % 360
             l2 = result[j][1] % 360
             gap = (l2 - l1) % 360
-            if 0 < gap < min_gap:
+            if gap < min_gap:
                 push = (min_gap - gap) / 2.0
                 result[i][1] -= push
                 result[j][1] += push
@@ -271,11 +271,12 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
                        f'stroke="{_GOLD_DIM}" stroke-width="0.6"/>')
 
         # Glyph
-        is_key = name in ("Soleil ☉", "Lune ☽", "Nœud Nord ☊", "Nœud Sud ☋",
+        is_key = name in ("Soleil ☀", "Lune ☽", "Nœud Nord ☊", "Nœud Sud ☋",
                           "Porte Visible ⊙", "Porte Invisible ⊗")
         filt  = ' filter="url(#glow)"' if is_key else ''
+        fs    = 13 if len(sym) > 1 else 21
         px, py = xy(disp_lon, R_NATAL)
-        svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="21" '
+        svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="{fs}" '
                    f'text-anchor="middle" dominant-baseline="middle"{filt}>{sym}</text>')
 
         # Degree label
@@ -310,8 +311,9 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
                        f'stroke="{col}" stroke-width="1" opacity="0.5"/>')
 
             # Glyph
+            fs = 11 if len(sym) > 1 else 17
             px, py = xy(disp_lon, R_TR_SYM)
-            svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="17" '
+            svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="{fs}" '
                        f'text-anchor="middle" dominant-baseline="middle" opacity="0.9">{sym}</text>')
 
             # Degree label
