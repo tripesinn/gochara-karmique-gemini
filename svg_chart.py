@@ -44,7 +44,7 @@ _NATAL_SYM = {
     "Chiron ⚷":          ("⚷", _PURPLE),
     "Nœud Nord ☊":       ("☊", _CYAN),
     "Nœud Sud ☋":        ("☋", _CYAN),
-    "Lilith ⚸":          ("⚸", _PURPLE),
+    "Lilith ⚸":          ("⚸", _CYAN),
     "Porte Visible ⊙":   ("♄/♅", _GOLD),
     "Porte Invisible ⊗": ("♅/♄", _PURPLE),
 }
@@ -241,7 +241,7 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
     rahu_d = natal_positions.get("Nœud Nord ☊")
     if ketu_d and rahu_d:
         _axis(float(ketu_d["lon_raw"]), float(rahu_d["lon_raw"]),
-              _PURPLE, "Karma", "Dharma", dash="5,3")
+              _CYAN, "Karma", "Dharma", dash="5,3")
 
     pi_d = natal_positions.get("Porte Invisible ⊗")
     pv_d = natal_positions.get("Porte Visible ⊙")
