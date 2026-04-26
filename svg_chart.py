@@ -192,6 +192,10 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
         svg.append(f'<path d="{_arc_path(CX, CY, R_OUT, R_ZIN, a0, a1)}" '
                    f'fill="{_ELEM[i]}" stroke="{_GOLD_DIM}" stroke-width="0.5"/>')
 
+        # Sign glyph at segment centre
+        sx, sy = xy(lon0 + 15, (R_OUT + R_ZIN) / 2)
+        svg.append(f'<text x="{sx:.1f}" y="{sy:.1f}" fill="{_GOLD}" font-size="17" '
+                   f'text-anchor="middle" dominant-baseline="middle">{_SIGNS[i]}</text>')
 
     # ── 2. Ring boundaries ────────────────────────────────────────────────────
     rings = [
