@@ -186,6 +186,13 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
         f'  <stop offset="0%" stop-color="#1a1050" stop-opacity="0.55"/>',
         f'  <stop offset="100%" stop-color="{_BG}" stop-opacity="0"/>',
         '</radialGradient>',
+        # Arrowhead markers for evolution arrows
+        f'<marker id="arw-cyan" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto">',
+        f'  <path d="M 0 0 L 5 2.5 L 0 5 Z" fill="{_CYAN}"/>',
+        '</marker>',
+        f'<marker id="arw-purple" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto">',
+        f'  <path d="M 0 0 L 5 2.5 L 0 5 Z" fill="{_PURPLE}"/>',
+        '</marker>',
         '</defs>',
         f'<circle cx="{CX}" cy="{CY}" r="{R_OUT}" fill="url(#cg)"/>',
     ]
@@ -294,6 +301,9 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
 
     natal_spread = _spread(natal_raw, min_gap=9.0)
 
+    # Collect display positions for evolution arrows
+    natal_disp_pos = {}
+
     for entry in natal_spread:
         name, disp_lon, (sym, col, orig_d) = entry
         orig_lon = float(orig_d.get("lon_raw", disp_lon))
@@ -319,6 +329,42 @@ def generate_karmic_chart_svg(natal_positions, transit_positions=None, lang='fr'
         px, py = xy(disp_lon, R_NATAL)
         svg.append(f'<text x="{px:.1f}" y="{py:.1f}" fill="{col}" font-size="{fs}" '
                    f'text-anchor="middle" dominant-baseline="middle"{filt}>{sym}</text>')
+
+        # Halo + label for Chiron (Blessure→PV) and Lilith (Épreuve→☊)
+        if name == "Chiron ⚷":
+            svg.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="15" fill="none" '
+                       f'stroke="{_PURPLE}" stroke-width="1.3" opacity="0.65" stroke-dasharray="3,2"/>')
+            lx, ly = xy(disp_lon, R_NATAL - 26)
+            svg.append(f'<text x="{lx:.1f}" y="{ly:.1f}" fill="{_PURPLE}" font-size="6.5" '
+                       f'text-anchor="middle" dominant-baseline="middle" '
+                       f'font-family="monospace" opacity="0.85">Blessure→PV</text>')
+        elif name == "Lilith ⚸":
+            svg.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="15" fill="none" '
+                       f'stroke="{_CYAN}" stroke-width="1.3" opacity="0.65" stroke-dasharray="3,2"/>')
+            lx, ly = xy(disp_lon, R_NATAL - 26)
+            svg.append(f'<text x="{lx:.1f}" y="{ly:.1f}" fill="{_CYAN}" font-size="6.5" '
+                       f'text-anchor="middle" dominant-baseline="middle" '
+                       f'font-family="monospace" opacity="0.85">Épreuve→☊</text>')
+
+        # Track positions for arrows
+        if name in ("Chiron ⚷", "Porte Visible ⊙", "Lilith ⚸", "Nœud Nord ☊"):
+            natal_disp_pos[name] = disp_lon
+
+    # ── 5b. Evolution arrows (Chiron→PV, Lilith→Rahu) ────────────────────────
+    ARROW_R = R_NATAL - 12
+    if "Chiron ⚷" in natal_disp_pos and "Porte Visible ⊙" in natal_disp_pos:
+        ax1, ay1 = xy(natal_disp_pos["Chiron ⚷"], ARROW_R)
+        ax2, ay2 = xy(natal_disp_pos["Porte Visible ⊙"], ARROW_R)
+        svg.append(f'<line x1="{ax1:.1f}" y1="{ay1:.1f}" x2="{ax2:.1f}" y2="{ay2:.1f}" '
+                   f'stroke="{_PURPLE}" stroke-width="0.9" opacity="0.30" stroke-dasharray="5,4" '
+                   f'marker-end="url(#arw-purple)"/>')
+
+    if "Lilith ⚸" in natal_disp_pos and "Nœud Nord ☊" in natal_disp_pos:
+        bx1, by1 = xy(natal_disp_pos["Lilith ⚸"], ARROW_R)
+        bx2, by2 = xy(natal_disp_pos["Nœud Nord ☊"], ARROW_R)
+        svg.append(f'<line x1="{bx1:.1f}" y1="{by1:.1f}" x2="{bx2:.1f}" y2="{by2:.1f}" '
+                   f'stroke="{_CYAN}" stroke-width="0.9" opacity="0.30" stroke-dasharray="5,4" '
+                   f'marker-end="url(#arw-cyan)"/>')
 
     # ── 5. Transit planets ────────────────────────────────────────────────────
     if has_transit:
